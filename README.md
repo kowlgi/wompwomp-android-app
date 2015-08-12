@@ -2,10 +2,7 @@
 
 ### This is a repository for learning Android from a udacity tutorial ###
 
-* Quick Summary
-
-This class takes you from an empty project to an app that includes a list view, notifications, cloud connectivity, etc.
-* Version
+* This class takes you from an empty project to an app that includes a list view, notifications, cloud connectivity, etc.
 * [The Udacity class](https://www.udacity.com/course/developing-android-apps--ud853)
 
 ### How do I get set up? ###
