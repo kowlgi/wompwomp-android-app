@@ -62,12 +62,21 @@ public class MainActivityFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if(id == R.id.action_refresh) {
-            SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            new FetchWeatherTask().execute(pref.getString(getString(R.string.pref_location_key), "77479"));
-            Log.v("HELLO", pref.getString(getString(R.string.pref_location_key), "77479"));
+            updateWeather();
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void updateWeather() {
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        new FetchWeatherTask().execute(pref.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default)));
+        Log.v("HELLO", pref.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default)));
+    }
+
+    public void onStart() {
+        super.onStart();
+        updateWeather();
     }
 
     @Override
@@ -76,20 +85,12 @@ public class MainActivityFragment extends Fragment {
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        ArrayList<String> weekForecast = new ArrayList<String>();
-        weekForecast.add("Today - Sunny - 88/63");
-        weekForecast.add("Tomorrow - Sunny - 88/63");
-        weekForecast.add("Friday - Sunny - 88/63");
-        weekForecast.add("Saturday - Sunny - 88/63");
-        weekForecast.add("Sunday - Sunny - 88/63");
-        weekForecast.add("Monday - Sunny - 88/63");
-        weekForecast.add("Tuesday - Cloudy - 88/63");
         mForecastAdapter =
                 new ArrayAdapter<String>(
                         getActivity(),
                         R.layout.list_item_forecast,
                         list_item_forecast_textview,
-                        weekForecast);
+                        new ArrayList<String>());
 
         ListView forecastListView = (ListView) rootView.findViewById(R.id.listview_forecast);
         forecastListView.setAdapter(mForecastAdapter);
