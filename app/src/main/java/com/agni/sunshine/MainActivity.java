@@ -1,6 +1,8 @@
 package com.agni.sunshine;
 
 import android.content.Intent;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -13,6 +15,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        setupTabs();
     }
 
 
@@ -39,6 +42,29 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    private void setupTabs() {
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        actionBar.setDisplayShowTitleEnabled(true);
+
+        ActionBar.Tab tab1 = actionBar
+                .newTab()
+                .setText("First")
+                .setTabListener(new SupportFragmentTabListener<MainActivityFragment>(R.id.fragment, this,
+                        "first", MainActivityFragment.class));
+
+        actionBar.addTab(tab1);
+        actionBar.selectTab(tab1);
+
+        ActionBar.Tab tab2 = actionBar
+                .newTab()
+                .setText("Second")
+                .setTabListener(new SupportFragmentTabListener<MainActivityFragment>(R.id.fragment, this,
+                        "second", MainActivityFragment.class));
+        actionBar.addTab(tab2);
+    }
+
 
 
 }
