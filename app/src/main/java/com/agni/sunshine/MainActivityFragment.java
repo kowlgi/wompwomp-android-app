@@ -1,8 +1,11 @@
 package com.agni.sunshine;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.text.format.Time;
@@ -59,7 +62,9 @@ public class MainActivityFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if(id == R.id.action_refresh) {
-            new FetchWeatherTask().execute("77479");
+            SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            new FetchWeatherTask().execute(pref.getString(getString(R.string.pref_location_key), "77479"));
+            Log.v("HELLO", pref.getString(getString(R.string.pref_location_key), "77479"));
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -91,10 +96,9 @@ public class MainActivityFragment extends Fragment {
         forecastListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                CharSequence text = mForecastAdapter.getItem(i);
-                int duration = Toast.LENGTH_SHORT;
-
-                Toast.makeText(getActivity(), text, duration).setGravity(Gravity.CENTER, 0, 0).show();
+                String forecast = mForecastAdapter.getItem(i);
+                Intent detailIntent = new Intent(getActivity(), DetailActivity.class).putExtra(Intent.EXTRA_TEXT, forecast);
+                startActivity(detailIntent);
             }
         });
 
