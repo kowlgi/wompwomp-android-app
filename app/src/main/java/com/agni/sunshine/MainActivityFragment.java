@@ -1,6 +1,5 @@
 package com.agni.sunshine;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -10,7 +9,6 @@ import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.text.format.Time;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -20,7 +18,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -43,14 +40,25 @@ import static com.agni.sunshine.R.id.list_item_forecast_textview;
 public class MainActivityFragment extends Fragment {
 
     public ArrayAdapter<String> mForecastAdapter;
+    public static final String ARG_PAGE = "ARG_PAGE";
+    private int mPage;
 
     public MainActivityFragment() {
+    }
+
+    public static MainActivityFragment newInstance(int page) {
+        Bundle args = new Bundle();
+        args.putInt(ARG_PAGE, page);
+        MainActivityFragment fragment = new MainActivityFragment();
+        fragment.setArguments(args);
+        return fragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        mPage = getArguments().getInt(ARG_PAGE);
     }
 
     @Override

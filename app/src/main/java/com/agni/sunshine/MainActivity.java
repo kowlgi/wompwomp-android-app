@@ -1,10 +1,9 @@
 package com.agni.sunshine;
 
 import android.content.Intent;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.design.widget.TabLayout;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -44,27 +43,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupTabs() {
-        ActionBar actionBar = getSupportActionBar();
-        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-        actionBar.setDisplayShowTitleEnabled(true);
+        // Get the ViewPager and set it's PagerAdapter so that it can display items
+        ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
+        viewPager.setAdapter(new AgniFragmentPagerAdapter(getSupportFragmentManager(),
+                MainActivity.this));
 
-        ActionBar.Tab tab1 = actionBar
-                .newTab()
-                .setText("First")
-                .setTabListener(new SupportFragmentTabListener<MainActivityFragment>(R.id.fragment, this,
-                        "first", MainActivityFragment.class));
-
-        actionBar.addTab(tab1);
-        actionBar.selectTab(tab1);
-
-        ActionBar.Tab tab2 = actionBar
-                .newTab()
-                .setText("Second")
-                .setTabListener(new SupportFragmentTabListener<MainActivityFragment>(R.id.fragment, this,
-                        "second", MainActivityFragment.class));
-        actionBar.addTab(tab2);
+        // Give the TabLayout the ViewPager
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
+        tabLayout.setupWithViewPager(viewPager);
     }
-
-
-
 }
