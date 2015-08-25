@@ -10,6 +10,9 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:hint="@string/default_text"
+        android:lines="5"
+        android:maxLength="140"
+        android:paddingTop="10dp"
         android:inputType="textMultiLine"
         android:imeActionLabel="@string/button_text" />
 

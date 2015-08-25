@@ -3,6 +3,7 @@ package com.agni.sunshine;
 import android.app.Activity;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -29,6 +30,7 @@ public class PublishFragment extends Fragment implements View.OnClickListener {
     private int mParam1;
     private Button mButton;
     private EditText mText;
+    private View mView;
 
     private OnPublishInteractionListener mListener;
 
@@ -63,11 +65,11 @@ public class PublishFragment extends Fragment implements View.OnClickListener {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View myView = inflater.inflate(R.layout.fragment_publish, container, false);
-        mButton = (Button) myView.findViewById(R.id.publish_button);
+        mView = inflater.inflate(R.layout.fragment_publish, container, false);
+        mButton = (Button) mView.findViewById(R.id.publish_button);
         mButton.setOnClickListener(this);
-        mText = (EditText) myView.findViewById(R.id.publish_text);
-        return myView;
+        mText = (EditText) mView.findViewById(R.id.publish_text);
+        return mView;
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -113,5 +115,8 @@ public class PublishFragment extends Fragment implements View.OnClickListener {
     public void onClick(View v) {
         // implements your things
         Log.v("Button", mText.getText().toString());
+        mText.setText("");
+        Snackbar.make(mView, R.string.snackbar_text, Snackbar.LENGTH_LONG)
+                .show();
     }
 }
