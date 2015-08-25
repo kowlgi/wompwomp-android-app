@@ -32,6 +32,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 
 /**
  * A fragment representing a list of Items.
@@ -63,7 +64,7 @@ public class ExploreFragment extends Fragment implements AbsListView.OnItemClick
      * The Adapter which will be used to populate the ListView/GridView with
      * Views.
      */
-    private ListAdapter mAdapter;
+    private ArrayAdapter<String> mAdapter;
 
     // TODO: Rename and change types of parameters
     public static Fragment newInstance(int page) {
@@ -90,8 +91,8 @@ public class ExploreFragment extends Fragment implements AbsListView.OnItemClick
         }
 
         // TODO: Change Adapter to display your content
-        mAdapter = new ArrayAdapter<DummyContent.DummyItem>(getActivity(),
-                android.R.layout.simple_list_item_1, android.R.id.text1, DummyContent.ITEMS);
+        mAdapter = new ArrayAdapter<String>(getActivity(),
+                android.R.layout.simple_list_item_1, android.R.id.text1, new ArrayList<String>());
     }
 
     @Override
@@ -187,14 +188,102 @@ public class ExploreFragment extends Fragment implements AbsListView.OnItemClick
         private final String LOG_TAG = UpdateFeedTask.class.getSimpleName();
 
         protected String[] doInBackground(Void... params) {
-            // Some long-running task like downloading an image.
-            String[] result = null;
-            return result;
+            // These two need to be declared outside the try/catch
+            // so that they can be closed in the finally block.
+            HttpURLConnection urlConnection = null;
+            BufferedReader reader = null;
+            String JSONResponse = null;
+
+            try {
+                // Construct the URL for the OpenWeatherMap query
+                // Possible parameters are avaiable at OWM's forecast API page, at
+                // http://openweathermap.org/API#forecast
+                Uri.Builder ub = Uri.parse("http://10.1.40.50:3000/showall").buildUpon();
+                URL url = new URL(ub.build().toString());
+
+                Log.v(LOG_TAG, url.toString());
+
+                // Create the request to OpenWeatherMap, and open the connection
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("GET");
+                urlConnection.connect();
+
+                // Read the input stream into a String
+                InputStream inputStream = urlConnection.getInputStream();
+                StringBuffer buffer = new StringBuffer();
+                if (inputStream == null) {
+                    // Nothing to do.
+                    return null;
+                }
+                reader = new BufferedReader(new InputStreamReader(inputStream));
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
+                    // But it does make debugging a *lot* easier if you print out the completed
+                    // buffer for debugging.
+                    buffer.append(line + "\n");
+                }
+
+                if (buffer.length() == 0) {
+                    // Stream was empty.  No point in parsing.
+                    return null;
+                }
+
+                JSONResponse = buffer.toString();
+            }catch (IOException e) {
+                Log.e(LOG_TAG, "Error ", e);
+                return null;
+            } finally
+            {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+                if (reader != null) {
+                    try {
+                        reader.close();
+                    } catch (final IOException e) {
+                        Log.e(LOG_TAG, "Error closing stream", e);
+                    }
+                }
+            }
+
+            try {
+                return getQuotesFromJson(JSONResponse);
+            } catch (JSONException e) {
+                Log.e(LOG_TAG, "Error ", e);
+                // If there was an error in parsin json STOP
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+
+        private String[] getQuotesFromJson(String JSONStr) throws JSONException {
+            // These are the names of the JSON objects that need to be extracted.
+            final String OWM_LIST = "list";
+
+            JSONObject forecastJson = new JSONObject(JSONStr);
+            JSONArray quoteArray = forecastJson.getJSONArray(OWM_LIST);
+
+            String[] resultStrs = new String[quoteArray.length()];
+            for(int i = 0; i < quoteArray.length(); i++) {
+                resultStrs[i] = quoteArray.getString(i);
+            }
+            Log.v(LOG_TAG, resultStrs[0]);
+            return resultStrs;
         }
 
         protected void onPostExecute(String[] result) {
             // This method is executed in the UIThread
             // with access to the result of the long running task
+            if(result != null){
+                mAdapter.clear();
+                for  (String quoteStr : result) {
+                    mAdapter.add(quoteStr);
+                }
+            }
+
             mSwipeContainer.setRefreshing(false);
         }
     }
