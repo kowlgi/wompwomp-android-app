@@ -86,7 +86,6 @@ public class PublishFragment extends Fragment implements View.OnClickListener {
             throw new ClassCastException(activity.toString()
                     + " must implement OnFragmentInteractionListener");
         }
-        Log.v("Button", "Button works!");
     }
 
     @Override
