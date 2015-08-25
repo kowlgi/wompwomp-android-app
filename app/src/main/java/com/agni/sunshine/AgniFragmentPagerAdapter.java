@@ -1,15 +1,16 @@
 package com.agni.sunshine;
 
+
 import android.content.Context;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 
 /**
  * Created by kowlgi on 8/24/15.
  */
 public class AgniFragmentPagerAdapter extends android.support.v4.app.FragmentPagerAdapter{
     final int PAGE_COUNT = 3;
-    private String tabTitles[] = new String[] { "Publish", "Weather", "Explore" };
+    private String tabTitles[] = new String[] { "Publish", "Explore", "Weather" };
     private Context context;
 
     public AgniFragmentPagerAdapter(FragmentManager fm, Context context) {
@@ -24,7 +25,16 @@ public class AgniFragmentPagerAdapter extends android.support.v4.app.FragmentPag
 
     @Override
     public Fragment getItem(int position) {
-        return MainActivityFragment.newInstance(position + 1);
+        if (position == 0) {
+            return PublishFragment.newInstance(position + 1);
+        }
+        else if (position == 1){
+            return ExploreFragment.newInstance(position + 1);
+        }
+        else {
+            return MainActivityFragment.newInstance(position + 1);
+        }
+
     }
 
     @Override

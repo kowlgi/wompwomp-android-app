@@ -1,14 +1,17 @@
 package com.agni.sunshine;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity
+        implements PublishFragment.OnPublishInteractionListener, ExploreFragment.OnExploreInteractionListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,4 +55,13 @@ public class MainActivity extends AppCompatActivity {
         TabLayout tabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
         tabLayout.setupWithViewPager(viewPager);
     }
+
+    public void onPublishSelected(Uri uri){
+
+    }
+
+    public void onExploreSelected(String id) {
+
+    }
+
 }

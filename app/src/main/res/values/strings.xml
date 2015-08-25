@@ -21,4 +21,11 @@
     <string name="pref_imperial_label">Imperial</string>
     <string name="pref_metric_option">metric</string>
     <string name="pref_imperial_option">imperial</string>
+
+
+    <string name="default_text">Say something...</string>
+    <string name="button_text">Publish</string>
+
+<!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
