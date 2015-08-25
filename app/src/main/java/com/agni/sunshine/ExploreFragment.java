@@ -107,7 +107,7 @@ public class ExploreFragment extends Fragment implements AbsListView.OnItemClick
                 // Your code to refresh the list here.
                 // Make sure you call swipeContainer.setRefreshing(false)
                 // once the network request has completed successfully.
-                // DO NOTHING YET
+                new UpdateFeedTask().execute();
             }
         });
         // Configure the refreshing colors
@@ -181,151 +181,21 @@ public class ExploreFragment extends Fragment implements AbsListView.OnItemClick
     }
 
 
-
-    public class UpdateFeedTask extends AsyncTask<String, Void, String[]> {
+    // The types specified here are the input data type, the progress type, and the result type
+    public class UpdateFeedTask extends AsyncTask<Void, Void, String[]> {
 
         private final String LOG_TAG = UpdateFeedTask.class.getSimpleName();
 
-        /** The system calls this to perform work in a worker thread and
-         * delivers it the parameters given to AsyncTask.execute() */
-        protected String[] doInBackground(String...postcode) {
-            // These two need to be declared outside the try/catch
-            // so that they can be closed in the finally block.
-            HttpURLConnection urlConnection = null;
-            BufferedReader reader = null;
-
-            // Will contain the raw JSON response as a string.
-            String forecastJsonStr = null;
-            final Integer NUM_DAYS = 7;
-
-            try {
-                // Construct the URL for the OpenWeatherMap query
-                // Possible parameters are avaiable at OWM's forecast API page, at
-                // http://openweathermap.org/API#forecast
-                Uri.Builder ub = new Uri.Builder();
-                ub.scheme("http")
-                        .authority("api.openweathermap.org")
-                        .appendPath("data")
-                        .appendPath("2.5")
-                        .appendPath("forecast")
-                        .appendPath("daily")
-                        .appendQueryParameter("q", postcode[0])
-                        .appendQueryParameter("mode", "json")
-                        .appendQueryParameter("units", "metric")
-                        .appendQueryParameter("cnt", NUM_DAYS.toString());
-
-                URL url = new URL(ub.build().toString());
-
-                // Create the request to OpenWeatherMap, and open the connection
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
-
-                // Read the input stream into a String
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null) {
-                    // Nothing to do.
-                    return null;
-                }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                    // But it does make debugging a *lot* easier if you print out the completed
-                    // buffer for debugging.
-                    buffer.append(line + "\n");
-                }
-
-                if (buffer.length() == 0) {
-                    // Stream was empty.  No point in parsing.
-                    return null;
-                }
-                forecastJsonStr = buffer.toString();
-            } catch (IOException e) {
-                Log.e(LOG_TAG, "Error ", e);
-                // If the code didn't successfully get the weather data, there's no point in attemping
-                // to parse it.
-                return null;
-            } finally
-            {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (final IOException e) {
-                        Log.e(LOG_TAG, "Error closing stream", e);
-                    }
-                }
-            }
-
-            try {
-                return getWeatherDataFromJson(forecastJsonStr, NUM_DAYS);
-            } catch (JSONException e) {
-                Log.e(LOG_TAG, "Error ", e);
-                // If there was an error in parsin json STOP
-                e.printStackTrace();
-            }
-
-            return null;
+        protected String[] doInBackground(Void... params) {
+            // Some long-running task like downloading an image.
+            String[] result = null;
+            return result;
         }
 
-        /** The system calls this to perform work in the UI thread and delivers
-         * the result from doInBackground() */
         protected void onPostExecute(String[] result) {
-            if(result != null){/*
-                mForecastAdapter.clear();
-                for  (String dayForecastStr : result) {
-                    mForecastAdapter.add(dayForecastStr);
-                }*/
-            }
-        }
-
-        /**
-         * Take the String representing the complete forecast in JSON Format and
-         * pull out the data we need to construct the Strings needed for the wireframes.
-         *
-         * Fortunately parsing is easy:  constructor takes the JSON string and converts it
-         * into an Object hierarchy for us.
-         */
-        private String[] getWeatherDataFromJson(String forecastJsonStr, int numDays)
-                throws JSONException {
-
-            // These are the names of the JSON objects that need to be extracted.
-            final String OWM_LIST = "list";
-            final String OWM_WEATHER = "weather";
-            final String OWM_TEMPERATURE = "temp";
-            final String OWM_MAX = "max";
-            final String OWM_MIN = "min";
-            final String OWM_DESCRIPTION = "main";
-
-            JSONObject forecastJson = new JSONObject(forecastJsonStr);
-            JSONArray weatherArray = forecastJson.getJSONArray(OWM_LIST);
-
-            // OWM returns daily forecasts based upon the local time of the city that is being
-            // asked for, which means that we need to know the GMT offset to translate this data
-            // properly.
-
-            // Since this data is also sent in-order and the first day is always the
-            // current day, we're going to take advantage of that to get a nice
-            // normalized UTC date for all of our weather.
-
-            Time dayTime = new Time();
-            dayTime.setToNow();
-
-            // we start at the day returned by local time. Otherwise this is a mess.
-            int julianStartDay = Time.getJulianDay(System.currentTimeMillis(), dayTime.gmtoff);
-
-            // now we work exclusively in UTC
-            dayTime = new Time();
-
-            String[] resultStrs = new String[numDays];
-
-            return resultStrs;
-
+            // This method is executed in the UIThread
+            // with access to the result of the long running task
+            mSwipeContainer.setRefreshing(false);
         }
     }
 
