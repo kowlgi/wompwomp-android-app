@@ -23,8 +23,8 @@
     <string name="pref_imperial_option">imperial</string>
 
 
-    <string name="default_text">Say something...</string>
-    <string name="button_text">Publish</string>
+    <string name="default_text">Write something...</string>
+    <string name="button_text">I\'m done</string>
 
 <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>

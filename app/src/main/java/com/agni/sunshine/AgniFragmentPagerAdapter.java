@@ -10,7 +10,7 @@ import android.support.v4.app.FragmentManager;
  */
 public class AgniFragmentPagerAdapter extends android.support.v4.app.FragmentPagerAdapter{
     final int PAGE_COUNT = 2;
-    private String tabTitles[] = new String[] { "Publish", "Explore"};
+    private String tabTitles[] = new String[] { "Write", "Explore"};
     private Context context;
 
     public AgniFragmentPagerAdapter(FragmentManager fm, Context context) {
