@@ -115,28 +115,25 @@ public class PublishFragment extends Fragment implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        // implements your things
-        Log.v("Button", mText.getText().toString());
-
         AsyncHttpClient client = new AsyncHttpClient();
         RequestParams params = new RequestParams();
-        params.put("quote",mText.getText().toString());
+        params.put("quote", mText.getText().toString());
         client.post("http://10.1.40.50:3000/submit", params, new TextHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, String res) {
                         // called when response HTTP status is "200 OK"
+                        mText.setText("");
+                        Snackbar.make(mView, R.string.snackbar_text, Snackbar.LENGTH_LONG)
+                                .show();
                     }
 
                     @Override
                     public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
                         // called when response HTTP status is "4XX" (eg. 401, 403, 404)
+                        Snackbar.make(mView, R.string.snackbar_error_text, Snackbar.LENGTH_LONG)
+                                .show();
                     }
                 }
         );
-
-
-        mText.setText("");
-        Snackbar.make(mView, R.string.snackbar_text, Snackbar.LENGTH_LONG)
-                .show();
     }
 }

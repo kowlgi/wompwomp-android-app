@@ -24,9 +24,10 @@
 
 
     <string name="default_text">Write something...</string>
-    <string name="button_text">I\'m done</string>
+    <string name="button_text">Submit</string>
 
 <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="snackbar_text">Your quote is now whizzing through the ether. Nice work keeping it classy!</string>
+    <string name="snackbar_text">Your quote is now whizzing through the ether. Open the Explore tab and refresh to see your quote!</string>
+    <string name="snackbar_error_text">Uh oh, something didn\'t go right :( Try again.</string>
 </resources>
