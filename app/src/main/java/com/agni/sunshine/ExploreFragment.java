@@ -19,8 +19,6 @@ import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.TextView;
 
-import com.agni.sunshine.dummy.DummyContent;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -149,7 +147,6 @@ public class ExploreFragment extends Fragment implements AbsListView.OnItemClick
         if (null != mListener) {
             // Notify the active callbacks interface (the activity, if the
             // fragment is attached to one) that an item has been selected.
-            mListener.onExploreSelected(DummyContent.ITEMS.get(position).id);
         }
     }
 
@@ -198,7 +195,7 @@ public class ExploreFragment extends Fragment implements AbsListView.OnItemClick
                 // Construct the URL for the OpenWeatherMap query
                 // Possible parameters are avaiable at OWM's forecast API page, at
                 // http://openweathermap.org/API#forecast
-                Uri.Builder ub = Uri.parse("http://10.1.40.50:3000/showall").buildUpon();
+                Uri.Builder ub = Uri.parse("http://45.55.216.153:3000/showall").buildUpon();
                 URL url = new URL(ub.build().toString());
 
                 Log.v(LOG_TAG, url.toString());
