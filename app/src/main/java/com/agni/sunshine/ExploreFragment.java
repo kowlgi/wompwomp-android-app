@@ -195,7 +195,7 @@ public class ExploreFragment extends Fragment implements AbsListView.OnItemClick
                 // Construct the URL for the OpenWeatherMap query
                 // Possible parameters are avaiable at OWM's forecast API page, at
                 // http://openweathermap.org/API#forecast
-                Uri.Builder ub = Uri.parse("http://45.55.216.153:3000/showall").buildUpon();
+                Uri.Builder ub = Uri.parse("http://10.1.40.109:3000/showall").buildUpon();
                 URL url = new URL(ub.build().toString());
 
                 Log.v(LOG_TAG, url.toString());
@@ -286,6 +286,3 @@ public class ExploreFragment extends Fragment implements AbsListView.OnItemClick
     }
 
 }
-
-
-//xmlns:android="http://schemas.android.com/apk/res/android"

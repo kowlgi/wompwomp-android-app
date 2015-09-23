@@ -64,5 +64,4 @@ public class MainActivity extends AppCompatActivity
     public void onExploreSelected(String id) {
 
     }
-
 }

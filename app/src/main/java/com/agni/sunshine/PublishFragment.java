@@ -118,7 +118,7 @@ public class PublishFragment extends Fragment implements View.OnClickListener {
         AsyncHttpClient client = new AsyncHttpClient();
         RequestParams params = new RequestParams();
         params.put("quote", mText.getText().toString());
-        client.post("http://45.55.216.153:3000/submit", params, new TextHttpResponseHandler() {
+        client.post("http://10.1.40.109:3000/submit", params, new TextHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, String res) {
                         // called when response HTTP status is "200 OK"
