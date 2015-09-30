@@ -88,7 +88,6 @@ public class ExploreFragment extends Fragment implements AbsListView.OnItemClick
             mParam1 = getArguments().getInt(ARG_PARAM1);
         }
 
-        // TODO: Change Adapter to display your content
         mAdapter = new ArrayAdapter<String>(getActivity(),
                 android.R.layout.simple_list_item_1, android.R.id.text1, new ArrayList<String>());
     }
