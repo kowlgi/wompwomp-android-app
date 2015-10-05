@@ -3,9 +3,13 @@ package com.agni.sunshine;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -15,6 +19,12 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,46 +35,30 @@ import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.NetworkImageView;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class MainActivity extends AppCompatActivity {
 
     private List<Quote> myQuotes = new ArrayList<Quote>();
     private ImageLoader mImageLoader;
+    private SwipeRefreshLayout mSwipeContainer;
+    ArrayAdapter<Quote> mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.agni_main);
         mImageLoader = VolleySingleton.getInstance().getImageLoader();
-
-        populateQuotesList();
         populateListView();
-    }
-
-    private void populateQuotesList() {
-        myQuotes.add(new Quote("https://c2.staticflickr.com/2/1196/1065036310_d826f46270_b.jpg",
-                "Do one thing every day that scares you. ― Eleanor Roosevelt") );
-        myQuotes.add(new Quote("https://c1.staticflickr.com/1/192/504251019_ffc94c77b5_b.jpg",
-                "We are what we pretend to be, so we must be careful about what we pretend to be.― Kurt Vonnegut, Mother Night"));
-        myQuotes.add(new Quote("https://c1.staticflickr.com/1/17/92230866_713ae1eeef_b.jpg",
-                "Sometimes you wake up. Sometimes the fall kills you. And sometimes, when you fall, you fly.― Neil Gaiman, The Sandman, Vol. 6: Fables and Reflections"));
-        myQuotes.add(new Quote("https://c1.staticflickr.com/3/2140/2422023906_c6522c014d_b.jpg",
-                "When we love, we always strive to become better than we are. When we strive to become better than we are, everything around us becomes better too.― Paulo Coelho, The Alchemist") );
-        myQuotes.add(new Quote("https://c2.staticflickr.com/4/3140/2971576313_11f623b340_b.jpg",
-                "What's meant to be will always find a way ― Trisha Yearwood"));
-        myQuotes.add(new Quote("https://c2.staticflickr.com/6/5058/5543747770_7d37c98a54_b.jpg",
-                "The flower that blooms in adversity is the rarest and most beautiful of all.― Walt Disney Company, Mulan"));
-        myQuotes.add(new Quote("https://c1.staticflickr.com/3/2870/11335297394_21f07b19d7_b.jpg",
-                "We delight in the beauty of the butterfly, but rarely admit the changes it has gone through to achieve that beauty.― Maya Angelou") );
-        myQuotes.add(new Quote("https://c1.staticflickr.com/1/43/122094097_8175fdee9b_b.jpg",
-                "You never have to change anything you got up in the middle of the night to write.― Saul Bellow"));
-        myQuotes.add(new Quote("https://c1.staticflickr.com/9/8306/7989621033_721222caf2_b.jpg",
-                "The unexamined life is not worth living.― Socrates"));
+        new UpdateFeedTask().execute();
     }
 
     private void populateListView() {
-        ArrayAdapter<Quote> adapter = new MyListAdapter();
+        mAdapter = new MyListAdapter();
         ListView list = (ListView) findViewById(R.id.quotesListView);
-        list.setAdapter(adapter);
+        list.setAdapter(mAdapter);
     }
 
     private class MyListAdapter extends ArrayAdapter<Quote> {
@@ -83,16 +77,17 @@ public class MainActivity extends AppCompatActivity {
             }
 
             // Find the quote to work with
-            Quote currentQuote = myQuotes.get(position);
-            NetworkImageView networkImageView = (NetworkImageView) itemView.findViewById(R.id.imageView);
+            Quote currentQuote = getItem(position);
+            if(currentQuote != null) {
+                NetworkImageView networkImageView = (NetworkImageView) itemView.findViewById(R.id.imageView);
 
-            networkImageView.setImageUrl(currentQuote.getUri(), mImageLoader);
-            networkImageView.setDefaultImageResId(R.drawable.landscape27);
-            networkImageView.setErrorImageResId(R.drawable.landscape27);
+                networkImageView.setImageUrl(currentQuote.getUri(), mImageLoader);
+                networkImageView.setDefaultImageResId(R.drawable.landscape27);
+                networkImageView.setErrorImageResId(R.drawable.landscape27);
 
-            TextView quotetextview = (TextView) itemView.findViewById(R.id.textView);
-            quotetextview.setText(currentQuote.getQuotetext());
-
+                TextView quotetextview = (TextView) itemView.findViewById(R.id.textView);
+                quotetextview.setText(currentQuote.getQuotetext());
+            }
             return itemView;
         }
     }
@@ -117,5 +112,112 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    // The types specified here are the input data type, the progress type, and the result type
+    public class UpdateFeedTask extends AsyncTask<Void, Void, Quote[]> {
+
+        private final String LOG_TAG = UpdateFeedTask.class.getSimpleName();
+
+        protected Quote[] doInBackground(Void... params) {
+            // These two need to be declared outside the try/catch
+            // so that they can be closed in the finally block.
+            HttpURLConnection urlConnection = null;
+            BufferedReader reader = null;
+            String JSONResponse = null;
+
+            try {
+                // Construct the URL for the OpenWeatherMap query
+                // Possible parameters are avaiable at OWM's forecast API page, at
+                // http://openweathermap.org/API#forecast
+                Uri.Builder ub = Uri.parse("http://192.168.0.9:3000/items?offset=-1&limit=10").buildUpon();
+                URL url = new URL(ub.build().toString());
+
+                Log.v(LOG_TAG, url.toString());
+
+                // Create the request to OpenWeatherMap, and open the connection
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("GET");
+                urlConnection.connect();
+
+                // Read the input stream into a String
+                InputStream inputStream = urlConnection.getInputStream();
+                StringBuffer buffer = new StringBuffer();
+                if (inputStream == null) {
+                    // Nothing to do.
+                    return null;
+                }
+                reader = new BufferedReader(new InputStreamReader(inputStream));
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
+                    // But it does make debugging a *lot* easier if you print out the completed
+                    // buffer for debugging.
+                    buffer.append(line + "\n");
+                }
+
+                if (buffer.length() == 0) {
+                    // Stream was empty.  No point in parsing.
+                    return null;
+                }
+
+                JSONResponse = buffer.toString();
+            }catch (IOException e) {
+                Log.e(LOG_TAG, "Error ", e);
+                return null;
+            } finally
+            {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+                if (reader != null) {
+                    try {
+                        reader.close();
+                    } catch (final IOException e) {
+                        Log.e(LOG_TAG, "Error closing stream", e);
+                    }
+                }
+            }
+
+            try {
+                return getQuotesFromJson(JSONResponse);
+            } catch (JSONException e) {
+                Log.e(LOG_TAG, "Error ", e);
+                // If there was an error in parsin json STOP
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+
+        private Quote[] getQuotesFromJson(String JSONStr) throws JSONException {
+            // These are the names of the JSON objects that need to be extracted.
+            final String OWM_LIST = "list";
+            final String OWM_TEXT = "text";
+            final String OWM_IMAGEURI = "imageuri";
+
+            JSONObject forecastJson = new JSONObject(JSONStr);
+            JSONArray quoteArray = forecastJson.getJSONArray(OWM_LIST);
+
+            Quote[] result = new Quote[quoteArray.length()];
+            for(int i = 0; i < quoteArray.length(); i++) {
+                result[i] = new Quote(quoteArray.getJSONObject(i).getString(OWM_IMAGEURI),
+                        quoteArray.getJSONObject(i).getString(OWM_TEXT));
+            }
+
+            return result;
+        }
+
+        protected void onPostExecute(Quote[] result) {
+            // This method is executed in the UIThread
+            // with access to the result of the long running task
+            if(result != null){
+                mAdapter.clear();
+                for  (Quote quote : result) {
+                    mAdapter.insert(quote, 0);
+                }
+            }
+        }
     }
 }

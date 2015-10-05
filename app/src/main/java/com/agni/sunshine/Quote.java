@@ -19,4 +19,12 @@ public class Quote {
     public String getQuotetext() {
         return quotetext;
     }
+
+    public void setUri(String uri) {
+        this.uri = uri;
+    }
+
+    public void setQuotetext(String quotetext) {
+        this.quotetext = quotetext;
+    }
 }

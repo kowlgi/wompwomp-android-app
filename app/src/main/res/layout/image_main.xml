@@ -21,5 +21,4 @@
         android:background="#5F00"
         android:textSize="20sp"
         android:layout_centerInParent="true" />
-
 </RelativeLayout>
