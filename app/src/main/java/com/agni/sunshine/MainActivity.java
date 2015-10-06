@@ -9,7 +9,10 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -41,54 +44,87 @@ import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
 
-    private List<Quote> myQuotes = new ArrayList<Quote>();
     private ImageLoader mImageLoader;
-    private SwipeRefreshLayout mSwipeContainer;
-    ArrayAdapter<Quote> mAdapter;
+    private RecyclerView mRecyclerView;
+    private RecyclerView.Adapter mAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.agni_main);
+        mRecyclerView = (RecyclerView) findViewById(R.id.quotesRecyclerView);
+
+        // use this setting to improve performance if you know that changes
+        // in content do not change the layout size of the RecyclerView
+        mRecyclerView.setHasFixedSize(true);
+
+        // use a linear layout manager
+        mLayoutManager = new LinearLayoutManager(this);
+        mRecyclerView.setLayoutManager(mLayoutManager);
+
         mImageLoader = VolleySingleton.getInstance().getImageLoader();
-        populateListView();
         new UpdateFeedTask().execute();
     }
 
-    private void populateListView() {
-        mAdapter = new MyListAdapter();
-        ListView list = (ListView) findViewById(R.id.quotesListView);
-        list.setAdapter(mAdapter);
-    }
+    private class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
+        Quote[] mDataset;
 
-    private class MyListAdapter extends ArrayAdapter<Quote> {
+        // Provide a direct reference to each of the views within a data item
+        // Used to cache the views within the item layout for fast access
+        public class ViewHolder extends RecyclerView.ViewHolder {
+            // Your holder should contain a member variable
+            // for any view that will be set as you render a row
+            public NetworkImageView imageView;
+            public TextView textView;
 
-        public MyListAdapter() {
-            super(MainActivity.this, R.layout.image_main, myQuotes);
+            // We also create a constructor that accepts the entire item row
+            // and does the view lookups to find each subview
+            public ViewHolder(View itemView) {
+                // Stores the itemView in a public final member variable that can be used
+                // to access the context from any ViewHolder instance.
+                super(itemView);
+
+                imageView = (NetworkImageView) itemView.findViewById(R.id.imageView);
+                textView = (TextView) itemView.findViewById(R.id.textView);
+            }
         }
 
+        // Provide a suitable constructor (depends on the kind of dataset)
+        public MyAdapter(Quote[] myDataset) {
+            mDataset = myDataset;
+        }
+
+        // Create new views (invoked by the layout manager)
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            // Make sure we have a view to work with
-            View itemView = convertView;
-            if(itemView == null) {
-                itemView = getLayoutInflater().inflate(R.layout.image_main, parent, false);
+        public MyAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
+                                                       int viewType) {
+            // create a new view
+            View v = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.image_main, parent, false);
 
-            }
+            MyAdapter.ViewHolder vh = new MyAdapter.ViewHolder(v);
+            return vh;
+        }
 
-            // Find the quote to work with
-            Quote currentQuote = getItem(position);
-            if(currentQuote != null) {
-                NetworkImageView networkImageView = (NetworkImageView) itemView.findViewById(R.id.imageView);
+        // Replace the contents of a view (invoked by the layout manager)
+        @Override
+        public void onBindViewHolder(MyAdapter.ViewHolder holder, int position) {
+            // - get element from your dataset at this position
+            // - replace the contents of the view with that element
 
-                networkImageView.setImageUrl(currentQuote.getUri(), mImageLoader);
-                networkImageView.setDefaultImageResId(R.drawable.landscape27);
-                networkImageView.setErrorImageResId(R.drawable.landscape27);
+            holder.imageView.setImageUrl(mDataset[position].getUri(), mImageLoader);
+            holder.imageView.setDefaultImageResId(R.drawable.landscape27);
+            holder.imageView.setErrorImageResId(R.drawable.landscape27);
 
-                TextView quotetextview = (TextView) itemView.findViewById(R.id.textView);
-                quotetextview.setText(currentQuote.getQuotetext());
-            }
-            return itemView;
+            holder.textView.setText(mDataset[position].getQuotetext());
+
+        }
+
+        // Return the size of your dataset (invoked by the layout manager)
+        @Override
+        public int getItemCount() {
+            return mDataset.length;
         }
     }
 
@@ -213,10 +249,9 @@ public class MainActivity extends AppCompatActivity {
             // This method is executed in the UIThread
             // with access to the result of the long running task
             if(result != null){
-                mAdapter.clear();
-                for  (Quote quote : result) {
-                    mAdapter.insert(quote, 0);
-                }
+                // specify an adapter (see also next example)
+                mAdapter = new MyAdapter(result);
+                mRecyclerView.setAdapter(mAdapter);
             }
         }
     }
