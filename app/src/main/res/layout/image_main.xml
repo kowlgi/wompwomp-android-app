@@ -17,9 +17,7 @@
             android:layout_width="420dp"
             android:layout_height="420dp"
             android:id="@+id/imageView"
-            android:scaleType="fitXY"
-            android:maxHeight="420dp"
-            android:maxWidth="420dp" />
+            android:scaleType="fitXY" />
 
         <TextView
             android:id="@+id/textView"
@@ -27,7 +25,7 @@
             android:text="Hello"
             android:textColor="#000000"
             android:textSize="20sp"
-            android:layout_width="match_parent"
+            android:layout_width="fill_parent"
             android:layout_height="match_parent"
             android:layout_below="@+id/imageView"/>
     </RelativeLayout>

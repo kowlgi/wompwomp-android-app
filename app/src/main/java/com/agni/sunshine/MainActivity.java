@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -113,10 +114,15 @@ public class MainActivity extends AppCompatActivity {
             // - get element from your dataset at this position
             // - replace the contents of the view with that element
 
+            DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+            float dpHeight = displayMetrics.heightPixels / displayMetrics.density;
+
+            holder.imageView.setMinimumHeight((int)Math.round(dpHeight*0.66));
             holder.imageView.setImageUrl(mDataset[position].getUri(), mImageLoader);
             holder.imageView.setDefaultImageResId(R.drawable.landscape27);
             holder.imageView.setErrorImageResId(R.drawable.landscape27);
 
+            holder.textView.setMinHeight((int)Math.round(dpHeight*0.34));
             holder.textView.setText(mDataset[position].getQuotetext());
 
         }
