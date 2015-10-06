@@ -237,8 +237,8 @@ public class MainActivity extends AppCompatActivity {
             JSONArray quoteArray = forecastJson.getJSONArray(OWM_LIST);
 
             Quote[] result = new Quote[quoteArray.length()];
-            for(int i = 0; i < quoteArray.length(); i++) {
-                result[i] = new Quote(quoteArray.getJSONObject(i).getString(OWM_IMAGEURI),
+            for(int i = quoteArray.length() - 1; i >= 0 ; i--) {
+                result[quoteArray.length() - i - 1] = new Quote(quoteArray.getJSONObject(i).getString(OWM_IMAGEURI),
                         quoteArray.getJSONObject(i).getString(OWM_TEXT));
             }
 
@@ -250,6 +250,7 @@ public class MainActivity extends AppCompatActivity {
             // with access to the result of the long running task
             if(result != null){
                 // specify an adapter (see also next example)
+
                 mAdapter = new MyAdapter(result);
                 mRecyclerView.setAdapter(mAdapter);
             }
