@@ -1,21 +1,27 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.gms.google-services'
 
 android {
-    compileSdkVersion 21
-    buildToolsVersion "22.0.1"
+    compileSdkVersion 23
+    buildToolsVersion "23.0.0"
 
     defaultConfig {
         applicationId "com.agni.sunshine"
-        minSdkVersion 15
-        targetSdkVersion 21
+        minSdkVersion 9
+        targetSdkVersion 23
         versionCode 1
         versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+    }
+    packagingOptions {
+        exclude 'LICENSE.txt'
     }
 }
 
@@ -29,4 +35,5 @@ dependencies {
     compile 'com.loopj.android:android-async-http:1.4.8'
     compile 'com.mcxiaoke.volley:library:1.0.19'
     compile 'com.android.support:cardview-v7:21.0.2'
+    compile 'com.google.android.gms:play-services-gcm:8.1.0'
 }

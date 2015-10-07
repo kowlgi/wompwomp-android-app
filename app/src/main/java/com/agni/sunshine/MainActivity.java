@@ -1,6 +1,7 @@
 package com.agni.sunshine;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
@@ -38,6 +39,8 @@ import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.NetworkImageView;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -49,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
+    private static final String TAG = "MainActivity";
+    private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +70,12 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerView.setLayoutManager(mLayoutManager);
 
         mImageLoader = VolleySingleton.getInstance().getImageLoader();
+
+        if (checkPlayServices()) {
+            // Start IntentService to register this application with GCM.
+            Intent intent = new Intent(this, RegistrationIntentService.class);
+            startService(intent);
+        }
         new UpdateFeedTask().execute();
     }
 
@@ -117,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
             DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
             float dpHeight = displayMetrics.heightPixels / displayMetrics.density;
 
-            holder.imageView.setMinimumHeight((int)Math.round(dpHeight*0.66));
+            holder.imageView.setMinimumHeight((int) Math.round(dpHeight * 0.66));
             holder.imageView.setImageUrl(mDataset[position].getUri(), mImageLoader);
             holder.imageView.setDefaultImageResId(R.drawable.landscape27);
             holder.imageView.setErrorImageResId(R.drawable.landscape27);
@@ -261,5 +272,26 @@ public class MainActivity extends AppCompatActivity {
                 mRecyclerView.setAdapter(mAdapter);
             }
         }
+    }
+
+    /**
+     * Check the device to make sure it has the Google Play Services APK. If
+     * it doesn't, display a dialog that allows users to download the APK from
+     * the Google Play Store or enable it in the device's system settings.
+     */
+    private boolean checkPlayServices() {
+        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
+        int resultCode = apiAvailability.isGooglePlayServicesAvailable(this);
+        if (resultCode != ConnectionResult.SUCCESS) {
+            if (apiAvailability.isUserResolvableError(resultCode)) {
+                apiAvailability.getErrorDialog(this, resultCode, PLAY_SERVICES_RESOLUTION_REQUEST)
+                        .show();
+            } else {
+                Log.i(TAG, "This device is not supported.");
+                finish();
+            }
+            return false;
+        }
+        return true;
     }
 }
