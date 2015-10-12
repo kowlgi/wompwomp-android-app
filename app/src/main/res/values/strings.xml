@@ -31,4 +31,5 @@
     <string name="snackbar_text">Your quote is now whizzing through the ether. Open the Explore tab and refresh to see your quote!</string>
     <string name="snackbar_error_text">Uh oh, something didn\'t go right :( Try again.</string>
     <string name="title_activity_main">MainActivity</string>
+    <string name="send_to">Send To</string>
 </resources>

@@ -9,6 +9,11 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- [END gcm_permission] -->
 
+    <!-- [START sharing_bitmap_permission] -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!-- [END sharing_bitmap_permission] -->
+
     <application
         android:name="com.agni.sunshine.MyApplication"
         android:allowBackup="true"

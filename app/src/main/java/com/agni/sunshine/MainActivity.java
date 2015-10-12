@@ -1,15 +1,16 @@
 package com.agni.sunshine;
 
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Color;
+import android.graphics.Canvas;
+import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.ActionBarActivity;
+import android.os.Environment;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
@@ -19,26 +20,19 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageLoader;
-import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.NetworkImageView;
-import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
@@ -48,7 +42,6 @@ import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
 
-    private ImageLoader mImageLoader;
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
@@ -68,8 +61,6 @@ public class MainActivity extends AppCompatActivity {
         // use a linear layout manager
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
-
-        mImageLoader = VolleySingleton.getInstance().getImageLoader();
 
         if (checkPlayServices()) {
             // Start IntentService to register this application with GCM.
@@ -99,7 +90,77 @@ public class MainActivity extends AppCompatActivity {
 
                 imageView = (NetworkImageView) itemView.findViewById(R.id.imageView);
                 textView = (TextView) itemView.findViewById(R.id.textView);
+                Typeface font = Typeface.createFromAsset(getAssets(), "HappyMonkeyRegular.ttf");
+                textView.setTypeface(font);
+                itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override public void onClick(View v) {
+                        //Uri bmpUri = getLocalImageBitmapUri(imageView);
+                        View linearView = (View) imageView.getParent();
+                        View cardView = (View) linearView.getParent();
+                        Uri bmpUri = getLocalCardViewBitmapUri(cardView);
+                        if (bmpUri != null) {
+                            // Construct a ShareIntent with link to image
+                            Intent shareIntent = new Intent();
+                            shareIntent.setAction(Intent.ACTION_SEND);
+                            shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
+                            shareIntent.setType("image/*");
+                            // Launch sharing dialog for image
+                            startActivity(Intent.createChooser(shareIntent, "Share Image"));
+                        } else {
+                            // ...sharing failed, handle error
+                            Log.v(TAG, "Sharing failed");
+                        }
+                        Log.v(TAG, imageView.getImageURL());
+                    }
+                });
             }
+        }
+
+        // Returns the URI path to the Bitmap displayed in specified ImageView
+        public Uri getLocalImageBitmapUri(NetworkImageView networkImageview) {
+            // Extract Bitmap from ImageView drawable
+            final Bitmap bmp  = ((BitmapDrawable) networkImageview.getDrawable()).getBitmap();
+            if (bmp == null) {
+                Log.v(TAG, "Unable to get Bitmap");
+                return null;
+            }
+            // Store image to default external storage directory
+            Uri bmpUri = null;
+            try {
+                File file =  new File(Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_DOWNLOADS), "share_image_" + System.currentTimeMillis() + ".png");
+                file.getParentFile().mkdirs();
+                FileOutputStream out = new FileOutputStream(file);
+                bmp.compress(Bitmap.CompressFormat.PNG, 90, out);
+                out.close();
+                bmpUri = Uri.fromFile(file);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return bmpUri;
+        }
+
+        public Uri getLocalCardViewBitmapUri(View cardView){
+            //Create a Bitmap with the same dimensions
+            Bitmap image = Bitmap.createBitmap(cardView.getWidth(),
+                    cardView.getHeight(),
+                    Bitmap.Config.RGB_565);
+            //Draw the view inside the Bitmap
+            cardView.draw(new Canvas(image));
+
+            // Store image to default external storage directory
+            Uri bmpUri = null;
+            try {
+                File file =  new File(Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_DOWNLOADS), "share_image_" + System.currentTimeMillis() + ".png");
+                file.getParentFile().mkdirs();
+                FileOutputStream out = new FileOutputStream(file);
+                image.compress(Bitmap.CompressFormat.PNG, 90, out); //Output
+                bmpUri = Uri.fromFile(file);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return bmpUri;
         }
 
         // Provide a suitable constructor (depends on the kind of dataset)
@@ -127,15 +188,15 @@ public class MainActivity extends AppCompatActivity {
 
             DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
             float dpHeight = displayMetrics.heightPixels / displayMetrics.density;
+            //View parent = (View) holder.imageView.getParent();
+            //float dpHeight = parent.getHeight();
 
             holder.imageView.setMinimumHeight((int) Math.round(dpHeight * 0.66));
-            holder.imageView.setImageUrl(mDataset[position].getUri(), mImageLoader);
+            holder.imageView.setImageUrl(mDataset[position].getUri(), VolleySingleton.getInstance().getImageLoader());
             holder.imageView.setDefaultImageResId(R.drawable.landscape27);
             holder.imageView.setErrorImageResId(R.drawable.landscape27);
-
             holder.textView.setMinHeight((int)Math.round(dpHeight*0.34));
             holder.textView.setText(mDataset[position].getQuotetext());
-
         }
 
         // Return the size of your dataset (invoked by the layout manager)
@@ -183,7 +244,7 @@ public class MainActivity extends AppCompatActivity {
                 // Construct the URL for the OpenWeatherMap query
                 // Possible parameters are avaiable at OWM's forecast API page, at
                 // http://openweathermap.org/API#forecast
-                Uri.Builder ub = Uri.parse("http://192.168.0.9:3000/items?offset=-1&limit=10").buildUpon();
+                Uri.Builder ub = Uri.parse("http://45.55.216.153:3000/items?offset=-1").buildUpon();
                 URL url = new URL(ub.build().toString());
 
                 Log.v(LOG_TAG, url.toString());
