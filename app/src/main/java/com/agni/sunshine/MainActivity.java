@@ -90,8 +90,6 @@ public class MainActivity extends AppCompatActivity {
 
                 imageView = (NetworkImageView) itemView.findViewById(R.id.imageView);
                 textView = (TextView) itemView.findViewById(R.id.textView);
-                Typeface font = Typeface.createFromAsset(getAssets(), "HappyMonkeyRegular.ttf");
-                textView.setTypeface(font);
                 itemView.setOnClickListener(new View.OnClickListener() {
                     @Override public void onClick(View v) {
                         //Uri bmpUri = getLocalImageBitmapUri(imageView);
