@@ -20,6 +20,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -90,7 +91,8 @@ public class MainActivity extends AppCompatActivity {
 
                 imageView = (NetworkImageView) itemView.findViewById(R.id.imageView);
                 textView = (TextView) itemView.findViewById(R.id.textView);
-                itemView.setOnClickListener(new View.OnClickListener() {
+                View buttonView = (View) itemView.findViewById(R.id.share_button);
+                buttonView.setOnClickListener(new View.OnClickListener() {
                     @Override public void onClick(View v) {
                         //Uri bmpUri = getLocalImageBitmapUri(imageView);
                         View linearView = (View) imageView.getParent();
@@ -189,11 +191,11 @@ public class MainActivity extends AppCompatActivity {
             //View parent = (View) holder.imageView.getParent();
             //float dpHeight = parent.getHeight();
 
-            holder.imageView.setMinimumHeight((int) Math.round(dpHeight * 0.66));
+            holder.imageView.setMinimumHeight((int) Math.round(dpHeight * 0.50));
             holder.imageView.setImageUrl(mDataset[position].getUri(), VolleySingleton.getInstance().getImageLoader());
             holder.imageView.setDefaultImageResId(R.drawable.geometry2);
             holder.imageView.setErrorImageResId(R.drawable.geometry2);
-            holder.textView.setMinHeight((int)Math.round(dpHeight*0.34));
+            holder.textView.setMinHeight((int)Math.round(dpHeight*0.15));
             holder.textView.setText(mDataset[position].getQuotetext());
         }
 
