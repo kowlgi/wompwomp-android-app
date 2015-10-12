@@ -191,8 +191,8 @@ public class MainActivity extends AppCompatActivity {
 
             holder.imageView.setMinimumHeight((int) Math.round(dpHeight * 0.66));
             holder.imageView.setImageUrl(mDataset[position].getUri(), VolleySingleton.getInstance().getImageLoader());
-            holder.imageView.setDefaultImageResId(R.drawable.landscape27);
-            holder.imageView.setErrorImageResId(R.drawable.landscape27);
+            holder.imageView.setDefaultImageResId(R.drawable.geometry2);
+            holder.imageView.setErrorImageResId(R.drawable.geometry2);
             holder.textView.setMinHeight((int)Math.round(dpHeight*0.34));
             holder.textView.setText(mDataset[position].getQuotetext());
         }
