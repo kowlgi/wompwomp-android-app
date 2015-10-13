@@ -33,7 +33,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import com.android.volley.toolbox.NetworkImageView;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
@@ -79,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
         public class ViewHolder extends RecyclerView.ViewHolder {
             // Your holder should contain a member variable
             // for any view that will be set as you render a row
-            public NetworkImageView imageView;
+            public SquareNetworkImageView imageView;
             public TextView textView;
 
             // We also create a constructor that accepts the entire item row
@@ -89,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
                 // to access the context from any ViewHolder instance.
                 super(itemView);
 
-                imageView = (NetworkImageView) itemView.findViewById(R.id.imageView);
+                imageView = (SquareNetworkImageView) itemView.findViewById(R.id.imageView);
                 textView = (TextView) itemView.findViewById(R.id.textView);
                 View buttonView = (View) itemView.findViewById(R.id.share_button);
                 buttonView.setOnClickListener(new View.OnClickListener() {
@@ -117,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // Returns the URI path to the Bitmap displayed in specified ImageView
-        public Uri getLocalImageBitmapUri(NetworkImageView networkImageview) {
+        public Uri getLocalImageBitmapUri(SquareNetworkImageView networkImageview) {
             // Extract Bitmap from ImageView drawable
             final Bitmap bmp  = ((BitmapDrawable) networkImageview.getDrawable()).getBitmap();
             if (bmp == null) {
@@ -188,14 +187,11 @@ public class MainActivity extends AppCompatActivity {
 
             DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
             float dpHeight = displayMetrics.heightPixels / displayMetrics.density;
-            //View parent = (View) holder.imageView.getParent();
-            //float dpHeight = parent.getHeight();
 
-            holder.imageView.setMinimumHeight((int) Math.round(dpHeight * 0.50));
-            holder.imageView.setImageUrl(mDataset[position].getUri(), VolleySingleton.getInstance().getImageLoader());
             holder.imageView.setDefaultImageResId(R.drawable.geometry2);
             holder.imageView.setErrorImageResId(R.drawable.geometry2);
-            holder.textView.setMinHeight((int)Math.round(dpHeight*0.15));
+            holder.imageView.setImageUrl(mDataset[position].getUri(), VolleySingleton.getInstance().getImageLoader());
+            holder.textView.setMinHeight((int)Math.round(dpHeight*0.20)); //min 20% of height
             holder.textView.setText(mDataset[position].getQuotetext());
         }
 
