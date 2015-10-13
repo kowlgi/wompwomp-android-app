@@ -1,14 +1,17 @@
 package com.agni.sunshine;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
@@ -40,7 +43,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity{
 
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mAdapter;
@@ -67,6 +70,16 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(this, RegistrationIntentService.class);
             startService(intent);
         }
+
+        if(Build.VERSION.SDK_INT> Build.VERSION_CODES.LOLLIPOP_MR1 &&
+                checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") != PackageManager.PERMISSION_GRANTED) {
+            //Any app that declares the WRITE_EXTERNAL_STORAGE permission is implicitly granted the
+            // READ_EXTERNAL_STORAGE permission.
+            String[] permissions = {"android.permission.WRITE_EXTERNAL_STORAGE"};
+            int permissionRequestCode = 200;
+            requestPermissions(permissions, permissionRequestCode);
+        }
+
         new UpdateFeedTask().execute();
     }
 
@@ -97,19 +110,19 @@ public class MainActivity extends AppCompatActivity {
                         View linearView = (View) imageView.getParent();
                         View cardView = (View) linearView.getParent();
                         Uri bmpUri = getLocalCardViewBitmapUri(cardView);
+
+                        Intent shareIntent = new Intent();
+                        shareIntent.setAction(Intent.ACTION_SEND);
                         if (bmpUri != null) {
                             // Construct a ShareIntent with link to image
-                            Intent shareIntent = new Intent();
-                            shareIntent.setAction(Intent.ACTION_SEND);
                             shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
                             shareIntent.setType("image/*");
-                            // Launch sharing dialog for image
-                            startActivity(Intent.createChooser(shareIntent, "Share Image"));
-                        } else {
-                            // ...sharing failed, handle error
-                            Log.v(TAG, "Sharing failed");
                         }
-                        Log.v(TAG, imageView.getImageURL());
+                        else {
+                            shareIntent.putExtra(Intent.EXTRA_TEXT, textView.getText());
+                            shareIntent.setType("text/plain");
+                        }
+                        startActivity(Intent.createChooser(shareIntent, "Share"));
                     }
                 });
             }
@@ -126,6 +139,10 @@ public class MainActivity extends AppCompatActivity {
             // Store image to default external storage directory
             Uri bmpUri = null;
             try {
+                if(Build.VERSION.SDK_INT> Build.VERSION_CODES.LOLLIPOP_MR1 &&
+                        checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") == PackageManager.PERMISSION_DENIED) {
+                    return  null;
+                }
                 File file =  new File(Environment.getExternalStoragePublicDirectory(
                         Environment.DIRECTORY_DOWNLOADS), "share_image_" + System.currentTimeMillis() + ".png");
                 file.getParentFile().mkdirs();
@@ -150,6 +167,11 @@ public class MainActivity extends AppCompatActivity {
             // Store image to default external storage directory
             Uri bmpUri = null;
             try {
+                if(Build.VERSION.SDK_INT> Build.VERSION_CODES.LOLLIPOP_MR1 &&
+                        checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") == PackageManager.PERMISSION_DENIED) {
+                    return  null;
+                }
+
                 File file =  new File(Environment.getExternalStoragePublicDirectory(
                         Environment.DIRECTORY_DOWNLOADS), "share_image_" + System.currentTimeMillis() + ".png");
                 file.getParentFile().mkdirs();
@@ -350,5 +372,17 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int permsRequestCode, String[] permissions, int[] grantResults){
+
+        switch(permsRequestCode){
+            case 200:
+                Log.v(TAG, "write external storage accepted");
+                boolean writeExternalStorageAccepted = grantResults[0]==PackageManager.PERMISSION_GRANTED;
+                break;
+
+        }
     }
 }
