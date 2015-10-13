@@ -16,10 +16,13 @@
 
 package com.agni.sunshine;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -27,6 +30,13 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import com.google.android.gms.gcm.GcmListenerService;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class MyGcmListenerService extends GcmListenerService {
 
@@ -43,8 +53,7 @@ public class MyGcmListenerService extends GcmListenerService {
     @Override
     public void onMessageReceived(String from, Bundle data) {
         String message = data.getString("message");
-        Log.d(TAG, "From: " + from);
-        Log.d(TAG, "Message: " + message);
+        String imageUri = data.getString("imageuri");
 
         if (from.startsWith("/topics/")) {
             // message received from some topic.
@@ -64,7 +73,7 @@ public class MyGcmListenerService extends GcmListenerService {
          * In some cases it may be useful to show a notification indicating to the user
          * that a message was received.
          */
-        sendNotification(message);
+        sendNotification(message, imageUri);
         // [END_EXCLUDE]
     }
     // [END receive_message]
@@ -74,7 +83,7 @@ public class MyGcmListenerService extends GcmListenerService {
      *
      * @param message GCM message received.
      */
-    private void sendNotification(String message) {
+    private void sendNotification(String message, String imageUri) {
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
@@ -89,9 +98,55 @@ public class MyGcmListenerService extends GcmListenerService {
                 .setSound(defaultSoundUri)
                 .setContentIntent(pendingIntent);
 
+        Bitmap aBigBitmap = getBitmap(imageUri);
+        if(aBigBitmap != null) {
+            NotificationCompat.BigPictureStyle bigStyle = new
+                    NotificationCompat.BigPictureStyle();
+            bigStyle.setBigContentTitle("Agni");
+            bigStyle.setSummaryText(message);
+            bigStyle.bigPicture(aBigBitmap);
+            notificationBuilder.setStyle(bigStyle);
+        }
+
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         notificationManager.notify(0 /* ID of notification */, notificationBuilder.build());
+    }
+
+
+    private Bitmap getBitmap(String imageUri) {
+
+        if(imageUri == null) return null;
+
+        // These two need to be declared outside the try/catch
+        // so that they can be closed in the finally block.
+        HttpURLConnection urlConnection = null;
+        BufferedReader reader = null;
+        String JSONResponse = null;
+        Bitmap aBitmap = null;
+
+        try {
+            URL url = new URL(imageUri);
+
+            // Create the request to OpenWeatherMap, and open the connection
+            urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestMethod("GET");
+            urlConnection.connect();
+
+            // Read the input stream into a String
+            InputStream inputStream = urlConnection.getInputStream();
+            aBitmap = BitmapFactory.decodeStream(inputStream);
+
+        }catch (IOException e) {
+            Log.e(TAG, "Error ", e);
+        } finally
+        {
+            if (urlConnection != null) {
+                urlConnection.disconnect();
+            }
+            return aBitmap;
+        }
+
     }
 }
