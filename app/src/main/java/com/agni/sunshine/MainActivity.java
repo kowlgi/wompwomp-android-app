@@ -108,8 +108,7 @@ public class MainActivity extends AppCompatActivity{
                     @Override public void onClick(View v) {
                         //Uri bmpUri = getLocalImageBitmapUri(imageView);
                         View linearView = (View) imageView.getParent();
-                        View cardView = (View) linearView.getParent();
-                        Uri bmpUri = getLocalCardViewBitmapUri(cardView);
+                        Uri bmpUri = getLocalViewBitmapUri(linearView);
 
                         Intent shareIntent = new Intent();
                         shareIntent.setAction(Intent.ACTION_SEND);
@@ -156,13 +155,13 @@ public class MainActivity extends AppCompatActivity{
             return bmpUri;
         }
 
-        public Uri getLocalCardViewBitmapUri(View cardView){
+        public Uri getLocalViewBitmapUri(View aView){
             //Create a Bitmap with the same dimensions
-            Bitmap image = Bitmap.createBitmap(cardView.getWidth(),
-                    cardView.getHeight(),
+            Bitmap image = Bitmap.createBitmap(aView.getWidth(),
+                    aView.getHeight(),
                     Bitmap.Config.RGB_565);
             //Draw the view inside the Bitmap
-            cardView.draw(new Canvas(image));
+            aView.draw(new Canvas(image));
 
             // Store image to default external storage directory
             Uri bmpUri = null;
