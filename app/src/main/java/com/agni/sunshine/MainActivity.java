@@ -93,16 +93,19 @@ public class MainActivity extends AppCompatActivity{
             // for any view that will be set as you render a row
             public SquareNetworkImageView imageView;
             public TextView textView;
+            public String displayUri;
+
 
             // We also create a constructor that accepts the entire item row
             // and does the view lookups to find each subview
-            public ViewHolder(View itemView) {
+            public ViewHolder(View itemView, String dUri) {
                 // Stores the itemView in a public final member variable that can be used
                 // to access the context from any ViewHolder instance.
                 super(itemView);
 
                 imageView = (SquareNetworkImageView) itemView.findViewById(R.id.imageView);
                 textView = (TextView) itemView.findViewById(R.id.textView);
+                displayUri = dUri;
                 View buttonView = (View) itemView.findViewById(R.id.share_button);
                 buttonView.setOnClickListener(new View.OnClickListener() {
                     @Override public void onClick(View v) {
@@ -112,6 +115,8 @@ public class MainActivity extends AppCompatActivity{
 
                         Intent shareIntent = new Intent();
                         shareIntent.setAction(Intent.ACTION_SEND);
+                        shareIntent.putExtra(Intent.EXTRA_TEXT, "Check out the original home of this cool picture -- " + displayUri);
+                        shareIntent.setType("text/plain");
                         if (bmpUri != null) {
                             // Construct a ShareIntent with link to image
                             shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
@@ -196,7 +201,7 @@ public class MainActivity extends AppCompatActivity{
             View v = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.image_main, parent, false);
 
-            MyAdapter.ViewHolder vh = new MyAdapter.ViewHolder(v);
+            MyAdapter.ViewHolder vh = new MyAdapter.ViewHolder(v, "http://45.55.216.153:3000"/* default display URL*/);
             return vh;
         }
 
@@ -211,9 +216,10 @@ public class MainActivity extends AppCompatActivity{
 
             holder.imageView.setDefaultImageResId(R.drawable.geometry2);
             holder.imageView.setErrorImageResId(R.drawable.geometry2);
-            holder.imageView.setImageUrl(mDataset[position].getUri(), VolleySingleton.getInstance().getImageLoader());
-            holder.textView.setMinHeight((int)Math.round(dpHeight*0.20)); //min 20% of height
-            holder.textView.setText(mDataset[position].getQuotetext());
+            holder.imageView.setImageUrl(mDataset[position].getSourceUri(), VolleySingleton.getInstance().getImageLoader());
+            holder.textView.setMinHeight((int) Math.round(dpHeight * 0.20)); //min 20% of height
+            holder.textView.setText(mDataset[position].getQuoteText());
+            holder.displayUri = mDataset[position].getDisplayUri();
         }
 
         // Return the size of your dataset (invoked by the layout manager)
@@ -327,14 +333,18 @@ public class MainActivity extends AppCompatActivity{
             final String OWM_LIST = "list";
             final String OWM_TEXT = "text";
             final String OWM_IMAGEURI = "imageuri";
+            final String OWM_ID = "id";
 
-            JSONObject forecastJson = new JSONObject(JSONStr);
-            JSONArray quoteArray = forecastJson.getJSONArray(OWM_LIST);
+            JSONObject entireJson = new JSONObject(JSONStr);
+            JSONArray quoteArray = entireJson.getJSONArray(OWM_LIST);
 
             Quote[] result = new Quote[quoteArray.length()];
             for(int i = quoteArray.length() - 1; i >= 0 ; i--) {
-                result[quoteArray.length() - i - 1] = new Quote(quoteArray.getJSONObject(i).getString(OWM_IMAGEURI),
-                        quoteArray.getJSONObject(i).getString(OWM_TEXT));
+                JSONObject jsonObject = quoteArray.getJSONObject(i);
+                result[quoteArray.length() - i - 1] = new Quote(
+                        jsonObject.getString(OWM_IMAGEURI),
+                        jsonObject.getString(OWM_TEXT),
+                        "http://45.55.216.153:3000/v/" + jsonObject.getString(OWM_ID));
             }
 
             return result;

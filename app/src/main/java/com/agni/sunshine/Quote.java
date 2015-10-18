@@ -4,27 +4,37 @@ package com.agni.sunshine;
  * Created by kowlgi on 9/25/15.
  */
 public class Quote {
-    private String uri;
-    private String quotetext;
+    private String imageSourceUri;
+    private String quoteText;
+    private String imageDisplayUri;
 
-    public Quote(String uri, String quotetext) {
-        this.uri = uri;
-        this.quotetext = quotetext;
+    public Quote(String sourceUri, String text, String displayUri) {
+        this.imageSourceUri = sourceUri;
+        this.quoteText = text;
+        this.imageDisplayUri = displayUri;
     }
 
-    public String getUri() {
-        return uri;
+    public String getSourceUri() {
+        return imageSourceUri;
     }
 
-    public String getQuotetext() {
-        return quotetext;
+    public String getQuoteText() {
+        return quoteText;
     }
 
-    public void setUri(String uri) {
-        this.uri = uri;
+    public String getDisplayUri() {
+        return imageDisplayUri;
     }
 
-    public void setQuotetext(String quotetext) {
-        this.quotetext = quotetext;
+    public void setSourceUri(String sourceUri) {
+        this.imageSourceUri = sourceUri;
+    }
+
+    public void setQuoteText(String text) {
+        this.quoteText = text;
+    }
+
+    public void setDisplayUri(String displayUri) {
+        this.imageDisplayUri = displayUri;
     }
 }
