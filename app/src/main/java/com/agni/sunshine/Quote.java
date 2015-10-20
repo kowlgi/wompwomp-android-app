@@ -7,11 +7,11 @@ public class Quote {
     private String imageSourceUri;
     private String quoteText;
     private String imageDisplayUri;
+    private String backgroundColor;
+    private String bodytextColor;
 
-    public Quote(String sourceUri, String text, String displayUri) {
-        this.imageSourceUri = sourceUri;
-        this.quoteText = text;
-        this.imageDisplayUri = displayUri;
+
+    public Quote() {
     }
 
     public String getSourceUri() {
@@ -24,6 +24,22 @@ public class Quote {
 
     public String getDisplayUri() {
         return imageDisplayUri;
+    }
+
+    public String getBackgroundColor() {
+        return backgroundColor;
+    }
+
+    public void setBackgroundColor(String backgroundColor) {
+        this.backgroundColor = backgroundColor;
+    }
+
+    public String getBodytextColor() {
+        return bodytextColor;
+    }
+
+    public void setBodytextColor(String bodytextColor) {
+        this.bodytextColor = bodytextColor;
     }
 
     public void setSourceUri(String sourceUri) {

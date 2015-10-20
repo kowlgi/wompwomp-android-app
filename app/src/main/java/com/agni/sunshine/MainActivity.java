@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
@@ -50,6 +51,7 @@ public class MainActivity extends AppCompatActivity{
     private RecyclerView.LayoutManager mLayoutManager;
     private static final String TAG = "MainActivity";
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
+    private static final String MAIN_URL = "http://45.55.216.153:3000";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,6 +96,7 @@ public class MainActivity extends AppCompatActivity{
             public SquareNetworkImageView imageView;
             public TextView textView;
             public String displayUri;
+            public TextView shareButton;
 
 
             // We also create a constructor that accepts the entire item row
@@ -102,29 +105,24 @@ public class MainActivity extends AppCompatActivity{
                 // Stores the itemView in a public final member variable that can be used
                 // to access the context from any ViewHolder instance.
                 super(itemView);
-
                 imageView = (SquareNetworkImageView) itemView.findViewById(R.id.imageView);
                 textView = (TextView) itemView.findViewById(R.id.textView);
+                shareButton = (TextView) itemView.findViewById(R.id.share_button);
                 displayUri = dUri;
                 View buttonView = (View) itemView.findViewById(R.id.share_button);
                 buttonView.setOnClickListener(new View.OnClickListener() {
                     @Override public void onClick(View v) {
-                        //Uri bmpUri = getLocalImageBitmapUri(imageView);
-                        View linearView = (View) imageView.getParent();
-                        Uri bmpUri = getLocalViewBitmapUri(linearView);
-
                         Intent shareIntent = new Intent();
                         shareIntent.setAction(Intent.ACTION_SEND);
-                        shareIntent.putExtra(Intent.EXTRA_TEXT, "Check out the original home of this cool picture -- " + displayUri);
+                        shareIntent.putExtra(Intent.EXTRA_TEXT, displayUri);
                         shareIntent.setType("text/plain");
+
+                        View parentView = (View) imageView.getParent();
+                        Uri bmpUri = getLocalViewBitmapUri(parentView);
                         if (bmpUri != null) {
                             // Construct a ShareIntent with link to image
                             shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
                             shareIntent.setType("image/*");
-                        }
-                        else {
-                            shareIntent.putExtra(Intent.EXTRA_TEXT, textView.getText());
-                            shareIntent.setType("text/plain");
                         }
                         startActivity(Intent.createChooser(shareIntent, "Share"));
                     }
@@ -132,35 +130,10 @@ public class MainActivity extends AppCompatActivity{
             }
         }
 
-        // Returns the URI path to the Bitmap displayed in specified ImageView
-        public Uri getLocalImageBitmapUri(SquareNetworkImageView networkImageview) {
-            // Extract Bitmap from ImageView drawable
-            final Bitmap bmp  = ((BitmapDrawable) networkImageview.getDrawable()).getBitmap();
-            if (bmp == null) {
-                Log.v(TAG, "Unable to get Bitmap");
-                return null;
-            }
-            // Store image to default external storage directory
-            Uri bmpUri = null;
-            try {
-                if(Build.VERSION.SDK_INT> Build.VERSION_CODES.LOLLIPOP_MR1 &&
-                        checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") == PackageManager.PERMISSION_DENIED) {
-                    return  null;
-                }
-                File file =  new File(Environment.getExternalStoragePublicDirectory(
-                        Environment.DIRECTORY_DOWNLOADS), "share_image_" + System.currentTimeMillis() + ".png");
-                file.getParentFile().mkdirs();
-                FileOutputStream out = new FileOutputStream(file);
-                bmp.compress(Bitmap.CompressFormat.PNG, 90, out);
-                out.close();
-                bmpUri = Uri.fromFile(file);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return bmpUri;
-        }
-
         public Uri getLocalViewBitmapUri(View aView){
+            // Example: Extract Bitmap from ImageView drawable
+            // final Bitmap bmp  = ((BitmapDrawable) networkImageview.getDrawable()).getBitmap();
+
             //Create a Bitmap with the same dimensions
             Bitmap image = Bitmap.createBitmap(aView.getWidth(),
                     aView.getHeight(),
@@ -201,7 +174,7 @@ public class MainActivity extends AppCompatActivity{
             View v = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.image_main, parent, false);
 
-            MyAdapter.ViewHolder vh = new MyAdapter.ViewHolder(v, "http://45.55.216.153:3000"/* default display URL*/);
+            MyAdapter.ViewHolder vh = new MyAdapter.ViewHolder(v, MAIN_URL/* default display URL*/);
             return vh;
         }
 
@@ -219,7 +192,13 @@ public class MainActivity extends AppCompatActivity{
             holder.imageView.setImageUrl(mDataset[position].getSourceUri(), VolleySingleton.getInstance().getImageLoader());
             holder.textView.setMinHeight((int) Math.round(dpHeight * 0.20)); //min 20% of height
             holder.textView.setText(mDataset[position].getQuoteText());
+            holder.textView.setTextColor(Color.parseColor(mDataset[position].getBodytextColor()));
+            holder.shareButton.setTextColor(Color.parseColor(mDataset[position].getBodytextColor()));
+            View parentView = (View) holder.imageView.getParent();
+            parentView.setBackgroundColor(Color.parseColor(mDataset[position].getBackgroundColor()));
             holder.displayUri = mDataset[position].getDisplayUri();
+            CardView cardView = (CardView) holder.itemView;
+            cardView.setCardBackgroundColor(Color.parseColor(mDataset[position].getBackgroundColor()));
         }
 
         // Return the size of your dataset (invoked by the layout manager)
@@ -267,7 +246,7 @@ public class MainActivity extends AppCompatActivity{
                 // Construct the URL for the OpenWeatherMap query
                 // Possible parameters are avaiable at OWM's forecast API page, at
                 // http://openweathermap.org/API#forecast
-                Uri.Builder ub = Uri.parse("http://45.55.216.153:3000/items?offset=-1").buildUpon();
+                Uri.Builder ub = Uri.parse(MAIN_URL + "/items?offset=-1").buildUpon();
                 URL url = new URL(ub.build().toString());
 
                 Log.v(LOG_TAG, url.toString());
@@ -334,6 +313,8 @@ public class MainActivity extends AppCompatActivity{
             final String OWM_TEXT = "text";
             final String OWM_IMAGEURI = "imageuri";
             final String OWM_ID = "id";
+            final String OWM_BACKGROUNDCOLOR = "backgroundcolor";
+            final String OWM_BODYTEXTCOLOR = "bodytextcolor";
 
             JSONObject entireJson = new JSONObject(JSONStr);
             JSONArray quoteArray = entireJson.getJSONArray(OWM_LIST);
@@ -341,10 +322,13 @@ public class MainActivity extends AppCompatActivity{
             Quote[] result = new Quote[quoteArray.length()];
             for(int i = quoteArray.length() - 1; i >= 0 ; i--) {
                 JSONObject jsonObject = quoteArray.getJSONObject(i);
-                result[quoteArray.length() - i - 1] = new Quote(
-                        jsonObject.getString(OWM_IMAGEURI),
-                        jsonObject.getString(OWM_TEXT),
-                        "http://45.55.216.153:3000/v/" + jsonObject.getString(OWM_ID));
+                Quote q = new Quote();
+                q.setSourceUri(jsonObject.getString(OWM_IMAGEURI));
+                q.setQuoteText(jsonObject.getString(OWM_TEXT));
+                q.setDisplayUri(MAIN_URL+"/v/" + jsonObject.getString(OWM_ID));
+                q.setBodytextColor(jsonObject.getString(OWM_BODYTEXTCOLOR));
+                q.setBackgroundColor(jsonObject.getString(OWM_BACKGROUNDCOLOR));
+                result[quoteArray.length() - i - 1] = q;
             }
 
             return result;

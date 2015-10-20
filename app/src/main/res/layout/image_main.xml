@@ -7,7 +7,12 @@
     card_view:cardCornerRadius="0dp"
     android:clickable="false"
     card_view:cardElevation="3dp"
-    android:layout_marginBottom="20dp">
+    android:layout_marginBottom="20dp"
+    android:background="#b77c59"
+    android:backgroundTintMode="screen"
+    android:focusableInTouchMode="false"
+    android:focusable="false"
+    android:contextClickable="false">
 
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:orientation="vertical" android:layout_width="match_parent"
@@ -32,7 +37,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:typeface="normal"
-                android:background="#FFFFFF"
                 android:padding="10dp"
                 android:layout_below="@+id/imageView"/>
 
@@ -43,8 +47,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/share"
-        android:background="#FFFFFF"
-        android:textColor="#0645AD"
         android:id="@+id/share_button"
         android:padding="10dp"
         android:textSize="15dp"
