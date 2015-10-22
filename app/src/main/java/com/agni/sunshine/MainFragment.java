@@ -11,6 +11,8 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
@@ -20,6 +22,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.agni.sunshine.util.ImageCache;
@@ -37,8 +40,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashSet;
 
 /**
  * Created by kowlgi on 10/21/15.
@@ -46,12 +53,15 @@ import java.net.URL;
 public class MainFragment extends Fragment {
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mAdapter;
+    private Quote[] mQuotes = null;
     private RecyclerView.LayoutManager mLayoutManager;
     private static final String TAG = "MainFragment";
     private static final String MAIN_URL = "http://45.55.216.153:3000";
     private ImageFetcher mImageFetcher;
     private static final String IMAGE_CACHE_DIR = "thumbs";
-    private static final String JSON_FILENAME = "agnijson";
+    private static final String MODEL_FILENAME = "agnimodel.ser";
+    private static final String FAVORITE_FILENAME = "agnifavorite.ser";
+    Handler mHandler = null;
 
     /**
      * Empty constructor as per the Fragment documentation
@@ -87,6 +97,13 @@ public class MainFragment extends Fragment {
         mImageFetcher.setLoadingImage(R.drawable.geometry2);
         mImageFetcher.addImageCache(getActivity().getSupportFragmentManager(), cacheParams);
 
+        // Create a new background thread for processing messages or runnables sequentially
+        HandlerThread handlerThread = new HandlerThread("FavoritesThread");
+        // Starts the background thread
+        handlerThread.start();
+        // Create a handler attached to the HandlerThread's Looper
+        mHandler = new Handler(handlerThread.getLooper());
+
         new UpdateFeedTask().execute();
         return v;
     }
@@ -112,7 +129,7 @@ public class MainFragment extends Fragment {
     }
 
     private class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
-        Quote[] mDataset;
+        private Quote[] mDataset = null;
 
 
         // Provide a direct reference to each of the views within a data item
@@ -122,38 +139,122 @@ public class MainFragment extends Fragment {
             // for any view that will be set as you render a row
             public SquareNetworkImageView imageView;
             public TextView textView;
-            public String displayUri;
-            public TextView shareButton;
+            public ImageButton shareButton;
+            public ImageButton favoriteButton;
 
             // We also create a constructor that accepts the entire item row
             // and does the view lookups to find each subview
-            public ViewHolder(View itemView, String dUri) {
+            public ViewHolder(View itemView) {
                 // Stores the itemView in a public final member variable that can be used
                 // to access the context from any ViewHolder instance.
                 super(itemView);
                 imageView = (SquareNetworkImageView) itemView.findViewById(R.id.imageView);
                 textView = (TextView) itemView.findViewById(R.id.textView);
-                shareButton = (TextView) itemView.findViewById(R.id.share_button);
-                displayUri = dUri;
-                View buttonView = (View) itemView.findViewById(R.id.share_button);
-                buttonView.setOnClickListener(new View.OnClickListener() {
-                    @Override public void onClick(View v) {
-                        Intent shareIntent = new Intent();
-                        shareIntent.setAction(Intent.ACTION_SEND);
-                        shareIntent.putExtra(Intent.EXTRA_TEXT, displayUri);
-                        shareIntent.setType("text/plain");
-
-                        View parentView = (View) imageView.getParent();
-                        Uri bmpUri = getLocalViewBitmapUri(parentView);
-                        if (bmpUri != null) {
-                            // Construct a ShareIntent with link to image
-                            shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
-                            shareIntent.setType("image/*");
-                        }
-                        startActivity(Intent.createChooser(shareIntent, "Share"));
-                    }
-                });
+                shareButton = (ImageButton) itemView.findViewById(R.id.share_button);
+                favoriteButton = (ImageButton) itemView.findViewById(R.id.favorite_button);
             }
+        }
+
+        // Provide a suitable constructor (depends on the kind of dataset)
+        public MyAdapter(Quote[] myDataset) {
+            mDataset = myDataset;
+        }
+
+        // Create new views (invoked by the layout manager)
+        @Override
+        public MyAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
+                                                       int viewType) {
+            // create a new view
+            View v = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.image_main, parent, false);
+
+            MyAdapter.ViewHolder vh = new MyAdapter.ViewHolder(v);
+            return vh;
+        }
+
+        // Replace the contents of a view (invoked by the layout manager)
+        @Override
+        public void onBindViewHolder(final MyAdapter.ViewHolder holder, final int position) {
+            // - get element from your dataset at this position
+            // - replace the contents of the view with that element
+
+            DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+            float dpHeight = displayMetrics.heightPixels / displayMetrics.density;
+
+            mImageFetcher.loadImage(mDataset[position].getSourceUri(), holder.imageView);
+
+            holder.textView.setMinHeight((int) Math.round(dpHeight * 0.20)); //min 20% of height
+            holder.textView.setText(mDataset[position].getQuoteText());
+            holder.textView.setTextColor(Color.parseColor(mDataset[position].getBodytextColor()));
+
+            holder.shareButton.setBackgroundColor(Color.parseColor(mDataset[position].getBackgroundColor()));
+            holder.favoriteButton.setBackgroundColor(Color.parseColor(mDataset[position].getBackgroundColor()));
+            Log.v(TAG, Integer.valueOf(position).toString());
+            if (mDataset[position].getFavorite()) {
+                holder.favoriteButton.setImageResource(R.drawable.ic_favorite_black_24dp);
+            } else {
+                holder.favoriteButton.setImageResource(R.drawable.ic_favorite_border_black_24dp);
+            }
+
+            View parentView = (View) holder.imageView.getParent();
+            parentView.setBackgroundColor(Color.parseColor(mDataset[position].getBackgroundColor()));
+
+            CardView cardView = (CardView) holder.itemView;
+            cardView.setCardBackgroundColor(Color.parseColor(mDataset[position].getBackgroundColor()));
+
+            holder.shareButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent shareIntent = new Intent();
+                    shareIntent.setAction(Intent.ACTION_SEND);
+                    shareIntent.putExtra(Intent.EXTRA_TEXT, mQuotes[position].getDisplayUri());
+                    shareIntent.setType("text/plain");
+
+                    View parentView = (View) holder.imageView.getParent();
+                    Uri bmpUri = getLocalViewBitmapUri(parentView);
+                    if (bmpUri != null) {
+                        // Construct a ShareIntent with link to image
+                        shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
+                        shareIntent.setType("image/*");
+                    }
+                    startActivity(Intent.createChooser(shareIntent, "Share"));
+                }
+            });
+
+            holder.favoriteButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Boolean currentFavorite = mQuotes[position].getFavorite();
+                    mQuotes[position].setFavorite(!currentFavorite);
+
+                    // Execute the specified code on the worker thread
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            HashSet<String> favorites = new HashSet<String>();
+                            for (int i = 0; i < mQuotes.length; i++) {
+                                if (mQuotes[i].getFavorite() == true) {
+                                    favorites.add(mQuotes[i].getDisplayUri());
+                                }
+                            }
+
+                            try {
+                                FileOutputStream fos = getActivity().openFileOutput(FAVORITE_FILENAME, Context.MODE_PRIVATE);
+                                ObjectOutputStream oos = new ObjectOutputStream(fos);
+                                oos.writeObject(favorites);
+                                oos.close();
+                            } catch (java.io.FileNotFoundException fnf) {
+                                Log.e(TAG, "Error from file stream open operation ", fnf);
+                                fnf.printStackTrace();
+                            } catch (java.io.IOException ioe) {
+                                Log.e(TAG, "Error from file write operation ", ioe);
+                                ioe.printStackTrace();
+                            }
+                        }
+                    });
+                    notifyDataSetChanged();
+                }
+            });
         }
 
         public Uri getLocalViewBitmapUri(View aView){
@@ -185,48 +286,6 @@ public class MainFragment extends Fragment {
                 e.printStackTrace();
             }
             return bmpUri;
-        }
-
-        // Provide a suitable constructor (depends on the kind of dataset)
-        public MyAdapter(Quote[] myDataset) {
-            mDataset = myDataset;
-        }
-
-        // Create new views (invoked by the layout manager)
-        @Override
-        public MyAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
-                                                       int viewType) {
-            // create a new view
-            View v = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.image_main, parent, false);
-
-            MyAdapter.ViewHolder vh = new MyAdapter.ViewHolder(v, MAIN_URL/* default display URL*/);
-            return vh;
-        }
-
-        // Replace the contents of a view (invoked by the layout manager)
-        @Override
-        public void onBindViewHolder(MyAdapter.ViewHolder holder, int position) {
-            // - get element from your dataset at this position
-            // - replace the contents of the view with that element
-
-            DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-            float dpHeight = displayMetrics.heightPixels / displayMetrics.density;
-
-            mImageFetcher.loadImage(mDataset[position].getSourceUri(), holder.imageView);
-
-            holder.textView.setMinHeight((int) Math.round(dpHeight * 0.20)); //min 20% of height
-            holder.textView.setText(mDataset[position].getQuoteText());
-            holder.textView.setTextColor(Color.parseColor(mDataset[position].getBodytextColor()));
-
-            holder.shareButton.setTextColor(Color.parseColor(mDataset[position].getBodytextColor()));
-            holder.displayUri = mDataset[position].getDisplayUri();
-
-            View parentView = (View) holder.imageView.getParent();
-            parentView.setBackgroundColor(Color.parseColor(mDataset[position].getBackgroundColor()));
-
-            CardView cardView = (CardView) holder.itemView;
-            cardView.setCardBackgroundColor(Color.parseColor(mDataset[position].getBackgroundColor()));
         }
 
         // Return the size of your dataset (invoked by the layout manager)
@@ -283,14 +342,8 @@ public class MainFragment extends Fragment {
                 JSONResponse = buffer.toString();
                 Log.v(TAG, JSONResponse);
 
-                if(JSONResponse != null) {
-                    FileOutputStream fos = getActivity().openFileOutput(JSON_FILENAME, Context.MODE_PRIVATE);
-                    fos.write(JSONResponse.getBytes());
-                    fos.close();
-                }
-
             }catch (IOException e) {
-                Log.e(TAG, "Error reading from URL or writing to file", e);
+                Log.e(TAG, "Error reading from URL", e);
                 e.printStackTrace();
             } finally {
                 if (urlConnection != null) {
@@ -306,40 +359,78 @@ public class MainFragment extends Fragment {
                 }
             }
 
+            Quote[] quotes = null;
             try {
-                if(JSONResponse == null) {
-                    JSONResponse = getStringFromFile(JSON_FILENAME);
-                }
-                return getQuotesFromJson(JSONResponse);
+                quotes = getQuotesFromJson(JSONResponse);
             } catch(java.lang.Exception e) {
-                Log.e(TAG, "Error most likely from File Read operation ", e);
+                Log.e(TAG, "Error from JSON parse operation ", e);
                 e.printStackTrace();
             }
 
-            return null;
-        }
-
-        /* Borrowed from http://stackoverflow.com/questions/12910503/read-file-as-string */
-        public String convertStreamToString(InputStream is) throws Exception {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-            StringBuilder sb = new StringBuilder();
-            String line = null;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line).append("\n");
+            if(quotes == null) {
+                try {
+                    quotes = getQuotesFromFile(MODEL_FILENAME);
+                }catch (java.lang.Exception e) {
+                    Log.e(TAG, "Error from file read operation ", e);
+                    e.printStackTrace();
+                }
             }
-            reader.close();
-            return sb.toString();
+            else {
+                try {
+                    FileOutputStream fos = getActivity().openFileOutput(MODEL_FILENAME, Context.MODE_PRIVATE);
+                    ObjectOutputStream oos = new ObjectOutputStream(fos);
+                    oos.writeObject(quotes);
+                    oos.close();
+                } catch (java.io.FileNotFoundException fnf) {
+                    Log.e(TAG, "Error from file stream open operation ", fnf);
+                    fnf.printStackTrace();
+                } catch (java.io.IOException ioe) {
+                    Log.e(TAG, "Error from file write operation ", ioe);
+                    ioe.printStackTrace();
+                }
+            }
+
+            if(quotes != null) {
+                try {
+                    HashSet<String> favorites = getFavoritesFromFile(FAVORITE_FILENAME);
+                    for(int i = 0; i < quotes.length; i++){
+                        if(favorites != null && favorites.contains(quotes[i].getDisplayUri())) {
+                            quotes[i].setFavorite(true);
+                        }
+                        else {
+                            quotes[i].setFavorite(false);
+                        }
+                    }
+                }catch (java.lang.Exception e) {
+                    Log.e(TAG, "Error from file read operation ", e);
+                    e.printStackTrace();
+                }
+            }
+
+            return quotes;
         }
 
-        public String getStringFromFile (String filePath) throws Exception {
-            FileInputStream fin = getActivity().openFileInput(filePath);
-            String ret = convertStreamToString(fin);
+        public Quote[] getQuotesFromFile (String filePath) throws Exception {
+            FileInputStream fis = getActivity().openFileInput(filePath);
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            Quote[] quotes = (Quote[]) ois.readObject();
             //Make sure you close all streams.
-            fin.close();
-            return ret;
+            ois.close();
+            return quotes;
+        }
+
+        public HashSet<String> getFavoritesFromFile (String filePath) throws Exception {
+            FileInputStream fis = getActivity().openFileInput(filePath);
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            HashSet<String> favorites = (HashSet<String>) ois.readObject();
+            //Make sure you close all streams.
+            ois.close();
+            return favorites;
         }
 
         private Quote[] getQuotesFromJson(String JSONStr) throws JSONException {
+            if(JSONStr == null) return null;
+
             // These are the names of the JSON objects that need to be extracted.
             final String OWM_LIST = "list";
             final String OWM_TEXT = "text";
@@ -357,7 +448,7 @@ public class MainFragment extends Fragment {
                 Quote q = new Quote();
                 q.setSourceUri(jsonObject.getString(OWM_IMAGEURI));
                 q.setQuoteText(jsonObject.getString(OWM_TEXT));
-                q.setDisplayUri(MAIN_URL+"/v/" + jsonObject.getString(OWM_ID));
+                q.setDisplayUri(MAIN_URL + "/v/" + jsonObject.getString(OWM_ID));
                 q.setBodytextColor(jsonObject.getString(OWM_BODYTEXTCOLOR));
                 q.setBackgroundColor(jsonObject.getString(OWM_BACKGROUNDCOLOR));
                 result[quoteArray.length() - i - 1] = q;
@@ -371,12 +462,10 @@ public class MainFragment extends Fragment {
             // with access to the result of the long running task
             if(result != null){
                 // specify an adapter (see also next example)
-
-                mAdapter = new MyAdapter(result);
+                mQuotes = result;
+                mAdapter = new MyAdapter(mQuotes);
                 mRecyclerView.setAdapter(mAdapter);
             }
         }
     }
-
-
 }
