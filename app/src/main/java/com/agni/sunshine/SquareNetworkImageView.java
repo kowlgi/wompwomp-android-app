@@ -2,13 +2,15 @@ package com.agni.sunshine;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.widget.ImageView;
 
 import com.android.volley.toolbox.NetworkImageView;
 
 /**
  * Created by kowlgi on 10/12/15.
  */
-public class SquareNetworkImageView extends NetworkImageView{
+//public class SquareNetworkImageView extends NetworkImageView{
+public class SquareNetworkImageView extends ImageView {
 
     // Without this parameterized constructor, the compiler will
     // automatically create a default constructor that invokes super().

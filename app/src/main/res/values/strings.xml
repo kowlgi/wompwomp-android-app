@@ -32,4 +32,6 @@
     <string name="title_activity_main">MainActivity</string>
     <string name="send_to">Share Image</string>
     <string name="share">SHARE</string>
+
+    <string name="no_network_connection_toast">No network connection found</string>
 </resources>
