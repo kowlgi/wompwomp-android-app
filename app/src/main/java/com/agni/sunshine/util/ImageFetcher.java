@@ -18,6 +18,7 @@ package com.agni.sunshine.util;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
@@ -38,9 +39,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- * A simple subclass of {@link ImageResizer} that fetches and resizes images fetched from a URL.
+ * A simple subclass of {@link ImageWorker} that fetches images from a URL.
  */
-public class ImageFetcher extends ImageResizer {
+public class ImageFetcher extends ImageWorker {
     private static final String TAG = "ImageFetcher";
     private static final int HTTP_CACHE_SIZE = 10 * 1024 * 1024; // 10MB
     private static final String HTTP_CACHE_DIR = "http";
@@ -56,22 +57,9 @@ public class ImageFetcher extends ImageResizer {
      * Initialize providing a target image width and height for the processing images.
      *
      * @param context
-     * @param imageWidth
-     * @param imageHeight
      */
-    public ImageFetcher(Context context, int imageWidth, int imageHeight) {
-        super(context, imageWidth, imageHeight);
-        init(context);
-    }
-
-    /**
-     * Initialize providing a single target image size (used for both width and height);
-     *
-     * @param context
-     * @param imageSize
-     */
-    public ImageFetcher(Context context, int imageSize) {
-        super(context, imageSize);
+    public ImageFetcher(Context context) {
+        super(context);
         init(context);
     }
 
@@ -241,8 +229,7 @@ public class ImageFetcher extends ImageResizer {
 
         Bitmap bitmap = null;
         if (fileDescriptor != null) {
-            bitmap = decodeSampledBitmapFromDescriptor(fileDescriptor, mImageWidth,
-                    mImageHeight, getImageCache());
+            bitmap = BitmapFactory.decodeFileDescriptor(fileDescriptor, null, null);
         }
         if (fileInputStream != null) {
             try {

@@ -82,11 +82,8 @@ public class MainFragment extends Fragment {
                 new ImageCache.ImageCacheParams(getActivity(), IMAGE_CACHE_DIR);
         cacheParams.setMemCacheSizePercent(0.25f); // Set memory cache to 25% of app memory
 
-        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-        float dpHeight = displayMetrics.heightPixels / displayMetrics.density;
-
         // The ImageFetcher takes care of loading images into our ImageView children asynchronously
-        mImageFetcher = new ImageFetcher(getActivity(), Math.round(dpHeight));
+        mImageFetcher = new ImageFetcher(getActivity());
         mImageFetcher.setLoadingImage(R.drawable.geometry2);
         mImageFetcher.addImageCache(getActivity().getSupportFragmentManager(), cacheParams);
 

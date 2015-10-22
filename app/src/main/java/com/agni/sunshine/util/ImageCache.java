@@ -336,8 +336,7 @@ public class ImageCache {
 
                             // Decode bitmap, but we don't want to sample so give
                             // MAX_VALUE as the target dimensions
-                            bitmap = ImageResizer.decodeSampledBitmapFromDescriptor(
-                                    fd, Integer.MAX_VALUE, Integer.MAX_VALUE, this);
+                            bitmap = BitmapFactory.decodeFileDescriptor(fd, null, null);
                         }
                     }
                 } catch (final IOException e) {
