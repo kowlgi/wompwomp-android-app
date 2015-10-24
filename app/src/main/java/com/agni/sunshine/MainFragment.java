@@ -14,6 +14,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -45,6 +46,7 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashSet;
 
 /**
@@ -53,15 +55,17 @@ import java.util.HashSet;
 public class MainFragment extends Fragment {
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mAdapter;
-    private Quote[] mQuotes = null;
-    private RecyclerView.LayoutManager mLayoutManager;
+    private ArrayList<Quote> mQuotes = null;
+    private LinearLayoutManager mLayoutManager;
     private static final String TAG = "MainFragment";
     private static final String MAIN_URL = "http://45.55.216.153:3000";
     private ImageFetcher mImageFetcher;
     private static final String IMAGE_CACHE_DIR = "thumbs";
-    private static final String MODEL_FILENAME = "agnimodel.ser";
+    private static final String MODEL_FILENAME = "agnimodel";
     private static final String FAVORITE_FILENAME = "agnifavorite.ser";
+    private static final String INDEX_FILENAME = "index.ser";
     Handler mHandler = null;
+    SwipeRefreshLayout mSwipeRefreshLayout = null;
 
     /**
      * Empty constructor as per the Fragment documentation
@@ -104,7 +108,39 @@ public class MainFragment extends Fragment {
         // Create a handler attached to the HandlerThread's Looper
         mHandler = new Handler(handlerThread.getLooper());
 
-        new UpdateFeedTask().execute();
+        mSwipeRefreshLayout = ( SwipeRefreshLayout) v.findViewById(R.id.swiperefresh);
+
+        mSwipeRefreshLayout.setOnRefreshListener(
+                new SwipeRefreshLayout.OnRefreshListener() {
+                    @Override
+                    public void onRefresh() {
+                        Log.i(TAG, "onRefresh called from SwipeRefreshLayout");
+
+                        new UpdateFeedTask().execute(true);
+                    }
+                }
+        );
+        // Configure the refreshing colors
+        mSwipeRefreshLayout.setColorSchemeResources(
+                android.R.color.holo_blue_bright,
+                android.R.color.holo_green_light,
+                android.R.color.holo_orange_light,
+                android.R.color.holo_red_light);
+
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView view, int scrollState) {
+
+            }
+
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                mSwipeRefreshLayout.setEnabled(mLayoutManager.findFirstCompletelyVisibleItemPosition() == 0);
+            }
+        });
+
+        new UpdateFeedTask().execute(false); //restore feed from files and get latest from the web too
+        mSwipeRefreshLayout.setRefreshing(true);
         return v;
     }
 
@@ -129,8 +165,7 @@ public class MainFragment extends Fragment {
     }
 
     private class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
-        private Quote[] mDataset = null;
-
+        private ArrayList<Quote> mDataset = null;
 
         // Provide a direct reference to each of the views within a data item
         // Used to cache the views within the item layout for fast access
@@ -156,7 +191,7 @@ public class MainFragment extends Fragment {
         }
 
         // Provide a suitable constructor (depends on the kind of dataset)
-        public MyAdapter(Quote[] myDataset) {
+        public MyAdapter(ArrayList<Quote> myDataset) {
             mDataset = myDataset;
         }
 
@@ -181,33 +216,33 @@ public class MainFragment extends Fragment {
             DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
             float dpHeight = displayMetrics.heightPixels / displayMetrics.density;
 
-            mImageFetcher.loadImage(mDataset[position].getSourceUri(), holder.imageView);
+            mImageFetcher.loadImage(mDataset.get(position).getSourceUri(), holder.imageView);
 
             holder.textView.setMinHeight((int) Math.round(dpHeight * 0.20)); //min 20% of height
-            holder.textView.setText(mDataset[position].getQuoteText());
-            holder.textView.setTextColor(Color.parseColor(mDataset[position].getBodytextColor()));
+            holder.textView.setText(mDataset.get(position).getQuoteText());
+            holder.textView.setTextColor(Color.parseColor(mDataset.get(position).getBodytextColor()));
 
-            holder.shareButton.setBackgroundColor(Color.parseColor(mDataset[position].getBackgroundColor()));
-            holder.favoriteButton.setBackgroundColor(Color.parseColor(mDataset[position].getBackgroundColor()));
+            holder.shareButton.setBackgroundColor(Color.parseColor(mDataset.get(position).getBackgroundColor()));
+            holder.favoriteButton.setBackgroundColor(Color.parseColor(mDataset.get(position).getBackgroundColor()));
             Log.v(TAG, Integer.valueOf(position).toString());
-            if (mDataset[position].getFavorite()) {
+            if (mDataset.get(position).getFavorite()) {
                 holder.favoriteButton.setImageResource(R.drawable.ic_favorite_black_24dp);
             } else {
                 holder.favoriteButton.setImageResource(R.drawable.ic_favorite_border_black_24dp);
             }
 
             View parentView = (View) holder.imageView.getParent();
-            parentView.setBackgroundColor(Color.parseColor(mDataset[position].getBackgroundColor()));
+            parentView.setBackgroundColor(Color.parseColor(mDataset.get(position).getBackgroundColor()));
 
             CardView cardView = (CardView) holder.itemView;
-            cardView.setCardBackgroundColor(Color.parseColor(mDataset[position].getBackgroundColor()));
+            cardView.setCardBackgroundColor(Color.parseColor(mDataset.get(position).getBackgroundColor()));
 
             holder.shareButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Intent shareIntent = new Intent();
                     shareIntent.setAction(Intent.ACTION_SEND);
-                    shareIntent.putExtra(Intent.EXTRA_TEXT, mQuotes[position].getDisplayUri());
+                    shareIntent.putExtra(Intent.EXTRA_TEXT, mQuotes.get(position).getDisplayUri());
                     shareIntent.setType("text/plain");
 
                     View parentView = (View) holder.imageView.getParent();
@@ -224,17 +259,17 @@ public class MainFragment extends Fragment {
             holder.favoriteButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Boolean currentFavorite = mQuotes[position].getFavorite();
-                    mQuotes[position].setFavorite(!currentFavorite);
+                    Boolean currentFavorite = mQuotes.get(position).getFavorite();
+                    mQuotes.get(position).setFavorite(!currentFavorite);
 
                     // Execute the specified code on the worker thread
                     mHandler.post(new Runnable() {
                         @Override
                         public void run() {
                             HashSet<String> favorites = new HashSet<String>();
-                            for (int i = 0; i < mQuotes.length; i++) {
-                                if (mQuotes[i].getFavorite() == true) {
-                                    favorites.add(mQuotes[i].getDisplayUri());
+                            for (int i = 0; i < mQuotes.size(); i++) {
+                                if (mQuotes.get(i).getFavorite() == true) {
+                                    favorites.add(mQuotes.get(i).getDisplayUri());
                                 }
                             }
 
@@ -291,26 +326,63 @@ public class MainFragment extends Fragment {
         // Return the size of your dataset (invoked by the layout manager)
         @Override
         public int getItemCount() {
-            return mDataset.length;
+            return mDataset.size();
         }
     }
 
     // The types specified here are the input data type, the progress type, and the result type
-    public class UpdateFeedTask extends AsyncTask<Void, Void, Quote[]> {
+    public class UpdateFeedTask extends AsyncTask<Boolean, Void, ArrayList<Quote> > {
 
-        protected Quote[] doInBackground(Void... params) {
+        // IMPORTANT: result has to be in reverse chronological order
+        protected ArrayList<Quote> doInBackground(Boolean... params) {
             // These two need to be declared outside the try/catch
             // so that they can be closed in the finally block.
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
             String JSONResponse = null;
+            ArrayList<Integer> index = null;
+            Boolean getQuotesFromWebOnly = params[0];
+
+            if (fileExists(getActivity(), INDEX_FILENAME)) {
+                try {
+                    //Index is a list of array sizes stored in a file with the numerical suffix the same as the corresponding position
+                    index = getIndexFromFile(INDEX_FILENAME);
+                } catch (java.io.FileNotFoundException fnf) {
+                    Log.e(TAG, "Error from file stream open operation ", fnf);
+                    fnf.printStackTrace();
+                } catch (java.lang.Exception e) {
+                    Log.e(TAG, "Error from file read operation ", e);
+                    e.printStackTrace();
+                }
+            }
+
+            int cursor = 0;
+            if(index == null) {
+                index = new ArrayList<Integer>();
+            }
+
+            for (int i = 0; i < index.size(); i++) {
+                cursor += index.get(i);
+            }
+
+            ArrayList<Quote> quotes = new ArrayList<Quote>();
+            if(getQuotesFromWebOnly == false) {
+                for(int i = index.size() - 1; i >= 0; i--) {
+                    try {
+                        ArrayList<Quote> quotesFromFile = getQuotesFromFile(MODEL_FILENAME + Integer.valueOf(i).toString());
+                        for (int j = 0; j < quotesFromFile.size(); j++) {
+                            quotes.add(quotesFromFile.get(j)); // files are stored in reverse chronological order
+                        }
+                    } catch (java.lang.Exception e) {
+                        Log.e(TAG, "Error from file read operation ", e);
+                        e.printStackTrace();
+                    }
+                }
+            }
 
             try {
-                Log.v(TAG, "Start JSON Fetch");
-                Uri.Builder ub = Uri.parse(MAIN_URL + "/items?offset=-1").buildUpon();
+                Uri.Builder ub = Uri.parse(MAIN_URL + "/items?offset=" + Integer.valueOf(cursor).toString()).buildUpon();
                 URL url = new URL(ub.build().toString());
-
-                Log.v(TAG, url.toString());
 
                 // Create the request to OpenWeatherMap, and open the connection
                 urlConnection = (HttpURLConnection) url.openConnection();
@@ -340,8 +412,6 @@ public class MainFragment extends Fragment {
                 }
 
                 JSONResponse = buffer.toString();
-                Log.v(TAG, JSONResponse);
-
             }catch (IOException e) {
                 Log.e(TAG, "Error reading from URL", e);
                 e.printStackTrace();
@@ -359,28 +429,41 @@ public class MainFragment extends Fragment {
                 }
             }
 
-            Quote[] quotes = null;
+            ArrayList<Quote> quotesFromWeb = null;
             try {
-                quotes = getQuotesFromJson(JSONResponse);
+                quotesFromWeb = getQuotesFromJson(JSONResponse);
             } catch(java.lang.Exception e) {
                 Log.e(TAG, "Error from JSON parse operation ", e);
                 e.printStackTrace();
             }
 
-            if(quotes == null) {
+            if(quotesFromWeb != null) {
                 try {
-                    quotes = getQuotesFromFile(MODEL_FILENAME);
-                }catch (java.lang.Exception e) {
-                    Log.e(TAG, "Error from file read operation ", e);
-                    e.printStackTrace();
-                }
-            }
-            else {
-                try {
-                    FileOutputStream fos = getActivity().openFileOutput(MODEL_FILENAME, Context.MODE_PRIVATE);
+                    // Create new file for quotes obtained from the web
+                    // stored in reverse chronological order
+                    FileOutputStream fos = getActivity().openFileOutput(
+                            MODEL_FILENAME + Integer.valueOf(index.size()).toString(),
+                            Context.MODE_PRIVATE);
                     ObjectOutputStream oos = new ObjectOutputStream(fos);
-                    oos.writeObject(quotes);
+                    oos.writeObject(quotesFromWeb);
                     oos.close();
+
+                    // Update the index
+                    index.add(quotesFromWeb.size());
+
+                    //Write index to file
+                    FileOutputStream index_fos = getActivity().openFileOutput(
+                            INDEX_FILENAME,
+                            Context.MODE_PRIVATE);
+                    ObjectOutputStream index_oos = new ObjectOutputStream(index_fos);
+                    index_oos.writeObject(index);
+                    index_oos.close();
+
+                    //Update the in-memory Model
+                    for(int i = quotesFromWeb.size() - 1; i >= 0 ; i--) {
+                        quotes.add(0, quotesFromWeb.get(i)); //reverse chronological order
+                    }
+
                 } catch (java.io.FileNotFoundException fnf) {
                     Log.e(TAG, "Error from file stream open operation ", fnf);
                     fnf.printStackTrace();
@@ -390,15 +473,15 @@ public class MainFragment extends Fragment {
                 }
             }
 
-            if(quotes != null) {
+            if(quotes != null && fileExists(getActivity(), FAVORITE_FILENAME)) {
                 try {
                     HashSet<String> favorites = getFavoritesFromFile(FAVORITE_FILENAME);
-                    for(int i = 0; i < quotes.length; i++){
-                        if(favorites != null && favorites.contains(quotes[i].getDisplayUri())) {
-                            quotes[i].setFavorite(true);
+                    for(int i = 0; i < quotes.size(); i++){
+                        if(favorites != null && favorites.contains(quotes.get(i).getDisplayUri())) {
+                            quotes.get(i).setFavorite(true);
                         }
                         else {
-                            quotes[i].setFavorite(false);
+                            quotes.get(i).setFavorite(false);
                         }
                     }
                 }catch (java.lang.Exception e) {
@@ -410,10 +493,18 @@ public class MainFragment extends Fragment {
             return quotes;
         }
 
-        public Quote[] getQuotesFromFile (String filePath) throws Exception {
+        public boolean fileExists(Context context, String filename) {
+            File file = context.getFileStreamPath(filename);
+            if(file == null || !file.exists()) {
+                return false;
+            }
+            return true;
+        }
+
+        public ArrayList<Quote> getQuotesFromFile (String filePath) throws Exception {
             FileInputStream fis = getActivity().openFileInput(filePath);
             ObjectInputStream ois = new ObjectInputStream(fis);
-            Quote[] quotes = (Quote[]) ois.readObject();
+            ArrayList<Quote> quotes = (ArrayList<Quote>) ois.readObject();
             //Make sure you close all streams.
             ois.close();
             return quotes;
@@ -428,7 +519,16 @@ public class MainFragment extends Fragment {
             return favorites;
         }
 
-        private Quote[] getQuotesFromJson(String JSONStr) throws JSONException {
+        public ArrayList<Integer> getIndexFromFile (String filePath) throws Exception {
+            FileInputStream fis = getActivity().openFileInput(filePath);
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            ArrayList<Integer> index = (ArrayList<Integer>) ois.readObject();
+            //Make sure you close all streams.
+            ois.close();
+            return index;
+        }
+
+        private ArrayList<Quote> getQuotesFromJson(String JSONStr) throws JSONException {
             if(JSONStr == null) return null;
 
             // These are the names of the JSON objects that need to be extracted.
@@ -442,8 +542,8 @@ public class MainFragment extends Fragment {
             JSONObject entireJson = new JSONObject(JSONStr);
             JSONArray quoteArray = entireJson.getJSONArray(OWM_LIST);
 
-            Quote[] result = new Quote[quoteArray.length()];
-            for(int i = quoteArray.length() - 1; i >= 0 ; i--) {
+            ArrayList<Quote> result = new ArrayList<Quote>();
+            for(int i = 0; i < quoteArray.length() ; i++) {
                 JSONObject jsonObject = quoteArray.getJSONObject(i);
                 Quote q = new Quote();
                 q.setSourceUri(jsonObject.getString(OWM_IMAGEURI));
@@ -451,21 +551,35 @@ public class MainFragment extends Fragment {
                 q.setDisplayUri(MAIN_URL + "/v/" + jsonObject.getString(OWM_ID));
                 q.setBodytextColor(jsonObject.getString(OWM_BODYTEXTCOLOR));
                 q.setBackgroundColor(jsonObject.getString(OWM_BACKGROUNDCOLOR));
-                result[quoteArray.length() - i - 1] = q;
+                result.add(0, q); //reverse chronological order
             }
 
             return result;
         }
 
-        protected void onPostExecute(Quote[] result) {
+        protected void onPostExecute(ArrayList<Quote> result) {
             // This method is executed in the UIThread
             // with access to the result of the long running task
-            if(result != null){
+            if (result != null) {
                 // specify an adapter (see also next example)
-                mQuotes = result;
-                mAdapter = new MyAdapter(mQuotes);
-                mRecyclerView.setAdapter(mAdapter);
+                if(mQuotes == null) {
+                    mQuotes = result;
+                    mAdapter = new MyAdapter(mQuotes);
+                    mRecyclerView.setAdapter(mAdapter);
+                }
+                else {
+                    for(int i = result.size() - 1; i >= 0; i--) {
+                        mQuotes.add(0, result.get(i)); // add in reverse chronological order
+                    }
+                    mAdapter.notifyDataSetChanged();
+                }
             }
+            mSwipeRefreshLayout.setRefreshing(false);
         }
+    }
+
+    public void update(Boolean getFeedFromWebOnly) {
+        mSwipeRefreshLayout.setRefreshing(true);
+        new UpdateFeedTask().execute(getFeedFromWebOnly); // get latest feed from the web only
     }
 }
