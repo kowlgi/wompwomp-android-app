@@ -12,61 +12,70 @@ public class Quote implements Serializable {
     private String imageSourceUri = null;
     private String quoteText = null;
     private String imageDisplayUri = null;
-    private String backgroundColor = null;
-    private String bodytextColor = null;
     private Boolean favorite = false;
+    private Integer numFavorites = 0;
+    private Integer numShares = 0;
+    private String createdOn = null;
 
     public Quote() {
-    }
-
-    public String getSourceUri() {
-        return imageSourceUri;
     }
 
     public String getQuoteText() {
         return quoteText;
     }
 
-    public String getDisplayUri() {
-        return imageDisplayUri;
-    }
-
-    public String getBackgroundColor() {
-        return backgroundColor;
-    }
-
-    public void setBackgroundColor(String backgroundColor) {
-        this.backgroundColor = backgroundColor;
-    }
 
     public void setFavorite(Boolean state) {
         this.favorite = state;
-    }
-
-    public String getBodytextColor() {
-        return bodytextColor;
     }
 
     public Boolean getFavorite() {
         return favorite;
     }
 
-    public void setBodytextColor(String bodytextColor) {
-        this.bodytextColor = bodytextColor;
+    public Integer getNumFavorites() {
+        return numFavorites;
     }
 
-    public void setSourceUri(String sourceUri) {
-        this.imageSourceUri = sourceUri;
+    public void setNumFavorites(Integer numFavorites) {
+        this.numFavorites = numFavorites;
+    }
+
+    public Integer getNumShares() {
+        return numShares;
+    }
+
+    public String getImageSourceUri() {
+        return imageSourceUri;
+    }
+
+    public String getCreatedOn() {
+        return createdOn;
+    }
+
+    public void setCreatedOn(String createdOn) {
+        this.createdOn = createdOn;
+    }
+
+    public void setImageSourceUri(String imageSourceUri) {
+        this.imageSourceUri = imageSourceUri;
+    }
+
+    public String getImageDisplayUri() {
+        return imageDisplayUri;
+    }
+
+    public void setImageDisplayUri(String imageDisplayUri) {
+        this.imageDisplayUri = imageDisplayUri;
+    }
+
+    public void setNumShares(Integer numShares) {
+        this.numShares = numShares;
     }
 
     public void setQuoteText(String text) {
         this.quoteText = text;
     }
-
-    public void setDisplayUri(String displayUri) {
-        this.imageDisplayUri = displayUri;
-    }
-
     /**
      * Always treat de-serialization as a full-blown constructor, by
      * validating the final state of the de-serialized object.

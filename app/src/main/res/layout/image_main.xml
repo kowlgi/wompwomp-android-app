@@ -8,7 +8,6 @@
     android:clickable="false"
     card_view:cardElevation="3dp"
     android:layout_marginBottom="20dp"
-    android:background="#b77c59"
     android:backgroundTintMode="screen"
     android:focusableInTouchMode="false"
     android:focusable="false"
@@ -16,15 +15,15 @@
 
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:orientation="vertical" android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:background="@android:color/white" android:layout_height="match_parent">
 
         <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
             android:orientation="vertical" android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <com.agni.sunshine.SquareNetworkImageView
+            <com.agni.sunshine.SquareImageView
                 android:layout_width="match_parent"
-                android:layout_height="400dp"
+                android:layout_height="wrap_content"
                 android:id="@+id/imageView"
                 android:scaleType="fitXY" />
 
@@ -32,36 +31,80 @@
                 android:id="@+id/textView"
                 android:gravity="center"
                 android:text="Hello"
-                android:textColor="#000000"
-                android:textSize="18sp"
+                style="@android:style/TextAppearance.Medium"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:typeface="normal"
+                android:layout_height="wrap_content"
                 android:padding="10dp"
                 android:layout_below="@+id/imageView"/>
 
         </LinearLayout>
 
 
-        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-            android:orientation="horizontal" android:layout_width="match_parent"
-            android:layout_height="match_parent" android:gravity="end">
-            <ImageButton
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/favorite_button"
-                android:padding="10dp"
-                android:clickable="true"
-                android:src="@drawable/ic_favorite_border_black_24dp"/>
+        <RelativeLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/timeandbuttons"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:padding="10dp">
 
-            <ImageButton
+            <TextView
+                android:id="@+id/createdon"
+                android:text="Hello"
+                style="@android:style/TextAppearance.Small"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/share_button"
-                android:padding="10dp"
-                android:clickable="true"
-                android:src="@drawable/ic_share_black_24dp"/>
-        </LinearLayout>
+                android:layout_alignParentLeft="true"
+                android:padding="10dp"/>
+
+            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:orientation="horizontal" android:layout_width="wrap_content"
+                android:layout_alignParentRight="true" android:layout_height="wrap_content"
+                android:id="@+id/sharelayout" android:layout_margin="7dp">
+                <ImageButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/share_button"
+                    android:padding="3dp"
+                    android:clickable="true"
+                    android:background="@android:color/white"
+                    android:src="@drawable/ic_share_black_24dp" />
+
+                <TextView
+                    android:id="@+id/shareCount"
+                    android:gravity="start"
+                    android:text="Hello"
+                    style="@android:style/TextAppearance.Small"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="3dp"/>
+            </LinearLayout>
+
+            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:orientation="horizontal" android:layout_width="wrap_content"
+                android:layout_toLeftOf="@id/sharelayout" android:layout_height="wrap_content"
+                android:id="@+id/favoritelayout" android:layout_margin="7dp">
+
+                <ImageButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/favorite_button"
+                    android:padding="3dp"
+                    android:clickable="true"
+                    android:background="@android:color/white"
+                    android:src="@drawable/ic_favorite_border_black_24dp" />
+
+                <TextView
+                    android:id="@+id/favoriteCount"
+                    android:gravity="start"
+                    android:text="Hello"
+                    style="@android:style/TextAppearance.Small"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="3dp" />
+            </LinearLayout>
+
+        </RelativeLayout>
+
     </LinearLayout>
 
 </android.support.v7.widget.CardView>

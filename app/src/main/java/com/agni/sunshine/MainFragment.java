@@ -1,11 +1,11 @@
 package com.agni.sunshine;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -15,7 +15,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
@@ -28,7 +27,11 @@ import android.widget.TextView;
 
 import com.agni.sunshine.util.ImageCache;
 import com.agni.sunshine.util.ImageFetcher;
+import com.ocpsoft.pretty.time.PrettyTime;
 
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDateTime;
+import org.joda.time.format.ISODateTimeFormat;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -36,13 +39,11 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -53,13 +54,13 @@ import java.util.HashSet;
  * Created by kowlgi on 10/21/15.
  */
 public class MainFragment extends Fragment {
-    private RecyclerView mRecyclerView;
-    private RecyclerView.Adapter mAdapter;
+    private RecyclerView mRecyclerView = null;
+    private RecyclerView.Adapter mAdapter = null;
     private ArrayList<Quote> mQuotes = null;
     private LinearLayoutManager mLayoutManager;
     private static final String TAG = "MainFragment";
-    private static final String MAIN_URL = "http://45.55.216.153:3000";
-    private ImageFetcher mImageFetcher;
+    private static final String MAIN_URL = "http://192.168.0.9:3000";
+    private ImageFetcher mImageFetcher = null;
     private static final String IMAGE_CACHE_DIR = "thumbs";
     private static final String MODEL_FILENAME = "agnimodel";
     private static final String FAVORITE_FILENAME = "agnifavorite.ser";
@@ -135,6 +136,7 @@ public class MainFragment extends Fragment {
 
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
                 mSwipeRefreshLayout.setEnabled(mLayoutManager.findFirstCompletelyVisibleItemPosition() == 0);
             }
         });
@@ -172,10 +174,13 @@ public class MainFragment extends Fragment {
         public class ViewHolder extends RecyclerView.ViewHolder {
             // Your holder should contain a member variable
             // for any view that will be set as you render a row
-            public SquareNetworkImageView imageView;
+            public SquareImageView imageView;
             public TextView textView;
             public ImageButton shareButton;
             public ImageButton favoriteButton;
+            public TextView createdOnView;
+            public TextView numfavoritesView;
+            public TextView numsharesView;
 
             // We also create a constructor that accepts the entire item row
             // and does the view lookups to find each subview
@@ -183,10 +188,13 @@ public class MainFragment extends Fragment {
                 // Stores the itemView in a public final member variable that can be used
                 // to access the context from any ViewHolder instance.
                 super(itemView);
-                imageView = (SquareNetworkImageView) itemView.findViewById(R.id.imageView);
+                imageView = (SquareImageView) itemView.findViewById(R.id.imageView);
                 textView = (TextView) itemView.findViewById(R.id.textView);
                 shareButton = (ImageButton) itemView.findViewById(R.id.share_button);
                 favoriteButton = (ImageButton) itemView.findViewById(R.id.favorite_button);
+                createdOnView = (TextView) itemView.findViewById(R.id.createdon);
+                numfavoritesView = (TextView) itemView.findViewById(R.id.favoriteCount);
+                numsharesView = (TextView) itemView.findViewById(R.id.shareCount);
             }
         }
 
@@ -216,33 +224,31 @@ public class MainFragment extends Fragment {
             DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
             float dpHeight = displayMetrics.heightPixels / displayMetrics.density;
 
-            mImageFetcher.loadImage(mDataset.get(position).getSourceUri(), holder.imageView);
+            mImageFetcher.loadImage(mDataset.get(position).getImageSourceUri(), holder.imageView);
 
             holder.textView.setMinHeight((int) Math.round(dpHeight * 0.20)); //min 20% of height
             holder.textView.setText(mDataset.get(position).getQuoteText());
-            holder.textView.setTextColor(Color.parseColor(mDataset.get(position).getBodytextColor()));
 
-            holder.shareButton.setBackgroundColor(Color.parseColor(mDataset.get(position).getBackgroundColor()));
-            holder.favoriteButton.setBackgroundColor(Color.parseColor(mDataset.get(position).getBackgroundColor()));
-            Log.v(TAG, Integer.valueOf(position).toString());
             if (mDataset.get(position).getFavorite()) {
                 holder.favoriteButton.setImageResource(R.drawable.ic_favorite_black_24dp);
             } else {
                 holder.favoriteButton.setImageResource(R.drawable.ic_favorite_border_black_24dp);
             }
 
-            View parentView = (View) holder.imageView.getParent();
-            parentView.setBackgroundColor(Color.parseColor(mDataset.get(position).getBackgroundColor()));
+            PrettyTime prettyTime = new PrettyTime();
+            LocalDateTime createdOn = LocalDateTime.parse(mDataset.get(position).getCreatedOn(), ISODateTimeFormat.dateTime());
+            //http://www.flowstopper.org/2012/11/prettytime-and-joda-playing-nice.html
+            holder.createdOnView.setText(prettyTime.format(createdOn.toDateTime(DateTimeZone.UTC).toDate()));
 
-            CardView cardView = (CardView) holder.itemView;
-            cardView.setCardBackgroundColor(Color.parseColor(mDataset.get(position).getBackgroundColor()));
+            holder.numfavoritesView.setText(mDataset.get(position).getNumFavorites().toString());
+            holder.numsharesView.setText(mDataset.get(position).getNumShares().toString());
 
             holder.shareButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Intent shareIntent = new Intent();
                     shareIntent.setAction(Intent.ACTION_SEND);
-                    shareIntent.putExtra(Intent.EXTRA_TEXT, mQuotes.get(position).getDisplayUri());
+                    shareIntent.putExtra(Intent.EXTRA_TEXT, mQuotes.get(position).getImageDisplayUri());
                     shareIntent.setType("text/plain");
 
                     View parentView = (View) holder.imageView.getParent();
@@ -269,7 +275,7 @@ public class MainFragment extends Fragment {
                             HashSet<String> favorites = new HashSet<String>();
                             for (int i = 0; i < mQuotes.size(); i++) {
                                 if (mQuotes.get(i).getFavorite() == true) {
-                                    favorites.add(mQuotes.get(i).getDisplayUri());
+                                    favorites.add(mQuotes.get(i).getImageDisplayUri());
                                 }
                             }
 
@@ -365,21 +371,6 @@ public class MainFragment extends Fragment {
                 cursor += index.get(i);
             }
 
-            ArrayList<Quote> quotes = new ArrayList<Quote>();
-            if(getQuotesFromWebOnly == false) {
-                for(int i = index.size() - 1; i >= 0; i--) {
-                    try {
-                        ArrayList<Quote> quotesFromFile = getQuotesFromFile(MODEL_FILENAME + Integer.valueOf(i).toString());
-                        for (int j = 0; j < quotesFromFile.size(); j++) {
-                            quotes.add(quotesFromFile.get(j)); // files are stored in reverse chronological order
-                        }
-                    } catch (java.lang.Exception e) {
-                        Log.e(TAG, "Error from file read operation ", e);
-                        e.printStackTrace();
-                    }
-                }
-            }
-
             try {
                 Uri.Builder ub = Uri.parse(MAIN_URL + "/items?offset=" + Integer.valueOf(cursor).toString()).buildUpon();
                 URL url = new URL(ub.build().toString());
@@ -437,6 +428,20 @@ public class MainFragment extends Fragment {
                 e.printStackTrace();
             }
 
+            ArrayList<Quote> quotes = new ArrayList<Quote>();
+            if(getQuotesFromWebOnly == false) {
+                for(int i = index.size() - 1; i >= 0; i--)
+                    try {
+                        ArrayList<Quote> quotesFromFile = getQuotesFromFile(MODEL_FILENAME + Integer.valueOf(i).toString());
+                        for (int j = 0; j < quotesFromFile.size(); j++) {
+                            quotes.add(quotesFromFile.get(j)); // files are stored in reverse chronological order
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error from file read operation ", e);
+                        e.printStackTrace();
+                    }
+            }
+
             if(quotesFromWeb != null) {
                 try {
                     // Create new file for quotes obtained from the web
@@ -477,7 +482,7 @@ public class MainFragment extends Fragment {
                 try {
                     HashSet<String> favorites = getFavoritesFromFile(FAVORITE_FILENAME);
                     for(int i = 0; i < quotes.size(); i++){
-                        if(favorites != null && favorites.contains(quotes.get(i).getDisplayUri())) {
+                        if(favorites != null && favorites.contains(quotes.get(i).getImageDisplayUri())) {
                             quotes.get(i).setFavorite(true);
                         }
                         else {
@@ -532,25 +537,27 @@ public class MainFragment extends Fragment {
             if(JSONStr == null) return null;
 
             // These are the names of the JSON objects that need to be extracted.
-            final String OWM_LIST = "list";
-            final String OWM_TEXT = "text";
-            final String OWM_IMAGEURI = "imageuri";
-            final String OWM_ID = "id";
-            final String OWM_BACKGROUNDCOLOR = "backgroundcolor";
-            final String OWM_BODYTEXTCOLOR = "bodytextcolor";
+            final String AGNI_LIST = "list";
+            final String AGNI_TEXT = "text";
+            final String AGNI_IMAGEURI = "imageuri";
+            final String AGNI_ID = "id";
+            final String AGNI_CREATEDON = "created_on";
+            final String AGNI_NUMFAVORITES = "numfavorites";
+            final String AGNI_NUMSHARES = "numshares";
 
             JSONObject entireJson = new JSONObject(JSONStr);
-            JSONArray quoteArray = entireJson.getJSONArray(OWM_LIST);
+            JSONArray quoteArray = entireJson.getJSONArray(AGNI_LIST);
 
             ArrayList<Quote> result = new ArrayList<Quote>();
             for(int i = 0; i < quoteArray.length() ; i++) {
                 JSONObject jsonObject = quoteArray.getJSONObject(i);
                 Quote q = new Quote();
-                q.setSourceUri(jsonObject.getString(OWM_IMAGEURI));
-                q.setQuoteText(jsonObject.getString(OWM_TEXT));
-                q.setDisplayUri(MAIN_URL + "/v/" + jsonObject.getString(OWM_ID));
-                q.setBodytextColor(jsonObject.getString(OWM_BODYTEXTCOLOR));
-                q.setBackgroundColor(jsonObject.getString(OWM_BACKGROUNDCOLOR));
+                q.setImageSourceUri(jsonObject.getString(AGNI_IMAGEURI));
+                q.setQuoteText(jsonObject.getString(AGNI_TEXT));
+                q.setImageDisplayUri(MAIN_URL + "/v/" + jsonObject.getString(AGNI_ID));
+                q.setCreatedOn(jsonObject.getString(AGNI_CREATEDON));
+                q.setNumFavorites(jsonObject.getInt(AGNI_NUMFAVORITES));
+                q.setNumShares(jsonObject.getInt(AGNI_NUMSHARES));
                 result.add(0, q); //reverse chronological order
             }
 
