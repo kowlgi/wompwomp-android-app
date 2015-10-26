@@ -11,7 +11,7 @@ import java.io.Serializable;
 public class Quote implements Serializable {
     private String imageSourceUri = null;
     private String quoteText = null;
-    private String imageDisplayUri = null;
+    private String displayId = null;
     private Boolean favorite = false;
     private Integer numFavorites = 0;
     private Integer numShares = 0;
@@ -61,12 +61,12 @@ public class Quote implements Serializable {
         this.imageSourceUri = imageSourceUri;
     }
 
-    public String getImageDisplayUri() {
-        return imageDisplayUri;
+    public String getDisplayId() {
+        return displayId;
     }
 
-    public void setImageDisplayUri(String imageDisplayUri) {
-        this.imageDisplayUri = imageDisplayUri;
+    public void setDisplayId(String displayId) {
+        this.displayId = displayId;
     }
 
     public void setNumShares(Integer numShares) {

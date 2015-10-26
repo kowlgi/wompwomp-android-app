@@ -27,6 +27,9 @@ import android.widget.TextView;
 
 import com.agni.sunshine.util.ImageCache;
 import com.agni.sunshine.util.ImageFetcher;
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.RequestParams;
+import com.loopj.android.http.TextHttpResponseHandler;
 import com.ocpsoft.pretty.time.PrettyTime;
 
 import org.joda.time.DateTimeZone;
@@ -50,6 +53,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import cz.msebera.android.httpclient.Header;
+
+
 /**
  * Created by kowlgi on 10/21/15.
  */
@@ -59,7 +65,7 @@ public class MainFragment extends Fragment {
     private ArrayList<Quote> mQuotes = null;
     private LinearLayoutManager mLayoutManager;
     private static final String TAG = "MainFragment";
-    private static final String MAIN_URL = "http://192.168.0.9:3000";
+    private static final String MAIN_URL = "http://45.55.216.153:3000";
     private ImageFetcher mImageFetcher = null;
     private static final String IMAGE_CACHE_DIR = "thumbs";
     private static final String MODEL_FILENAME = "agnimodel";
@@ -246,9 +252,26 @@ public class MainFragment extends Fragment {
             holder.shareButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    AsyncHttpClient client = new AsyncHttpClient();
+                    RequestParams params = new RequestParams();
+                    client.post(MAIN_URL + "/s/" + mQuotes.get(position).getDisplayId(), params, new TextHttpResponseHandler() {
+                        @Override
+                        public void onSuccess(int statusCode, Header[] headers, String res) {
+                            // we received status 200 OK..wohoo!
+                        }
+
+                        @Override
+                        public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
+                            //do nothing
+                        }
+                    });
+
+                    mQuotes.get(position).setNumShares(mQuotes.get(position).getNumShares() + 1);
+                    notifyDataSetChanged();
+
                     Intent shareIntent = new Intent();
                     shareIntent.setAction(Intent.ACTION_SEND);
-                    shareIntent.putExtra(Intent.EXTRA_TEXT, mQuotes.get(position).getImageDisplayUri());
+                    shareIntent.putExtra(Intent.EXTRA_TEXT, MAIN_URL + "/v/" + mQuotes.get(position).getDisplayId());
                     shareIntent.setType("text/plain");
 
                     View parentView = (View) holder.imageView.getParent();
@@ -266,36 +289,72 @@ public class MainFragment extends Fragment {
                 @Override
                 public void onClick(View v) {
                     Boolean currentFavorite = mQuotes.get(position).getFavorite();
+                    Integer currentNumFavorites = mQuotes.get(position).getNumFavorites();
+                    String SUB_URL = "";
+
+                    if(currentFavorite) {
+                        // she likes me not :(
+                        if(currentNumFavorites > 0) {
+                            mQuotes.get(position).setNumFavorites(currentNumFavorites - 1);
+                        }
+                        SUB_URL = "/uf/";
+
+                    }
+                    else {
+                        // she likes me :)
+                        mQuotes.get(position).setNumFavorites(currentNumFavorites+1);
+                        SUB_URL = "/f/";
+                    }
                     mQuotes.get(position).setFavorite(!currentFavorite);
 
-                    // Execute the specified code on the worker thread
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            HashSet<String> favorites = new HashSet<String>();
-                            for (int i = 0; i < mQuotes.size(); i++) {
-                                if (mQuotes.get(i).getFavorite() == true) {
-                                    favorites.add(mQuotes.get(i).getImageDisplayUri());
-                                }
-                            }
+                    SUB_URL += mQuotes.get(position).getDisplayId();
 
-                            try {
-                                FileOutputStream fos = getActivity().openFileOutput(FAVORITE_FILENAME, Context.MODE_PRIVATE);
-                                ObjectOutputStream oos = new ObjectOutputStream(fos);
-                                oos.writeObject(favorites);
-                                oos.close();
-                            } catch (java.io.FileNotFoundException fnf) {
-                                Log.e(TAG, "Error from file stream open operation ", fnf);
-                                fnf.printStackTrace();
-                            } catch (java.io.IOException ioe) {
-                                Log.e(TAG, "Error from file write operation ", ioe);
-                                ioe.printStackTrace();
-                            }
+                    // Execute the specified code on the worker thread
+                    FavoriteRunnable favRunnable = new FavoriteRunnable();
+                    mHandler.post(favRunnable);
+
+                    AsyncHttpClient client = new AsyncHttpClient();
+                    RequestParams params = new RequestParams();
+                    client.post(MAIN_URL + SUB_URL, params, new TextHttpResponseHandler() {
+                        @Override
+                        public void onSuccess(int statusCode, Header[] headers, String res) {
+                            // called when response HTTP status is "200 OK"
+                        }
+
+                        @Override
+                        public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
+                            //do nothing
                         }
                     });
+
                     notifyDataSetChanged();
                 }
             });
+        }
+
+        public class FavoriteRunnable implements Runnable {
+            @Override
+            public void run() {
+                HashSet<String> favorites = new HashSet<String>();
+                for (int i = 0; i < mQuotes.size(); i++) {
+                    if (mQuotes.get(i).getFavorite() == true) {
+                        favorites.add(mQuotes.get(i).getDisplayId());
+                    }
+                }
+
+                try {
+                    FileOutputStream fos = getActivity().openFileOutput(FAVORITE_FILENAME, Context.MODE_PRIVATE);
+                    ObjectOutputStream oos = new ObjectOutputStream(fos);
+                    oos.writeObject(favorites);
+                    oos.close();
+                } catch (java.io.FileNotFoundException fnf) {
+                    Log.e(TAG, "Error from file stream open operation ", fnf);
+                    fnf.printStackTrace();
+                } catch (java.io.IOException ioe) {
+                    Log.e(TAG, "Error from file write operation ", ioe);
+                    ioe.printStackTrace();
+                }
+            }
         }
 
         public Uri getLocalViewBitmapUri(View aView){
@@ -347,12 +406,12 @@ public class MainFragment extends Fragment {
             BufferedReader reader = null;
             String JSONResponse = null;
             ArrayList<Integer> index = null;
-            Boolean getQuotesFromWebOnly = params[0];
+            Boolean newestFromWebOnly = params[0];
 
             if (fileExists(getActivity(), INDEX_FILENAME)) {
                 try {
                     //Index is a list of array sizes stored in a file with the numerical suffix the same as the corresponding position
-                    index = getIndexFromFile(INDEX_FILENAME);
+                    index = (ArrayList<Integer>) getObjectFromFile(INDEX_FILENAME);
                 } catch (java.io.FileNotFoundException fnf) {
                     Log.e(TAG, "Error from file stream open operation ", fnf);
                     fnf.printStackTrace();
@@ -362,20 +421,24 @@ public class MainFragment extends Fragment {
                 }
             }
 
-            int cursor = 0;
+            // If no index file exists, initialize the object nonetheless as index.size() is used
+            // in a lot of places
             if(index == null) {
                 index = new ArrayList<Integer>();
             }
 
-            for (int i = 0; i < index.size(); i++) {
-                cursor += index.get(i);
+            int cursor = 0;
+            if(newestFromWebOnly == true) {
+                //Advance cursor to highest position not saved on file(s) in internal storage
+                for (int i = 0; i < index.size(); i++) {
+                    cursor += index.get(i);
+                }
             }
 
             try {
                 Uri.Builder ub = Uri.parse(MAIN_URL + "/items?offset=" + Integer.valueOf(cursor).toString()).buildUpon();
                 URL url = new URL(ub.build().toString());
 
-                // Create the request to OpenWeatherMap, and open the connection
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("GET");
                 urlConnection.connect();
@@ -403,7 +466,7 @@ public class MainFragment extends Fragment {
                 }
 
                 JSONResponse = buffer.toString();
-            }catch (IOException e) {
+            } catch (IOException e) {
                 Log.e(TAG, "Error reading from URL", e);
                 e.printStackTrace();
             } finally {
@@ -429,10 +492,21 @@ public class MainFragment extends Fragment {
             }
 
             ArrayList<Quote> quotes = new ArrayList<Quote>();
-            if(getQuotesFromWebOnly == false) {
-                for(int i = index.size() - 1; i >= 0; i--)
+            // Possibilities:
+            // 1. request for all quotes and if we didn't fetch successfully from the server:
+            // newestFromWebOnly is false and quotesFromWeb is null -> READ from model data files, provided they exist i.e. index.size() > 0
+            // 2. request for all quotes, which were fetched successfully from the server:
+            // newestFromWebOnly is false and quotesFromWeb is non null -> ERASE existing model data files and create new ones
+            // 3. request for new quotes only, which were fetched successfully from the server:
+            // newestFromWebOnly is true and quotesFromWeb is not null --> DON'T read from model data files
+            // 4. request for new quotes only, which were NOT fetched successfully from the server:
+            // newestFromWebOnly is true and quotesFromWeb is null -->  DON'T read from model data files
+
+            /* possibility #1 */
+            if (newestFromWebOnly == false && quotesFromWeb == null && index.size() > 0) {
+                for (int i = index.size() - 1; i >= 0; i--) {
                     try {
-                        ArrayList<Quote> quotesFromFile = getQuotesFromFile(MODEL_FILENAME + Integer.valueOf(i).toString());
+                        ArrayList<Quote> quotesFromFile = (ArrayList<Quote>) getObjectFromFile(MODEL_FILENAME + Integer.valueOf(i).toString());
                         for (int j = 0; j < quotesFromFile.size(); j++) {
                             quotes.add(quotesFromFile.get(j)); // files are stored in reverse chronological order
                         }
@@ -440,9 +514,28 @@ public class MainFragment extends Fragment {
                         Log.e(TAG, "Error from file read operation ", e);
                         e.printStackTrace();
                     }
+                }
             }
+            else if (quotesFromWeb != null) {
 
-            if(quotesFromWeb != null) {
+                /* possibility #2 */
+                if(newestFromWebOnly == false) {
+                    for (int i = 0; i < index.size(); i++) {
+                        Log.v(TAG, "Deleting file: ..." + Integer.valueOf(i).toString());
+                        getActivity().deleteFile(MODEL_FILENAME + Integer.valueOf(i).toString());
+                    }
+
+                    if (index.size() > 0) {
+                        getActivity().deleteFile(INDEX_FILENAME);
+                    }
+                    index.clear();
+                }
+                else {
+                    /* possibility #3 */
+                }
+
+                Log.v(TAG,"Sizeof quotes from web" + Integer.valueOf(quotesFromWeb.size()).toString());
+
                 try {
                     // Create new file for quotes obtained from the web
                     // stored in reverse chronological order
@@ -477,12 +570,16 @@ public class MainFragment extends Fragment {
                     ioe.printStackTrace();
                 }
             }
+            // possibility #4 and other DON'T CARE possibilities
+            else {
+                // outta luck, mate
+            }
 
             if(quotes != null && fileExists(getActivity(), FAVORITE_FILENAME)) {
                 try {
-                    HashSet<String> favorites = getFavoritesFromFile(FAVORITE_FILENAME);
+                    HashSet<String> favorites = (HashSet<String>) getObjectFromFile(FAVORITE_FILENAME);
                     for(int i = 0; i < quotes.size(); i++){
-                        if(favorites != null && favorites.contains(quotes.get(i).getImageDisplayUri())) {
+                        if(favorites != null && favorites.contains(quotes.get(i).getDisplayId())) {
                             quotes.get(i).setFavorite(true);
                         }
                         else {
@@ -506,31 +603,13 @@ public class MainFragment extends Fragment {
             return true;
         }
 
-        public ArrayList<Quote> getQuotesFromFile (String filePath) throws Exception {
+        private Object getObjectFromFile (String filePath) throws Exception {
             FileInputStream fis = getActivity().openFileInput(filePath);
             ObjectInputStream ois = new ObjectInputStream(fis);
-            ArrayList<Quote> quotes = (ArrayList<Quote>) ois.readObject();
+            Object obj = ois.readObject();
             //Make sure you close all streams.
             ois.close();
-            return quotes;
-        }
-
-        public HashSet<String> getFavoritesFromFile (String filePath) throws Exception {
-            FileInputStream fis = getActivity().openFileInput(filePath);
-            ObjectInputStream ois = new ObjectInputStream(fis);
-            HashSet<String> favorites = (HashSet<String>) ois.readObject();
-            //Make sure you close all streams.
-            ois.close();
-            return favorites;
-        }
-
-        public ArrayList<Integer> getIndexFromFile (String filePath) throws Exception {
-            FileInputStream fis = getActivity().openFileInput(filePath);
-            ObjectInputStream ois = new ObjectInputStream(fis);
-            ArrayList<Integer> index = (ArrayList<Integer>) ois.readObject();
-            //Make sure you close all streams.
-            ois.close();
-            return index;
+            return obj;
         }
 
         private ArrayList<Quote> getQuotesFromJson(String JSONStr) throws JSONException {
@@ -554,7 +633,7 @@ public class MainFragment extends Fragment {
                 Quote q = new Quote();
                 q.setImageSourceUri(jsonObject.getString(AGNI_IMAGEURI));
                 q.setQuoteText(jsonObject.getString(AGNI_TEXT));
-                q.setImageDisplayUri(MAIN_URL + "/v/" + jsonObject.getString(AGNI_ID));
+                q.setDisplayId(jsonObject.getString(AGNI_ID));
                 q.setCreatedOn(jsonObject.getString(AGNI_CREATEDON));
                 q.setNumFavorites(jsonObject.getInt(AGNI_NUMFAVORITES));
                 q.setNumShares(jsonObject.getInt(AGNI_NUMSHARES));

@@ -38,4 +38,5 @@ dependencies {
     compile 'com.google.android.gms:play-services-gcm:8.1.0'
     compile 'com.ocpsoft:ocpsoft-pretty-time:1.0.6'
     compile 'joda-time:joda-time:2.8.2'
+    compile 'com.loopj.android:android-async-http:1.4.9'
 }

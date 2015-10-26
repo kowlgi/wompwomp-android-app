@@ -59,7 +59,7 @@ public class ImageCache {
     private static final String TAG = "ImageCache";
 
     // Default memory cache size in kilobytes
-    private static final int DEFAULT_MEM_CACHE_SIZE = 1024 * 5; // 5MB
+    private static final int DEFAULT_MEM_CACHE_SIZE = 1024 * 2; // 2MB
 
     // Default disk cache size in bytes
     private static final int DEFAULT_DISK_CACHE_SIZE = 1024 * 1024 * 10; // 10MB
