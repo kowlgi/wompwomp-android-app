@@ -43,6 +43,8 @@ public class MainActivity extends AppCompatActivity{
             int permissionRequestCode = 200;
             requestPermissions(permissions, permissionRequestCode);
         }
+
+        getSupportActionBar().setHideOnContentScrollEnabled(true);
     }
 
     @Override
@@ -68,7 +70,11 @@ public class MainActivity extends AppCompatActivity{
              f.update(true);
             return true;
         }
-
+        else if (id == R.id.action_favorites) {
+            Intent settingsIntent = new Intent(this, FavoritesActivity.class);
+            startActivity(settingsIntent);
+            return true;
+        }
 
         return super.onOptionsItemSelected(item);
     }
