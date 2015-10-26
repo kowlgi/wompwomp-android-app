@@ -667,4 +667,16 @@ public class MainFragment extends Fragment {
         mSwipeRefreshLayout.setRefreshing(true);
         new UpdateFeedTask().execute(getFeedFromWebOnly); // get latest feed from the web only
     }
+
+    public Bundle createBundleForFavorites() {
+        Bundle bundle = new Bundle();
+        ArrayList<Quote> favoriteQuotes = new ArrayList<Quote>();
+        for (int i = 0; i < mQuotes.size(); i++) {
+            if(mQuotes.get(i).getFavorite()) {
+                favoriteQuotes.add(mQuotes.get(i));
+            }
+        }
+        bundle.putSerializable("favoriteitems", favoriteQuotes);
+        return bundle;
+    }
 }

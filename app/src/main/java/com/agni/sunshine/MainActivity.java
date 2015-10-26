@@ -71,8 +71,11 @@ public class MainActivity extends AppCompatActivity{
             return true;
         }
         else if (id == R.id.action_favorites) {
-            Intent settingsIntent = new Intent(this, FavoritesActivity.class);
-            startActivity(settingsIntent);
+            MainFragment f = (MainFragment) getSupportFragmentManager().findFragmentByTag(TAG);
+            Bundle favoritesBundle = f.createBundleForFavorites();
+            Intent favoritesIntent = new Intent(this, FavoritesActivity.class);
+            favoritesIntent.putExtras(favoritesBundle);
+            startActivity(favoritesIntent);
             return true;
         }
 
