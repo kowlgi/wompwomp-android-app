@@ -494,16 +494,16 @@ public class MainFragment extends Fragment {
             ArrayList<Quote> quotes = new ArrayList<Quote>();
             // Possibilities:
             // 1. request for all quotes and if we didn't fetch successfully from the server:
-            // newestFromWebOnly is false and quotesFromWeb is null -> READ from model data files, provided they exist i.e. index.size() > 0
+            // newestFromWebOnly is false and quotesFromWeb is empty -> READ from model data files, provided they exist i.e. index.size() > 0
             // 2. request for all quotes, which were fetched successfully from the server:
-            // newestFromWebOnly is false and quotesFromWeb is non null -> ERASE existing model data files and create new ones
+            // newestFromWebOnly is false and quotesFromWeb is not empty -> DELETE existing model data, index files and create new ones
             // 3. request for new quotes only, which were fetched successfully from the server:
-            // newestFromWebOnly is true and quotesFromWeb is not null --> DON'T read from model data files
+            // newestFromWebOnly is true and quotesFromWeb is not empty --> DON'T read from model data files
             // 4. request for new quotes only, which were NOT fetched successfully from the server:
-            // newestFromWebOnly is true and quotesFromWeb is null -->  DON'T read from model data files
+            // newestFromWebOnly is true and quotesFromWeb is empty -->  DON'T read from model data files
 
             /* possibility #1 */
-            if (newestFromWebOnly == false && quotesFromWeb == null && index.size() > 0) {
+            if (newestFromWebOnly == false && quotesFromWeb.isEmpty() && index.size() > 0) {
                 for (int i = index.size() - 1; i >= 0; i--) {
                     try {
                         ArrayList<Quote> quotesFromFile = (ArrayList<Quote>) getObjectFromFile(MODEL_FILENAME + Integer.valueOf(i).toString());
@@ -516,12 +516,11 @@ public class MainFragment extends Fragment {
                     }
                 }
             }
-            else if (quotesFromWeb != null) {
+            else if (quotesFromWeb.isEmpty() == false) {
 
                 /* possibility #2 */
                 if(newestFromWebOnly == false) {
                     for (int i = 0; i < index.size(); i++) {
-                        Log.v(TAG, "Deleting file: ..." + Integer.valueOf(i).toString());
                         getActivity().deleteFile(MODEL_FILENAME + Integer.valueOf(i).toString());
                     }
 
@@ -533,8 +532,6 @@ public class MainFragment extends Fragment {
                 else {
                     /* possibility #3 */
                 }
-
-                Log.v(TAG,"Sizeof quotes from web" + Integer.valueOf(quotesFromWeb.size()).toString());
 
                 try {
                     // Create new file for quotes obtained from the web
