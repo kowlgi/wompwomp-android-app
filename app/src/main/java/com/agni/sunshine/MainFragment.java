@@ -503,7 +503,9 @@ public class MainFragment extends Fragment {
             // newestFromWebOnly is true and quotesFromWeb is empty -->  DON'T read from model data files
 
             /* possibility #1 */
-            if (newestFromWebOnly == false && quotesFromWeb.isEmpty() && index.size() > 0) {
+            if (newestFromWebOnly == false &&
+                    (quotesFromWeb == null || quotesFromWeb.isEmpty()) &&
+                    index.size() > 0) {
                 for (int i = index.size() - 1; i >= 0; i--) {
                     try {
                         ArrayList<Quote> quotesFromFile = (ArrayList<Quote>) getObjectFromFile(MODEL_FILENAME + Integer.valueOf(i).toString());
@@ -516,7 +518,7 @@ public class MainFragment extends Fragment {
                     }
                 }
             }
-            else if (quotesFromWeb.isEmpty() == false) {
+            else if (quotesFromWeb != null && !quotesFromWeb.isEmpty()) {
 
                 /* possibility #2 */
                 if(newestFromWebOnly == false) {
