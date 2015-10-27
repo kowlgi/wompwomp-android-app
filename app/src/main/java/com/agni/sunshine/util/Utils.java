@@ -17,9 +17,23 @@
 package com.agni.sunshine.util;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Build.VERSION_CODES;
+import android.os.Environment;
 import android.os.StrictMode;
+import android.support.v4.app.FragmentActivity;
+import android.view.View;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
 
 /**
  * Class containing some static utility methods.
@@ -75,5 +89,53 @@ public class Utils {
 
     public static boolean hasKitKat() {
         return Build.VERSION.SDK_INT >= VERSION_CODES.KITKAT;
+    }
+
+    public static Uri getLocalViewBitmapUri(View aView, Context context){
+        // Example: Extract Bitmap from ImageView drawable
+        // final Bitmap bmp  = ((BitmapDrawable) networkImageview.getDrawable()).getBitmap();
+
+        //Create a Bitmap with the same dimensions
+        Bitmap image = Bitmap.createBitmap(aView.getWidth(),
+                aView.getHeight(),
+                Bitmap.Config.RGB_565);
+        //Draw the view inside the Bitmap
+        aView.draw(new Canvas(image));
+
+        // Store image to default external storage directory
+        Uri bmpUri = null;
+        try {
+            if(Build.VERSION.SDK_INT> Build.VERSION_CODES.LOLLIPOP_MR1 &&
+                    context.checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") == PackageManager.PERMISSION_DENIED) {
+                return  null;
+            }
+
+            File file =  new File(Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOWNLOADS), "share_image_" + System.currentTimeMillis() + ".png");
+            file.getParentFile().mkdirs();
+            FileOutputStream out = new FileOutputStream(file);
+            image.compress(Bitmap.CompressFormat.PNG, 90, out); //Output
+            bmpUri = Uri.fromFile(file);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return bmpUri;
+    }
+
+    public static boolean fileExists(Context context, String filename) {
+        File file = context.getFileStreamPath(filename);
+        if(file == null || !file.exists()) {
+            return false;
+        }
+        return true;
+    }
+
+    public static Object getObjectFromFile (String filePath, Context context) throws Exception {
+        FileInputStream fis = context.openFileInput(filePath);
+        ObjectInputStream ois = new ObjectInputStream(fis);
+        Object obj = ois.readObject();
+        //Make sure you close all streams.
+        ois.close();
+        return obj;
     }
 }

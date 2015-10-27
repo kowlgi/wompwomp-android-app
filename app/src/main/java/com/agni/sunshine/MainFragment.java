@@ -27,6 +27,7 @@ import android.widget.TextView;
 
 import com.agni.sunshine.util.ImageCache;
 import com.agni.sunshine.util.ImageFetcher;
+import com.agni.sunshine.util.Utils;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.RequestParams;
 import com.loopj.android.http.TextHttpResponseHandler;
@@ -275,7 +276,7 @@ public class MainFragment extends Fragment {
                     shareIntent.setType("text/plain");
 
                     View parentView = (View) holder.imageView.getParent();
-                    Uri bmpUri = getLocalViewBitmapUri(parentView);
+                    Uri bmpUri = Utils.getLocalViewBitmapUri(parentView, getActivity());
                     if (bmpUri != null) {
                         // Construct a ShareIntent with link to image
                         shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
@@ -357,37 +358,6 @@ public class MainFragment extends Fragment {
             }
         }
 
-        public Uri getLocalViewBitmapUri(View aView){
-            // Example: Extract Bitmap from ImageView drawable
-            // final Bitmap bmp  = ((BitmapDrawable) networkImageview.getDrawable()).getBitmap();
-
-            //Create a Bitmap with the same dimensions
-            Bitmap image = Bitmap.createBitmap(aView.getWidth(),
-                    aView.getHeight(),
-                    Bitmap.Config.RGB_565);
-            //Draw the view inside the Bitmap
-            aView.draw(new Canvas(image));
-
-            // Store image to default external storage directory
-            Uri bmpUri = null;
-            try {
-                if(Build.VERSION.SDK_INT> Build.VERSION_CODES.LOLLIPOP_MR1 &&
-                        getActivity().checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") == PackageManager.PERMISSION_DENIED) {
-                    return  null;
-                }
-
-                File file =  new File(Environment.getExternalStoragePublicDirectory(
-                        Environment.DIRECTORY_DOWNLOADS), "share_image_" + System.currentTimeMillis() + ".png");
-                file.getParentFile().mkdirs();
-                FileOutputStream out = new FileOutputStream(file);
-                image.compress(Bitmap.CompressFormat.PNG, 90, out); //Output
-                bmpUri = Uri.fromFile(file);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return bmpUri;
-        }
-
         // Return the size of your dataset (invoked by the layout manager)
         @Override
         public int getItemCount() {
@@ -408,10 +378,10 @@ public class MainFragment extends Fragment {
             ArrayList<Integer> index = null;
             Boolean newestFromWebOnly = params[0];
 
-            if (fileExists(getActivity(), INDEX_FILENAME)) {
+            if (Utils.fileExists(getActivity(), INDEX_FILENAME)) {
                 try {
                     //Index is a list of array sizes stored in a file with the numerical suffix the same as the corresponding position
-                    index = (ArrayList<Integer>) getObjectFromFile(INDEX_FILENAME);
+                    index = (ArrayList<Integer>) Utils.getObjectFromFile(INDEX_FILENAME, getActivity());
                 } catch (java.io.FileNotFoundException fnf) {
                     Log.e(TAG, "Error from file stream open operation ", fnf);
                     fnf.printStackTrace();
@@ -508,7 +478,7 @@ public class MainFragment extends Fragment {
                     index.size() > 0) {
                 for (int i = index.size() - 1; i >= 0; i--) {
                     try {
-                        ArrayList<Quote> quotesFromFile = (ArrayList<Quote>) getObjectFromFile(MODEL_FILENAME + Integer.valueOf(i).toString());
+                        ArrayList<Quote> quotesFromFile = (ArrayList<Quote>) Utils.getObjectFromFile(MODEL_FILENAME + Integer.valueOf(i).toString(), getActivity());
                         for (int j = 0; j < quotesFromFile.size(); j++) {
                             quotes.add(quotesFromFile.get(j)); // files are stored in reverse chronological order
                         }
@@ -574,9 +544,9 @@ public class MainFragment extends Fragment {
                 // outta luck, mate
             }
 
-            if(quotes != null && fileExists(getActivity(), FAVORITE_FILENAME)) {
+            if(quotes != null && Utils.fileExists(getActivity(), FAVORITE_FILENAME)) {
                 try {
-                    HashSet<String> favorites = (HashSet<String>) getObjectFromFile(FAVORITE_FILENAME);
+                    HashSet<String> favorites = (HashSet<String>) Utils.getObjectFromFile(FAVORITE_FILENAME, getActivity());
                     for(int i = 0; i < quotes.size(); i++){
                         if(favorites != null && favorites.contains(quotes.get(i).getDisplayId())) {
                             quotes.get(i).setFavorite(true);
@@ -592,23 +562,6 @@ public class MainFragment extends Fragment {
             }
 
             return quotes;
-        }
-
-        public boolean fileExists(Context context, String filename) {
-            File file = context.getFileStreamPath(filename);
-            if(file == null || !file.exists()) {
-                return false;
-            }
-            return true;
-        }
-
-        private Object getObjectFromFile (String filePath) throws Exception {
-            FileInputStream fis = getActivity().openFileInput(filePath);
-            ObjectInputStream ois = new ObjectInputStream(fis);
-            Object obj = ois.readObject();
-            //Make sure you close all streams.
-            ois.close();
-            return obj;
         }
 
         private ArrayList<Quote> getQuotesFromJson(String JSONStr) throws JSONException {
