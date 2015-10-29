@@ -64,7 +64,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
      * <p>This points to the Android Developers Blog. (Side note: We highly recommend reading the
      * Android Developer Blog to stay up to date on the latest Android platform developments!)
      */
-    private static final String FEED_URL = "http://45.55.216.153:3000/items";
+    private static final String FEED_URL = "http://192.168.0.9:3000/items";
 
     /**
      * Network connection timeout, in milliseconds.

@@ -228,7 +228,7 @@ public class FeedProvider extends ContentProvider {
                         FeedContract.Entry.COLUMN_NAME_FAVORITE + TYPE_INTEGER + COMMA_SEP +
                         FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES    + TYPE_INTEGER + COMMA_SEP +
                         FeedContract.Entry.COLUMN_NAME_NUM_SHARES + TYPE_INTEGER + COMMA_SEP +
-                        FeedContract.Entry.COLUMN_NAME_CREATED_ON + TYPE_TEXT + COMMA_SEP + ")";
+                        FeedContract.Entry.COLUMN_NAME_CREATED_ON + TYPE_TEXT + ")";
 
         /** SQL statement to drop "entry" table. */
         private static final String SQL_DELETE_ENTRIES =

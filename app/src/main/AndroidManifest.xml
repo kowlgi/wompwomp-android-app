@@ -76,7 +76,7 @@
 
         <provider
             android:name=".provider.FeedProvider"
-            android:authorities="com.example.android.basicsyncadapter"
+            android:authorities="com.agni.sunshine"
             android:exported="false" />
 
         <!-- This service implements our SyncAdapter. It needs to be exported, so that the system
