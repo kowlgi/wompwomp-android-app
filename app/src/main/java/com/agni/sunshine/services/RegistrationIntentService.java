@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package services;
+package com.agni.sunshine.services;
 
 import android.app.IntentService;
 import android.content.Intent;

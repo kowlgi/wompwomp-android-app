@@ -89,7 +89,7 @@ public class RecyclingBitmapDrawable extends BitmapDrawable {
     private synchronized void checkState() {
         //BEGIN_INCLUDE(check_state)
         // If the drawable cache and display ref counts = 0, and this drawable
-        // has been displayed, then recycle/home/kowlgi/Sunshine/app/src/main/java/services
+        // has been displayed, then recycle/home/kowlgi/Sunshine/app/src/main/java/com.agni.sunshine.services
         if (mCacheRefCount <= 0 && mDisplayRefCount <= 0 && mHasBeenDisplayed
                 && hasValidBitmap()) {
             if (BuildConfig.DEBUG) {

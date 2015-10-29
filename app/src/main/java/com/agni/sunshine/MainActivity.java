@@ -13,7 +13,7 @@ import android.view.MenuItem;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
-import services.RegistrationIntentService;
+import com.agni.sunshine.services.RegistrationIntentService;
 
 public class MainActivity extends AppCompatActivity{
 
@@ -66,15 +66,11 @@ public class MainActivity extends AppCompatActivity{
             return true;
         }
         else if (id == R.id.action_refresh) {
-             MainFragment f = (MainFragment) getSupportFragmentManager().findFragmentByTag(TAG);
-             f.update(true);
+            MainFragment f = (MainFragment) getSupportFragmentManager().findFragmentByTag(TAG);
             return true;
         }
         else if (id == R.id.action_favorites) {
-            MainFragment f = (MainFragment) getSupportFragmentManager().findFragmentByTag(TAG);
-            Bundle favoritesBundle = f.createBundleForFavorites();
             Intent favoritesIntent = new Intent(this, FavoritesActivity.class);
-            favoritesIntent.putExtras(favoritesBundle);
             startActivity(favoritesIntent);
             return true;
         }
