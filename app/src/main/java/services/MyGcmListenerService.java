@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.agni.sunshine;
+package services;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -29,6 +29,8 @@ import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import com.agni.sunshine.MainActivity;
+import com.agni.sunshine.R;
 import com.google.android.gms.gcm.GcmListenerService;
 
 import java.io.BufferedReader;

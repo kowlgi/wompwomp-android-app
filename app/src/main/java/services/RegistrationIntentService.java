@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.agni.sunshine;
+package services;
 
 import android.app.IntentService;
 import android.content.Intent;
@@ -23,6 +23,8 @@ import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.agni.sunshine.QuickstartPreferences;
+import com.agni.sunshine.R;
 import com.google.android.gms.gcm.GcmPubSub;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.android.gms.iid.InstanceID;

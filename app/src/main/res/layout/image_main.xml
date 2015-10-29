@@ -19,7 +19,7 @@
 
         <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
             android:orientation="vertical" android:layout_width="match_parent"
-            android:background="@android:color/white" android:layout_height="match_parent">
+            android:layout_height="match_parent">
 
             <com.agni.sunshine.SquareImageView
                 android:layout_width="match_parent"
@@ -35,6 +35,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="10dp"
+                android:background="@android:color/white"
                 android:layout_below="@+id/imageView"/>
 
         </LinearLayout>

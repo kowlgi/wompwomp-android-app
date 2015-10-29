@@ -1,4 +1,4 @@
-package com.agni.sunshine; /**
+package services; /**
  * Copyright 2015 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,8 @@ package com.agni.sunshine; /**
 import android.content.Intent;
 
 import com.google.android.gms.iid.InstanceIDListenerService;
+
+import services.RegistrationIntentService;
 
 public class MyInstanceIDListenerService extends InstanceIDListenerService {
 
