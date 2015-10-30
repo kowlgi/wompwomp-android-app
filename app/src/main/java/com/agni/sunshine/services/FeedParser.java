@@ -101,7 +101,7 @@ public class FeedParser {
             } else if (name.equals(AGNI_NUMFAVORITES)) {
                 numFavorites = reader.nextInt();
             } else if (name.equals(AGNI_NUMSHARES)) {
-                numFavorites = reader.nextInt();
+                numShares = reader.nextInt();
             } else if (name.equals(AGNI_CREATEDON)) {
                 createdOn = reader.nextString();
             } else {
