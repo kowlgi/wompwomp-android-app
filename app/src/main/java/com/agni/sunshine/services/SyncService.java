@@ -33,7 +33,7 @@ import android.util.Log;
  * OS on request.
  */
 public class SyncService extends Service {
-    private static final String TAG = "SyncService";
+    private static final String TAG = "AgniSyncService";
 
     private static final Object sSyncAdapterLock = new Object();
     private static SyncAdapter sSyncAdapter = null;

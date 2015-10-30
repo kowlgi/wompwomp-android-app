@@ -59,14 +59,6 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
     public static final String TAG = "AgniSyncAdapter";
 
     /**
-     * URL to fetch content from during a sync.
-     *
-     * <p>This points to the Android Developers Blog. (Side note: We highly recommend reading the
-     * Android Developer Blog to stay up to date on the latest Android platform developments!)
-     */
-    private static final String FEED_URL = "http://192.168.0.9:3000/items";
-
-    /**
      * Network connection timeout, in milliseconds.
      */
     private static final int NET_CONNECT_TIMEOUT_MILLIS = 15000;  // 15 seconds
@@ -141,7 +133,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                               ContentProviderClient provider, SyncResult syncResult) {
         Log.i(TAG, "Beginning network synchronization");
         try {
-            final URL location = new URL(FEED_URL);
+            final URL location = new URL(FeedContract.FEED_URL);
             InputStream stream = null;
 
             try {

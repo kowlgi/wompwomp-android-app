@@ -145,12 +145,11 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
                 new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
                     public void onRefresh() {
-                        Log.i(TAG, "onRefresh called from SwipeRefreshLayout");
-
-                        //TODO: update feed here
+                        SyncUtils.TriggerRefresh();
                     }
                 }
         );
+
         // Configure the refreshing colors
         mSwipeRefreshLayout.setColorSchemeResources(
                 android.R.color.holo_blue_bright,
@@ -308,5 +307,4 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
             });
         }
     };
-
 }

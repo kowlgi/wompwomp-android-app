@@ -21,6 +21,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.DataSetObserver;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 
 /**
  * Created by skyfishjy on 10/31/14.
@@ -29,14 +30,11 @@ import android.support.v7.widget.RecyclerView;
 public abstract class BaseCursorAdapter<VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> {
 
     protected Context mContext;
-
     private Cursor mCursor;
-
     private boolean mDataValid;
-
     private int mRowIdColumn;
-
     private DataSetObserver mDataSetObserver;
+    private final String TAG = "BaseCursorAdapter";
 
     public BaseCursorAdapter(Context context, Cursor cursor) {
         mContext = context;

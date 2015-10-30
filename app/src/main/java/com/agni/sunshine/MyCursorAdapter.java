@@ -1,11 +1,13 @@
 package com.agni.sunshine;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +15,8 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.agni.sunshine.provider.FeedContract;
+import com.agni.sunshine.services.SyncUtils;
 import com.agni.sunshine.util.ImageFetcher;
 import com.agni.sunshine.util.Utils;
 import com.loopj.android.http.AsyncHttpClient;
@@ -34,6 +38,7 @@ import cz.msebera.android.httpclient.Header;
 public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolder>{
 
     private ImageFetcher mImageFetcher = null;
+    private final String TAG = "MyCursorAdapter";
 
     public MyCursorAdapter(Context context, Cursor cursor, ImageFetcher imageFetcher){
         super(context,cursor);
@@ -71,8 +76,9 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, Cursor cursor) {
-        MyListItem myListItem = MyListItem.fromCursor(cursor);
+    public void onBindViewHolder(final ViewHolder holder, Cursor cursor) {
+        final MyListItem myListItem = MyListItem.fromCursor(cursor);
+        Log.v(TAG, Integer.valueOf(cursor.getPosition()).toString());
 
         DisplayMetrics displayMetrics = mContext.getResources().getDisplayMetrics();
         float dpHeight = displayMetrics.heightPixels / displayMetrics.density;
@@ -95,5 +101,87 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 
         holder.numfavoritesView.setText(myListItem.getNumFavorites().toString());
         holder.numsharesView.setText(myListItem.getNumShares().toString());
+
+        holder.shareButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Uri updateUri = FeedContract.Entry.CONTENT_URI.buildUpon()
+                        .appendPath(myListItem.get_id().toString()).build();
+                ContentValues values = new ContentValues();
+                values.put(FeedContract.Entry.COLUMN_NAME_NUM_SHARES, myListItem.getNumShares() + 1);
+                mContext.getContentResolver().update(updateUri, values, null, null);
+
+                AsyncHttpClient client = new AsyncHttpClient();
+                RequestParams params = new RequestParams();
+                client.post(FeedContract.BASE_URL + "/s/" + myListItem.getId(), params, new TextHttpResponseHandler() {
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, String res) {
+                        // we received status 200 OK..wohoo!
+                    }
+
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
+                        //do nothing
+                    }
+                });
+
+                Intent shareIntent = new Intent();
+                shareIntent.setAction(Intent.ACTION_SEND);
+                shareIntent.putExtra(Intent.EXTRA_TEXT, FeedContract.BASE_URL + "/v/" + myListItem.getId());
+                shareIntent.setType("text/plain");
+
+                View parentView = (View) holder.imageView.getParent();
+                Uri bmpUri = Utils.getLocalViewBitmapUri(parentView, mContext);
+                if (bmpUri != null) {
+                    // Construct a ShareIntent with link to image
+                    shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
+                    shareIntent.setType("image/*");
+                }
+                mContext.startActivity(Intent.createChooser(shareIntent, "Share"));
+            }
+        });
+
+        holder.favoriteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String SUB_URL = "";
+                Uri updateUri = FeedContract.Entry.CONTENT_URI.buildUpon()
+                        .appendPath(myListItem.get_id().toString()).build();
+                ContentValues values = new ContentValues();
+                if(myListItem.getFavorite()) {
+                    // she likes me not :(
+                    if(myListItem.getNumFavorites() > 0) {
+                        values.put(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, myListItem.getNumFavorites() - 1);
+                    }
+
+                    values.put(FeedContract.Entry.COLUMN_NAME_FAVORITE, 0);
+                    SUB_URL = "/uf/";
+                }
+                else {
+                    // she likes me :)
+                    values.put(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, myListItem.getNumFavorites() + 1);
+                    values.put(FeedContract.Entry.COLUMN_NAME_FAVORITE, 1);
+                    SUB_URL = "/f/";
+                }
+
+                mContext.getContentResolver().update(updateUri, values, null, null);
+                SUB_URL += myListItem.getId();
+
+                AsyncHttpClient client = new AsyncHttpClient();
+                RequestParams params = new RequestParams();
+                client.post(FeedContract.BASE_URL + SUB_URL, params, new TextHttpResponseHandler() {
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, String res) {
+                        // called when response HTTP status is "200 OK"
+                    }
+
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
+                        //do nothing
+                    }
+                });
+            }
+        });
+
     }
 }

@@ -29,6 +29,16 @@ public class FeedContract {
     }
 
     /**
+     * URL to fetch content from during a sync.
+     *
+     * <p>This points to the Android Developers Blog. (Side note: We highly recommend reading the
+     * Android Developer Blog to stay up to date on the latest Android platform developments!)
+     */
+
+    public static final String BASE_URL = "http://192.168.0.9:3000";
+    public static final String FEED_URL = BASE_URL + "/items";
+
+    /**
      * Content provider authority.
      */
     public static final String CONTENT_AUTHORITY = "com.agni.sunshine";

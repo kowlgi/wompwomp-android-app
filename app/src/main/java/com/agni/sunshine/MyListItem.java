@@ -6,7 +6,8 @@ import android.database.Cursor;
  * Created by kowlgi on 10/29/15.
  */
 public class MyListItem {
-    private String id;
+    private Integer _id; // database id
+    private String id; //  globally unique item id
     private String imageSourceUri;
     private String quoteText;
     private Boolean favorite;
@@ -80,9 +81,18 @@ public class MyListItem {
         this.createdOn = createdOn;
     }
 
+    public Integer get_id() {
+        return _id;
+    }
+
+    public void set_id(Integer _id) {
+        this._id = _id;
+    }
+
     public static MyListItem fromCursor(Cursor c) {
         MyListItem myItem = new MyListItem();
-        myItem.setId(c.getString(COLUMN_ID));
+        myItem.set_id(c.getInt(COLUMN_ID));
+        myItem.setId(c.getString(COLUMN_ENTRY_ID));
         myItem.setImageSourceUri(c.getString(COLUMN_IMAGE_SOURCE_URI));
         myItem.setQuoteText(c.getString(COLUMN_QUOTE_TEXT));
         myItem.setFavorite(c.getInt(COLUMN_FAVORITE) > 0);
