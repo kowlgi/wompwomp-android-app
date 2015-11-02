@@ -67,6 +67,7 @@ public class MainActivity extends AppCompatActivity{
         }
         else if (id == R.id.action_refresh) {
             MainFragment f = (MainFragment) getSupportFragmentManager().findFragmentByTag(TAG);
+            f.update();
             return true;
         }
         else if (id == R.id.action_favorites) {

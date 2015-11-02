@@ -1,74 +1,35 @@
 package com.agni.sunshine;
 
 import android.accounts.Account;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.ContentResolver;
-import android.content.Context;
-import android.content.Intent;
+
 import android.content.SyncStatusObserver;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.net.Uri;
-import android.os.AsyncTask;
-import android.os.Build;
+
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.HandlerThread;
+
 import android.support.v4.app.Fragment;
-import android.support.v4.app.ListFragment;
+
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.format.Time;
-import android.util.DisplayMetrics;
-import android.util.Log;
+
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
-import android.widget.SimpleCursorAdapter;
-import android.widget.TextView;
 
 import com.agni.sunshine.accounts.GenericAccountService;
 import com.agni.sunshine.provider.FeedContract;
 import com.agni.sunshine.services.SyncUtils;
 import com.agni.sunshine.util.ImageCache;
 import com.agni.sunshine.util.ImageFetcher;
-import com.agni.sunshine.util.Utils;
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.RequestParams;
-import com.loopj.android.http.TextHttpResponseHandler;
-import com.ocpsoft.pretty.time.PrettyTime;
 
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDateTime;
-import org.joda.time.format.ISODateTimeFormat;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashSet;
-
-import cz.msebera.android.httpclient.Header;
 
 
 /**
@@ -116,9 +77,8 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
     }
 
     @Override
-    public View onCreateView(
-            LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        // 1. Set up the recycler view
         View v = inflater.inflate(R.layout.agni_main, container, false);
         mRecyclerView = (RecyclerView) v.findViewById(R.id.quotesRecyclerView);
 
@@ -129,34 +89,6 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
         // use a linear layout manager
         mLayoutManager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(mLayoutManager);
-
-        ImageCache.ImageCacheParams cacheParams =
-                new ImageCache.ImageCacheParams(getActivity(), IMAGE_CACHE_DIR);
-        cacheParams.setMemCacheSizePercent(0.25f); // Set memory cache to 25% of app memory
-
-        // The ImageFetcher takes care of loading images into our ImageView children asynchronously
-        mImageFetcher = new ImageFetcher(getActivity());
-        mImageFetcher.setLoadingImage(R.drawable.geometry2);
-        mImageFetcher.addImageCache(getActivity().getSupportFragmentManager(), cacheParams);
-
-        mSwipeRefreshLayout = ( SwipeRefreshLayout) v.findViewById(R.id.swiperefresh);
-
-        mSwipeRefreshLayout.setOnRefreshListener(
-                new SwipeRefreshLayout.OnRefreshListener() {
-                    @Override
-                    public void onRefresh() {
-                        SyncUtils.TriggerRefresh();
-                    }
-                }
-        );
-
-        // Configure the refreshing colors
-        mSwipeRefreshLayout.setColorSchemeResources(
-                android.R.color.holo_blue_bright,
-                android.R.color.holo_green_light,
-                android.R.color.holo_orange_light,
-                android.R.color.holo_red_light);
-
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(RecyclerView view, int scrollState) {
@@ -170,6 +102,36 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
             }
         });
 
+        Toolbar myToolbar = (Toolbar) v.findViewById(R.id.toolbar);
+        ((AppCompatActivity) getActivity()).setSupportActionBar(myToolbar);
+
+        // 2. Set up the image cache
+        ImageCache.ImageCacheParams cacheParams =
+                new ImageCache.ImageCacheParams(getActivity(), IMAGE_CACHE_DIR);
+        cacheParams.setMemCacheSizePercent(0.25f); // Set memory cache to 25% of app memory
+
+        // The ImageFetcher takes care of loading images into our ImageView children asynchronously
+        mImageFetcher = new ImageFetcher(getActivity());
+        mImageFetcher.setLoadingImage(R.drawable.geometry2);
+        mImageFetcher.addImageCache(getActivity().getSupportFragmentManager(), cacheParams);
+
+        // 3. Set up the swipe refresh layout
+        mSwipeRefreshLayout = ( SwipeRefreshLayout) v.findViewById(R.id.swiperefresh);
+        mSwipeRefreshLayout.setOnRefreshListener(
+                new SwipeRefreshLayout.OnRefreshListener() {
+                    @Override
+                    public void onRefresh() {
+                        SyncUtils.TriggerRefresh();
+                    }
+                }
+        );
+        // Configure the refreshing colors
+        mSwipeRefreshLayout.setColorSchemeResources(
+                android.R.color.holo_blue_bright,
+                android.R.color.holo_green_light,
+                android.R.color.holo_orange_light,
+                android.R.color.holo_red_light);
+
         return v;
     }
 
@@ -179,7 +141,6 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
         mImageFetcher.setExitTasksEarly(false);
 
         mSyncStatusObserver.onStatusChanged(0);
-
         // Watch for sync state changes
         final int mask = ContentResolver.SYNC_OBSERVER_TYPE_PENDING |
                 ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE;
@@ -189,6 +150,8 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
     @Override
     public void onPause() {
         super.onPause();
+
+
         mImageFetcher.setPauseWork(false);
         mImageFetcher.setExitTasksEarly(true);
         mImageFetcher.flushCache();
@@ -268,12 +231,6 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
         mAdapter.changeCursor(null);
     }
 
-    /**
-     * Create a new anonymous SyncStatusObserver. It's attached to the app's ContentResolver in
-     * onResume(), and removed in onPause(). If status changes, it sets the state of the Refresh
-     * button. If a sync is active or pending, the Refresh button is replaced by an indeterminate
-     * ProgressBar; otherwise, the button itself is displayed.
-     */
     private SyncStatusObserver mSyncStatusObserver = new SyncStatusObserver() {
         /** Callback invoked with the sync adapter status changes. */
         @Override
@@ -292,7 +249,8 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
                     if (account == null) {
                         // GetAccount() returned an invalid value. This shouldn't happen, but
                         // we'll set the status to "not refreshing".
-                        //TODO: setRefreshActionButtonState(false);
+                        //setRefreshActionButtonState(false);
+                        mSwipeRefreshLayout.setRefreshing(false);
                         return;
                     }
 
@@ -302,9 +260,15 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
                             account, FeedContract.CONTENT_AUTHORITY);
                     boolean syncPending = ContentResolver.isSyncPending(
                             account, FeedContract.CONTENT_AUTHORITY);
-                    //TODO: setRefreshActionButtonState(syncActive || syncPending);
+                    //setRefreshActionButtonState(syncActive || syncPending);
+                    mSwipeRefreshLayout.setRefreshing(syncActive || syncPending);
                 }
             });
         }
     };
+
+    public void update() {
+        SyncUtils.TriggerRefresh();
+    }
+
 }

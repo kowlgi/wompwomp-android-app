@@ -18,6 +18,7 @@ package com.agni.sunshine.services;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -41,6 +42,9 @@ import java.net.URL;
 public class MyGcmListenerService extends GcmListenerService {
 
     private static final String TAG = "MyGcmListenerService";
+    // Incoming Intent key for extended data
+    public static final String KEY_SYNC_REQUEST =
+            "com.example.android.datasync.KEY_SYNC_REQUEST";
 
     /**
      * Called when message is received.
@@ -52,11 +56,17 @@ public class MyGcmListenerService extends GcmListenerService {
     // [START receive_message]
     @Override
     public void onMessageReceived(String from, Bundle data) {
-        String message = data.getString("message");
-        String imageUri = data.getString("imageuri");
-
-        if (from.startsWith("/topics/")) {
+        if (from.startsWith("/topics/content")) {
+            String message = data.getString("message");
+            String imageUri = data.getString("imageuri");
             // message received from some topic.
+            /**
+             * In some cases it may be useful to show a notification indicating to the user
+             * that a message was received.
+             */
+            pushNotification(message, imageUri);
+        } else if (from.startsWith("/topics/sync")){
+            SyncUtils.TriggerRefresh();
         } else {
             // normal downstream message.
         }
@@ -69,11 +79,6 @@ public class MyGcmListenerService extends GcmListenerService {
          *     - Update UI.
          */
 
-        /**
-         * In some cases it may be useful to show a notification indicating to the user
-         * that a message was received.
-         */
-        sendNotification(message, imageUri);
         // [END_EXCLUDE]
     }
     // [END receive_message]
@@ -83,7 +88,7 @@ public class MyGcmListenerService extends GcmListenerService {
      *
      * @param message GCM message received.
      */
-    private void sendNotification(String message, String imageUri) {
+    private void pushNotification(String message, String imageUri) {
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
