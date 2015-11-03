@@ -32,7 +32,7 @@ import com.agni.sunshine.accounts.GenericAccountService;
  * Static helper methods for working with the sync framework.
  */
 public class SyncUtils {
-    private static final long SYNC_FREQUENCY = 60;  // 1 hr in seconds
+    private static final long SYNC_FREQUENCY = 60 * 60;  // 1 hr in seconds
     private static final String CONTENT_AUTHORITY = FeedContract.CONTENT_AUTHORITY;
     private static final String PREF_SETUP_COMPLETE = "setup_complete";
     // Value below must match the account type specified in res/xml/syncadapter.xml

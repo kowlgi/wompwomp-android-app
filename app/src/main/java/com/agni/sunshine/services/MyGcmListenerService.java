@@ -57,6 +57,7 @@ public class MyGcmListenerService extends GcmListenerService {
     @Override
     public void onMessageReceived(String from, Bundle data) {
         if (from.startsWith("/topics/content")) {
+            Log.i(TAG, "PUSH NOTIFY NOW");
             String message = data.getString("message");
             String imageUri = data.getString("imageuri");
             // message received from some topic.
@@ -66,6 +67,7 @@ public class MyGcmListenerService extends GcmListenerService {
              */
             pushNotification(message, imageUri);
         } else if (from.startsWith("/topics/sync")){
+            Log.i(TAG, "SYNC NOW");
             SyncUtils.TriggerRefresh();
         } else {
             // normal downstream message.

@@ -21,7 +21,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Build.VERSION_CODES;
@@ -29,6 +32,9 @@ import android.os.Environment;
 import android.os.StrictMode;
 import android.support.v4.app.FragmentActivity;
 import android.view.View;
+import android.widget.TextView;
+
+import com.agni.sunshine.R;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -99,8 +105,26 @@ public class Utils {
         Bitmap image = Bitmap.createBitmap(aView.getWidth(),
                 aView.getHeight(),
                 Bitmap.Config.RGB_565);
+        Canvas myCanvas = new Canvas(image);
+
         //Draw the view inside the Bitmap
-        aView.draw(new Canvas(image));
+        aView.draw(myCanvas);
+
+        View imageView = aView.findViewById(R.id.imageView);
+        final double SHRINK_FACTOR = 0.7;
+        final double HORIZONTAL_MARGIN_FACTOR = (1-SHRINK_FACTOR)/2;
+
+        Bitmap watermark = BitmapFactory.decodeResource(context.getResources(), R.drawable.watermark);
+        Bitmap scaledWatermark = Bitmap.createScaledBitmap(watermark,
+                (int) (aView.getWidth() * SHRINK_FACTOR),
+                (int) (aView.getHeight()*0.1),
+                false);
+        Paint bgPaint=new Paint();
+        bgPaint.setAntiAlias(true);
+        myCanvas.drawBitmap(scaledWatermark,
+                (int) (aView.getWidth()* HORIZONTAL_MARGIN_FACTOR)/* left */,
+                (int) (imageView.getHeight() * 0.9) /* top */,
+                bgPaint);
 
         // Store image to default external storage directory
         Uri bmpUri = null;

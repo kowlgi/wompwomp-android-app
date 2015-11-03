@@ -35,7 +35,7 @@ public class FeedContract {
      * Android Developer Blog to stay up to date on the latest Android platform developments!)
      */
 
-    public static final String BASE_URL = "http://192.168.1.119:3000";
+    public static final String BASE_URL = "http://45.55.216.153:3000";
     public static final String FEED_URL = BASE_URL + "/items";
 
     /**
