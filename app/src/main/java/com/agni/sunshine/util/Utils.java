@@ -121,10 +121,11 @@ public class Utils {
                 false);
         Paint bgPaint=new Paint();
         bgPaint.setAntiAlias(true);
-        myCanvas.drawBitmap(scaledWatermark,
-                (int) (aView.getWidth()* HORIZONTAL_MARGIN_FACTOR)/* left */,
-                (int) (imageView.getHeight() * 0.9) /* top */,
-                bgPaint);
+        // TODO: Uncomment below code block when you're ready to include watermarks
+        //myCanvas.drawBitmap(scaledWatermark,
+                //(int) (aView.getWidth()* HORIZONTAL_MARGIN_FACTOR)/* left */,
+                //(int) (imageView.getHeight() * 0.9) /* top */,
+               // bgPaint);
 
         // Store image to default external storage directory
         Uri bmpUri = null;

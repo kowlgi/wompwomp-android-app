@@ -24,6 +24,8 @@ public class MyListItem {
     public static final int COLUMN_NUM_FAVORITES = 5;
     public static final int COLUMN_NUM_SHARES = 6;
     public static final int COLUMN_CREATED_ON = 7;
+    public static final int TYPE_CONTENT_CARD = 0;
+    public static final int TYPE_SHARE_CARD = 1;
 
     public String getId() {
         return id;

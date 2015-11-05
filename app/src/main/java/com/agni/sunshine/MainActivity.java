@@ -13,8 +13,6 @@ import android.view.MenuItem;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
-import com.agni.sunshine.services.RegistrationIntentService;
-
 public class MainActivity extends AppCompatActivity{
 
     private static final String TAG = "MainActivity";
@@ -62,16 +60,13 @@ public class MainActivity extends AppCompatActivity{
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        else if (id == R.id.action_refresh) {
+        if (id == R.id.action_refresh) {
             MainFragment f = (MainFragment) getSupportFragmentManager().findFragmentByTag(TAG);
             f.update();
             return true;
         }
-        else if (id == R.id.action_favorites) {
-            Intent favoritesIntent = new Intent(this, FavoritesActivity.class);
+        else if (id == R.id.action_likes) {
+            Intent favoritesIntent = new Intent(this, LikesActivity.class);
             startActivity(favoritesIntent);
             return true;
         }

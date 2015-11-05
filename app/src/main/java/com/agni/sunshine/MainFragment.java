@@ -26,7 +26,6 @@ import android.view.ViewGroup;
 
 import com.agni.sunshine.accounts.GenericAccountService;
 import com.agni.sunshine.provider.FeedContract;
-import com.agni.sunshine.services.SyncUtils;
 import com.agni.sunshine.util.ImageCache;
 import com.agni.sunshine.util.ImageFetcher;
 
@@ -79,7 +78,7 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // 1. Set up the recycler view
-        View v = inflater.inflate(R.layout.agni_main, container, false);
+        View v = inflater.inflate(R.layout.main_activity, container, false);
         mRecyclerView = (RecyclerView) v.findViewById(R.id.quotesRecyclerView);
 
         // use this setting to improve performance if you know that changes
@@ -172,7 +171,7 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
      * Create SyncAccount at launch, if needed.
      *
      * <p>This will create a new account with the system for our application, register our
-     * {@link com.agni.sunshine.services.SyncService} with it, and establish a sync schedule.
+     * {@link SyncService} with it, and establish a sync schedule.
      */
     @Override
     public void onAttach(Activity activity) {

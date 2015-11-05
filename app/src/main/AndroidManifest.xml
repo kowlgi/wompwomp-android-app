@@ -52,7 +52,7 @@
 
         <!-- [START gcm_listener] -->
         <service
-            android:name=".services.MyGcmListenerService"
+            android:name=".MyGcmListenerService"
             android:exported="false" >
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
@@ -61,7 +61,7 @@
         <!-- [END gcm_listener] -->
         <!-- [START instanceId_listener] -->
         <service
-            android:name=".services.MyInstanceIDListenerService"
+            android:name=".MyInstanceIDListenerService"
             android:exported="false" >
             <intent-filter>
                 <action android:name="com.google.android.gms.iid.InstanceID" />
@@ -69,7 +69,7 @@
         </service>
         <!-- [END instanceId_listener] -->
         <service
-            android:name=".services.RegistrationIntentService"
+            android:name=".RegistrationIntentService"
             android:exported="false" >
         </service>
 
@@ -80,7 +80,7 @@
 
         <!-- This service implements our SyncAdapter. It needs to be exported, so that the system
         sync framework can access it. -->
-        <service android:name=".services.SyncService"
+        <service android:name=".SyncService"
             android:exported="true">
             <!-- This intent filter is required. It allows the system to launch our sync service
             as needed. -->
@@ -109,8 +109,8 @@
         </service>
 
         <activity
-            android:name=".FavoritesActivity"
-            android:label="@string/title_activity_favorites"
+            android:name=".LikesActivity"
+            android:label="@string/title_activity_likes"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme" >
             <meta-data
