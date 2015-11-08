@@ -43,6 +43,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -266,12 +267,17 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                     Log.i(TAG, "No action: " + existingUri);
                 }
             } else {
-                // Entry doesn't exist. Remove it from the database.
-                Uri deleteUri = FeedContract.Entry.CONTENT_URI.buildUpon()
-                        .appendPath(Integer.toString(id)).build();
-                Log.i(TAG, "Scheduling delete: " + deleteUri);
-                batch.add(ContentProviderOperation.newDelete(deleteUri).build());
-                syncResult.stats.numDeletes++;
+                // Entry doesn't exist on server. Remove it from the database if it's not a prompt card
+                if(Arrays.asList(AgniConstants.AGNI_PROMPT_LIST).contains(entryId)) {
+                    Log.i(TAG, "It's a prompt card, so don't delete");
+                }
+                else {
+                    Uri deleteUri = FeedContract.Entry.CONTENT_URI.buildUpon()
+                            .appendPath(Integer.toString(id)).build();
+                    Log.i(TAG, "Scheduling delete: " + deleteUri);
+                    batch.add(ContentProviderOperation.newDelete(deleteUri).build());
+                    syncResult.stats.numDeletes++;
+                }
             }
         }
         c.close();
@@ -287,6 +293,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                     .withValue(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, e.numFavorites)
                     .withValue(FeedContract.Entry.COLUMN_NAME_NUM_SHARES, e.numShares)
                     .withValue(FeedContract.Entry.COLUMN_NAME_CREATED_ON, e.createdOn)
+                    .withValue(FeedContract.Entry.COLUMN_NAME_CARD_TYPE, AgniConstants.TYPE_CONTENT_CARD)
                     .build());
             syncResult.stats.numInserts++;
         }

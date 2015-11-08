@@ -9,7 +9,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
+import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
@@ -21,12 +23,6 @@ public class MainActivity extends AppCompatActivity{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        if (getSupportFragmentManager().findFragmentByTag(TAG) == null) {
-            final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-            ft.add(android.R.id.content, new MainFragment(), TAG);
-            ft.commit();
-        }
 
         if (checkPlayServices()) {
             // Start IntentService to register this application with GCM.
@@ -43,6 +39,13 @@ public class MainActivity extends AppCompatActivity{
             requestPermissions(permissions, permissionRequestCode);
         }
 
+        if (getSupportFragmentManager().findFragmentByTag(TAG) == null) {
+            final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+            ft.add(android.R.id.content, new MainFragment(), TAG);
+            ft.commit();
+        }
+
+        logUser();
     }
 
     @Override
@@ -105,5 +108,9 @@ public class MainActivity extends AppCompatActivity{
                 break;
 
         }
+    }
+
+    private void logUser() {
+        Crashlytics.setUserIdentifier(Installation.id(this));
     }
 }

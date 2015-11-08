@@ -14,18 +14,7 @@ public class MyListItem {
     private Integer numFavorites;
     private Integer numShares;
     private String createdOn;
-
-    // Constants representing column positions from PROJECTION.
-    public static final int COLUMN_ID = 0;
-    public static final int COLUMN_ENTRY_ID = 1;
-    public static final int COLUMN_IMAGE_SOURCE_URI = 2;
-    public static final int COLUMN_QUOTE_TEXT = 3;
-    public static final int COLUMN_FAVORITE = 4;
-    public static final int COLUMN_NUM_FAVORITES = 5;
-    public static final int COLUMN_NUM_SHARES = 6;
-    public static final int COLUMN_CREATED_ON = 7;
-    public static final int TYPE_CONTENT_CARD = 0;
-    public static final int TYPE_SHARE_CARD = 1;
+    private Integer cardType;
 
     public String getId() {
         return id;
@@ -91,16 +80,25 @@ public class MyListItem {
         this._id = _id;
     }
 
+    public Integer getCardType() {
+        return cardType;
+    }
+
+    public void setCardType(Integer cardType) {
+        this.cardType = cardType;
+    }
+
     public static MyListItem fromCursor(Cursor c) {
         MyListItem myItem = new MyListItem();
-        myItem.set_id(c.getInt(COLUMN_ID));
-        myItem.setId(c.getString(COLUMN_ENTRY_ID));
-        myItem.setImageSourceUri(c.getString(COLUMN_IMAGE_SOURCE_URI));
-        myItem.setQuoteText(c.getString(COLUMN_QUOTE_TEXT));
-        myItem.setFavorite(c.getInt(COLUMN_FAVORITE) > 0);
-        myItem.setNumFavorites(c.getInt(COLUMN_NUM_FAVORITES));
-        myItem.setNumShares(c.getInt(COLUMN_NUM_SHARES));
-        myItem.setCreatedOn(c.getString(COLUMN_CREATED_ON));
+        myItem.set_id(c.getInt(AgniConstants.COLUMN_ID));
+        myItem.setId(c.getString(AgniConstants.COLUMN_ENTRY_ID));
+        myItem.setImageSourceUri(c.getString(AgniConstants.COLUMN_IMAGE_SOURCE_URI));
+        myItem.setQuoteText(c.getString(AgniConstants.COLUMN_QUOTE_TEXT));
+        myItem.setFavorite(c.getInt(AgniConstants.COLUMN_FAVORITE) > 0);
+        myItem.setNumFavorites(c.getInt(AgniConstants.COLUMN_NUM_FAVORITES));
+        myItem.setNumShares(c.getInt(AgniConstants.COLUMN_NUM_SHARES));
+        myItem.setCreatedOn(c.getString(AgniConstants.COLUMN_CREATED_ON));
+        myItem.setCardType(c.getInt(AgniConstants.COLUMN_CARD_TYPE));
         return myItem;
     }
 }

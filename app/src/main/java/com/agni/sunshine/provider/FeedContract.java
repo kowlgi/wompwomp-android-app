@@ -78,6 +78,7 @@ public class FeedContract {
          * Table name where records are stored for "entry" resources.
          */
         public static final String TABLE_NAME = "entry";
+
         /**
          * Unique agni ID, not related to database entry _ID.
          */
@@ -106,5 +107,10 @@ public class FeedContract {
          * Timestamp when the entry was added to the backend
          */
         public static final String COLUMN_NAME_CREATED_ON = "created_on";
+        /**
+         * Timestamp when the entry was added to the backend
+         */
+        public static final String COLUMN_NAME_CARD_TYPE = "card_type";
+
     }
 }

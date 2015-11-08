@@ -2,6 +2,8 @@ package com.agni.sunshine;
 
 import android.app.Application;
 import android.content.Context;
+import com.crashlytics.android.Crashlytics;
+import io.fabric.sdk.android.Fabric;
 import java.util.List;
 
 public class MyApplication extends Application {
@@ -11,6 +13,7 @@ public class MyApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        Fabric.with(this, new Crashlytics());
         mInstance = this;
 
         this.setAppContext(getApplicationContext());
@@ -25,4 +28,5 @@ public class MyApplication extends Application {
     public void setAppContext(Context mAppContext) {
         this.mAppContext = mAppContext;
     }
+
 }

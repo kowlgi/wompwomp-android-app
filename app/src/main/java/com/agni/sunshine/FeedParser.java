@@ -37,15 +37,6 @@ import java.util.List;
  * http://en.wikipedia.org/w/index.php?title=Atom_(standard)&oldid=560239173#Example_of_an_Atom_1.0_feed
  */
 public class FeedParser {
-
-    // Constants indicting XML element names that we're interested in
-    private final String AGNI_ID = "id";
-    private final String AGNI_TEXT = "text";
-    private final String AGNI_IMAGEURI = "imageuri";
-    private final String AGNI_CREATEDON = "created_on";
-    private final String AGNI_NUMFAVORITES = "numfavorites";
-    private final String AGNI_NUMSHARES = "numshares";
-
     // We don't use XML namespaces
     private static final String ns = null;
 
@@ -89,17 +80,17 @@ public class FeedParser {
         reader.beginObject();
         while (reader.hasNext()) {
             String name = reader.nextName();
-            if (name.equals(AGNI_ID)) {
+            if (name.equals(AgniConstants.AGNI_ID)) {
                 id = reader.nextString();
-            } else if (name.equals(AGNI_TEXT)) {
+            } else if (name.equals(AgniConstants.AGNI_TEXT)) {
                 quoteText = reader.nextString();
-            } else if (name.equals(AGNI_IMAGEURI)) {
+            } else if (name.equals(AgniConstants.AGNI_IMAGEURI)) {
                 imageSourceUri = reader.nextString();
-            } else if (name.equals(AGNI_NUMFAVORITES)) {
+            } else if (name.equals(AgniConstants.AGNI_NUMFAVORITES)) {
                 numFavorites = reader.nextInt();
-            } else if (name.equals(AGNI_NUMSHARES)) {
+            } else if (name.equals(AgniConstants.AGNI_NUMSHARES)) {
                 numShares = reader.nextInt();
-            } else if (name.equals(AGNI_CREATEDON)) {
+            } else if (name.equals(AgniConstants.AGNI_CREATEDON)) {
                 createdOn = reader.nextString();
             } else {
                 reader.skipValue();

@@ -17,6 +17,10 @@ import android.widget.TextView;
 import com.agni.sunshine.provider.FeedContract;
 import com.agni.sunshine.util.ImageFetcher;
 import com.agni.sunshine.util.Utils;
+import com.crashlytics.android.answers.Answers;
+import com.crashlytics.android.answers.ContentViewEvent;
+import com.crashlytics.android.answers.CustomEvent;
+import com.crashlytics.android.answers.ShareEvent;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.RequestParams;
 import com.loopj.android.http.TextHttpResponseHandler;
@@ -77,20 +81,24 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
     @Override
     public int getItemViewType(int position) {
         // here your custom logic to choose the view type
-        return MyListItem.TYPE_CONTENT_CARD;
+        int initialPosition = getCursor().getPosition();
+        getCursor().moveToPosition(position);
+        int viewType = getCursor().getInt(AgniConstants.COLUMN_CARD_TYPE);
+        getCursor().moveToPosition(initialPosition); // restore cursor
+        return viewType;
     }
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         ViewHolder vh = null;
         switch(viewType) {
-            case MyListItem.TYPE_CONTENT_CARD: {
+            case AgniConstants.TYPE_CONTENT_CARD: {
                 View itemView = LayoutInflater.from(parent.getContext())
                         .inflate(R.layout.content_card, parent, false);
                 vh = new ContentCardViewHolder(itemView);
                 break;
             }
-            case MyListItem.TYPE_SHARE_CARD: {
+            case AgniConstants.TYPE_SHARE_CARD: {
                 View itemView = LayoutInflater.from(parent.getContext())
                         .inflate(R.layout.share_card, parent, false);
                 vh = new ShareCardViewHolder(itemView);
@@ -104,7 +112,9 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
     public void onBindViewHolder(ViewHolder VH, Cursor cursor) {
 
         switch(getItemViewType(cursor.getPosition())){
-            case MyListItem.TYPE_CONTENT_CARD: {
+            // TODO: Use your own attributes to track content views in your app
+
+            case AgniConstants.TYPE_CONTENT_CARD: {
                 final ContentCardViewHolder holder = (ContentCardViewHolder) VH;
                 final MyListItem myListItem = MyListItem.fromCursor(cursor);
                 Log.v(TAG, Integer.valueOf(cursor.getPosition()).toString());
@@ -134,6 +144,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 holder.shareButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        Answers.getInstance().logShare(new ShareEvent().putMethod("Destination: unspecified").putContentId(myListItem.getId()));
+
                         Uri updateUri = FeedContract.Entry.CONTENT_URI.buildUpon()
                                 .appendPath(myListItem.get_id().toString()).build();
                         ContentValues values = new ContentValues();
@@ -185,11 +197,13 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 
                             values.put(FeedContract.Entry.COLUMN_NAME_FAVORITE, 0);
                             SUB_URL = "/uf/";
+                            Answers.getInstance().logCustom(new CustomEvent("Unlike button clicked").putCustomAttribute("id", myListItem.getId()));
                         } else {
                             // she likes me :)
                             values.put(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, myListItem.getNumFavorites() + 1);
                             values.put(FeedContract.Entry.COLUMN_NAME_FAVORITE, 1);
                             SUB_URL = "/f/";
+                            Answers.getInstance().logCustom(new CustomEvent("Like button clicked").putCustomAttribute("id", myListItem.getId()));
                         }
 
                         mContext.getContentResolver().update(updateUri, values, null, null);
@@ -212,7 +226,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 });
                 break;
             }
-            case MyListItem.TYPE_SHARE_CARD: {
+            case AgniConstants.TYPE_SHARE_CARD: {
                 //do nothing
                 break;
             }

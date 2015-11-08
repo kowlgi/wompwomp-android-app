@@ -26,6 +26,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
 import android.util.Log;
 
+import com.agni.sunshine.AgniConstants;
 import com.agni.sunshine.db.SelectionBuilder;
 
 public class FeedProvider extends ContentProvider {
@@ -212,8 +213,10 @@ public class FeedProvider extends ContentProvider {
      * database should never be accessed by other parts of the application directly.
      */
     static class FeedDatabase extends SQLiteOpenHelper {
+
+        private static final String TAG = "FeedDatabase";
         /** Schema version. */
-        public static final int DATABASE_VERSION = 1;
+        public static final int DATABASE_VERSION = 2;
         /** Filename for SQLite file. */
         public static final String DATABASE_NAME = "feed.db";
 
@@ -230,7 +233,8 @@ public class FeedProvider extends ContentProvider {
                         FeedContract.Entry.COLUMN_NAME_FAVORITE + TYPE_INTEGER + COMMA_SEP +
                         FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES    + TYPE_INTEGER + COMMA_SEP +
                         FeedContract.Entry.COLUMN_NAME_NUM_SHARES + TYPE_INTEGER + COMMA_SEP +
-                        FeedContract.Entry.COLUMN_NAME_CREATED_ON + TYPE_TEXT + ")";
+                        FeedContract.Entry.COLUMN_NAME_CREATED_ON + TYPE_TEXT + COMMA_SEP +
+                        FeedContract.Entry.COLUMN_NAME_CARD_TYPE + TYPE_INTEGER + ")";
 
         /** SQL statement to drop "entry" table. */
         private static final String SQL_DELETE_ENTRIES =
@@ -238,6 +242,7 @@ public class FeedProvider extends ContentProvider {
 
         public FeedDatabase(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
+            Log.i(TAG, SQL_CREATE_ENTRIES);
         }
 
         @Override

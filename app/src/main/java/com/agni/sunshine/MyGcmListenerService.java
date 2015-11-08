@@ -18,8 +18,10 @@ package com.agni.sunshine;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.RingtoneManager;
@@ -28,6 +30,7 @@ import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import com.agni.sunshine.provider.FeedContract;
 import com.google.android.gms.gcm.GcmListenerService;
 
 import java.io.BufferedReader;
@@ -64,10 +67,21 @@ public class MyGcmListenerService extends GcmListenerService {
             pushNotification(message, imageUri);
         } else if (from.startsWith("/topics/sync")){
             SyncUtils.TriggerRefresh();
-        } else if(from.startsWith("topics/promptshare")) {
-            // push 'share now' card to stream
-        } else if(from.startsWith("topics/promptrate")) {
-            // push 'rate now' card to stream
+        } else if(from.startsWith("/topics/prompt_share")) {
+            String timestamp = data.getString("message");
+            // push 'share now' card to feed
+            getContentResolver().insert(FeedContract.Entry.CONTENT_URI, populateContentValues(AgniConstants.TYPE_SHARE_CARD, timestamp));
+        } else if(from.startsWith("/topics/prompt_rate")) {
+            String timestamp = data.getString("message");
+            // push 'rate now' card to feed
+            getContentResolver().insert(FeedContract.Entry.CONTENT_URI, populateContentValues(AgniConstants.TYPE_RATE_CARD, timestamp));
+        } else if(from.startsWith("/topics/remove_all_prompts")) {
+            Log.i(TAG, "REMOVE ALL PROMPTS");
+            Uri uri = FeedContract.Entry.CONTENT_URI; // Get all entries
+            String[] share_args = new String[] { AgniConstants.AGNI_PROMPT_SHARE};
+            String[] rate_args = new String[] { AgniConstants.AGNI_PROMPT_RATE};
+            getContentResolver().delete(uri, FeedContract.Entry.COLUMN_NAME_ENTRY_ID+"=?", share_args);
+            getContentResolver().delete(uri, FeedContract.Entry.COLUMN_NAME_ENTRY_ID+"=?", rate_args);
         }
         else {
             // normal downstream message.
@@ -155,6 +169,25 @@ public class MyGcmListenerService extends GcmListenerService {
             }
             return aBitmap;
         }
+    }
 
+    private ContentValues populateContentValues(Integer card_type, String timestamp) {
+        ContentValues contentValues = new ContentValues();
+        String entry_id = null;
+        if(card_type == AgniConstants.TYPE_RATE_CARD) {
+            entry_id = AgniConstants.AGNI_PROMPT_RATE;
+        }
+        else if(card_type == AgniConstants.TYPE_SHARE_CARD) {
+            entry_id = AgniConstants.AGNI_PROMPT_SHARE;
+        }
+        contentValues.put(FeedContract.Entry.COLUMN_NAME_ENTRY_ID, entry_id);
+        contentValues.put(FeedContract.Entry.COLUMN_NAME_QUOTE_TEXT, "");
+        contentValues.put(FeedContract.Entry.COLUMN_NAME_IMAGE_SOURCE_URI, "");
+        contentValues.put(FeedContract.Entry.COLUMN_NAME_FAVORITE, 0);
+        contentValues.put(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, 0);
+        contentValues.put(FeedContract.Entry.COLUMN_NAME_NUM_SHARES, 0);
+        contentValues.put(FeedContract.Entry.COLUMN_NAME_CREATED_ON, timestamp);
+        contentValues.put(FeedContract.Entry.COLUMN_NAME_CARD_TYPE, card_type);
+        return contentValues;
     }
 }

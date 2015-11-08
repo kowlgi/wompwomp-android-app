@@ -34,7 +34,7 @@ import java.io.IOException;
 public class RegistrationIntentService extends IntentService {
 
     private static final String TAG = "RegIntentService";
-    private static final String[] TOPICS = {"content", "sync", "promptshare", "promptrate"};
+    private static final String[] TOPICS = {"content", "sync", "prompt_share", "prompt_rate", "remove_all_prompts"};
 
     public RegistrationIntentService() {
         super(TAG);

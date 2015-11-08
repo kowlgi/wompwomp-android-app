@@ -62,7 +62,8 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
             FeedContract.Entry.COLUMN_NAME_FAVORITE,
             FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES,
             FeedContract.Entry.COLUMN_NAME_NUM_SHARES,
-            FeedContract.Entry.COLUMN_NAME_CREATED_ON
+            FeedContract.Entry.COLUMN_NAME_CREATED_ON,
+            FeedContract.Entry.COLUMN_NAME_CARD_TYPE
     };
 
     /**

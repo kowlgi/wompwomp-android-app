@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    card_view:cardCornerRadius="0dp"
+    android:clickable="false"
+    card_view:cardElevation="3dp"
+    android:layout_marginBottom="30dp"
+    android:backgroundTintMode="screen"
+    android:focusableInTouchMode="false"
+    android:focusable="false"
+    android:contextClickable="false">
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical" android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#2196F3">
+
+        <TextView
+            android:id="@+id/share_text"
+            android:text="If you like this app share it with others"
+            style="@android:style/TextAppearance.Medium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:textColor="#E3F2FD"
+            android:padding="20dp"/>
+
+
+        <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:orientation="horizontal" android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <Button
+                android:text="SHARE"
+                android:id="@+id/sharenow"
+                android:textColor="#E3F2FD"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAlignment="center"
+                android:layout_alignParentRight="true"
+                android:padding="10dp"
+                android:background="#2196F3"
+                style="?android:attr/borderlessButtonStyle"/>
+
+            </RelativeLayout>
+
+    </LinearLayout>
+
+</android.support.v7.widget.CardView>
