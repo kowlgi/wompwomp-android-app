@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.agni.sunshine" >
+    package="co.wompwomp.sunshine" >
 
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -23,13 +23,13 @@
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
 
     <application
-        android:name=".MyApplication"
+        android:name="co.wompwomp.sunshine.MyApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name=".MainActivity"
+            android:name="co.wompwomp.sunshine.MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -44,7 +44,7 @@
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
 
-                <category android:name="com.agni.sunshine" />
+                <category android:name="co.wompwomp.sunshine" />
             </intent-filter>
         </receiver>
         <!-- [END gcm_receiver] -->
@@ -52,7 +52,7 @@
 
         <!-- [START gcm_listener] -->
         <service
-            android:name=".MyGcmListenerService"
+            android:name="co.wompwomp.sunshine.MyGcmListenerService"
             android:exported="false" >
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
@@ -61,7 +61,7 @@
         <!-- [END gcm_listener] -->
         <!-- [START instanceId_listener] -->
         <service
-            android:name=".MyInstanceIDListenerService"
+            android:name="co.wompwomp.sunshine.MyInstanceIDListenerService"
             android:exported="false" >
             <intent-filter>
                 <action android:name="com.google.android.gms.iid.InstanceID" />
@@ -69,18 +69,18 @@
         </service>
         <!-- [END instanceId_listener] -->
         <service
-            android:name=".RegistrationIntentService"
+            android:name="co.wompwomp.sunshine.RegistrationIntentService"
             android:exported="false" >
         </service>
 
         <provider
-            android:name=".provider.FeedProvider"
-            android:authorities="com.agni.sunshine"
+            android:name="co.wompwomp.sunshine.provider.FeedProvider"
+            android:authorities="co.wompwomp.sunshine"
             android:exported="false" />
 
         <!-- This service implements our SyncAdapter. It needs to be exported, so that the system
         sync framework can access it. -->
-        <service android:name=".SyncService"
+        <service android:name="co.wompwomp.sunshine.SyncService"
             android:exported="true">
             <!-- This intent filter is required. It allows the system to launch our sync service
             as needed. -->
@@ -98,7 +98,7 @@
 
         It's also possible to attach a SyncAdapter to an existing account provided by another
         package. In that case, this element could be omitted here. -->
-        <service android:name=".accounts.GenericAccountService">
+        <service android:name="co.wompwomp.sunshine.accounts.GenericAccountService">
             <!-- Required filter used by the system to launch our account service. -->
             <intent-filter>
                 <action android:name="android.accounts.AccountAuthenticator" />
@@ -109,13 +109,13 @@
         </service>
 
         <activity
-            android:name=".LikesActivity"
+            android:name="co.wompwomp.sunshine.LikesActivity"
             android:label="@string/title_activity_likes"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName="co.wompwomp.sunshine.MainActivity"
             android:theme="@style/AppTheme" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="MainActivity" />
+                android:value="co.wompwomp.sunshine.MainActivity" />
         </activity>
         <meta-data
             android:name="io.fabric.ApiKey"

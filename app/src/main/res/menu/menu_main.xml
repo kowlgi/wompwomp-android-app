@@ -1,6 +1,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools" tools:context="com.agni.sunshine.MainActivity">
+    xmlns:tools="http://schemas.android.com/tools" tools:context="co.wompwomp.sunshine.MainActivity">
     <item android:id="@+id/action_refresh" android:title="@string/action_refresh"
         android:orderInCategory="49" app:showAsAction="never" />
     <item android:id="@+id/action_likes" android:title="@string/action_likes"
@@ -9,6 +9,4 @@
         android:orderInCategory="51" app:showAsAction="never" />
     <item android:id="@+id/action_rate_us" android:title="@string/action_rate"
         android:orderInCategory="52" app:showAsAction="never" />
-    <item android:id="@+id/action_feedback" android:title="@string/action_feedback"
-        android:orderInCategory="53" app:showAsAction="never" />
 </menu>

@@ -20,9 +20,8 @@ apply plugin: 'com.google.gms.google-services'
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.0"
-
     defaultConfig {
-        applicationId "com.agni.sunshine"
+        applicationId 'co.wompwomp.sunshine'
         minSdkVersion 11
         targetSdkVersion 23
         versionCode 1
@@ -39,25 +38,26 @@ android {
     packagingOptions {
         exclude 'LICENSE.txt'
     }
+    productFlavors {
+    }
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:23.1.0'
-    compile 'com.android.support:support-v4:23.1.0'
-    compile 'com.android.support:design:23.1.0'
-    compile 'com.android.support:recyclerview-v7:23.1.0'
-    compile 'com.android.support:percent:23.1.0'
-    compile 'com.loopj.android:android-async-http:1.4.8'
-    compile 'com.android.support:cardview-v7:23.1.0'
-    compile 'com.google.android.gms:play-services-gcm:8.1.0'
-    compile 'com.ocpsoft:ocpsoft-pretty-time:1.0.6'
-    compile 'joda-time:joda-time:2.8.2'
-    compile 'com.loopj.android:android-async-http:1.4.9'
     compile('com.crashlytics.sdk.android:crashlytics:2.5.2@aar') {
         transitive = true;
     }
     compile('com.crashlytics.sdk.android:answers:1.3.3@aar') {
         transitive = true;
     }
+    compile 'com.android.support:appcompat-v7:23.1.0'
+    compile 'com.android.support:support-v4:23.1.0'
+    compile 'com.android.support:design:23.1.0'
+    compile 'com.android.support:recyclerview-v7:23.1.0'
+    compile 'com.android.support:percent:23.1.0'
+    compile 'com.loopj.android:android-async-http:1.4.9'
+    compile 'com.android.support:cardview-v7:23.1.0'
+    compile 'com.google.android.gms:play-services-gcm:8.1.0'
+    compile 'com.ocpsoft:ocpsoft-pretty-time:1.0.6'
+    compile 'joda-time:joda-time:2.8.2'
 }

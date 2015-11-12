@@ -16,6 +16,6 @@ limitations under the License.
 -->
 
 <account-authenticator xmlns:android="http://schemas.android.com/apk/res/android"
-                       android:accountType="com.agni.sunshine.account"
+                       android:accountType="co.wompwomp.sunshine.account"
                        android:label="@string/app_name"
         />
