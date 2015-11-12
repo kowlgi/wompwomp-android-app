@@ -15,4 +15,6 @@
     <string name="title_activity_likes">Likes</string>
     <string name="rate_us_placeholder">Next bus to the Play store arriving shortly...</string>
     <string name="share_app">Install the WompWomp app for amazing content to share with others</string>
+    <string name="share_us_if_you_like">If you like our app share it with others</string>
+    <string name="rate_us_on_play_store">We want your feedback. Rate us on the Play store</string>
 </resources>

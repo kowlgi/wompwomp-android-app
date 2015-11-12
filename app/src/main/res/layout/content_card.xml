@@ -68,7 +68,7 @@
                     android:padding="3dp"
                     android:clickable="true"
                     android:background="@android:color/white"
-                    android:src="@drawable/ic_share_black_24dp" />
+                    android:src="@drawable/ic_share_black_24px" />
 
                 <TextView
                     android:id="@+id/shareCount"
@@ -83,6 +83,29 @@
             <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:orientation="horizontal" android:layout_width="wrap_content"
                 android:layout_toLeftOf="@id/sharelayout" android:layout_height="wrap_content"
+                android:id="@+id/whatsappsharelayout" android:layout_margin="7dp">
+                <ImageButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/whatsapp_share_button"
+                    android:padding="3dp"
+                    android:clickable="true"
+                    android:background="@android:color/white"
+                    android:src="@drawable/ic_1447284844_whatsup_24dp" />
+
+                <TextView
+                    android:id="@+id/whatsapp_share_count"
+                    android:gravity="start"
+                    android:text=""
+                    style="@android:style/TextAppearance.Small"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="3dp"/>
+            </LinearLayout>
+
+            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:orientation="horizontal" android:layout_width="wrap_content"
+                android:layout_toLeftOf="@id/whatsappsharelayout" android:layout_height="wrap_content"
                 android:id="@+id/favoritelayout" android:layout_margin="7dp">
 
                 <ImageButton
@@ -92,12 +115,11 @@
                     android:padding="3dp"
                     android:clickable="true"
                     android:background="@android:color/white"
-                    android:src="@drawable/ic_favorite_border_black_24dp" />
+                    android:src="@drawable/ic_favorite_lightred_24dp" />
 
                 <TextView
                     android:id="@+id/favoriteCount"
                     android:gravity="start"
-                    android:text="Hello"
                     style="@android:style/TextAppearance.Small"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

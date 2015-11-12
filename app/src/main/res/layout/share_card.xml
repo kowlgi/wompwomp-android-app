@@ -10,32 +10,42 @@
     android:layout_marginBottom="30dp"
     android:focusableInTouchMode="false"
     android:focusable="false"
-    android:contextClickable="false"
-    android:background="">
+    android:contextClickable="false">
 
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:orientation="vertical" android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@drawable/share_card_background" >
 
-        <TextView
-            android:id="@+id/share_text"
-            android:text="If you like this app share it with others"
-            style="@android:style/TextAppearance.Large"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:textColor="#E3F2FD"
-            android:padding="20dp"/>
+            android:orientation="horizontal">
+            
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_favorite_lightgreen_48px"
+                android:padding="10dp"/>
 
+            <TextView
+                android:id="@+id/share_text"
+                android:text="@string/share_us_if_you_like"
+                style="@android:style/TextAppearance.Large"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:textColor="#B9F6CA"
+                android:padding="20dp"/>
+        </LinearLayout>
 
-        <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-            android:orientation="horizontal" android:layout_width="wrap_content"
+        <RelativeLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content">
-
             <Button
                 android:text="@string/share"
                 android:id="@+id/shareappbutton"
-                android:textColor="#E3F2FD"
+                android:textColor="#B9F6CA"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAlignment="center"
@@ -43,8 +53,7 @@
                 android:padding="20dp"
                 style="?android:attr/borderlessButtonStyle"
                 android:textAppearance="@style/TextAppearance.AppCompat.Large" />
-
-            </RelativeLayout>
+        </RelativeLayout>
 
     </LinearLayout>
 

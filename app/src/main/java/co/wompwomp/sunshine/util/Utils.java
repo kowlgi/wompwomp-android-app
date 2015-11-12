@@ -35,6 +35,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 
+import co.wompwomp.sunshine.R;
+
 /**
  * Class containing some static utility methods.
  */
@@ -108,18 +110,17 @@ public class Utils {
         final double SHRINK_FACTOR = 0.7;
         final double HORIZONTAL_MARGIN_FACTOR = (1-SHRINK_FACTOR)/2;
 
-        Bitmap watermark = BitmapFactory.decodeResource(context.getResources(), co.wompwomp.sunshine.R.drawable.watermark);
+        Bitmap watermark = BitmapFactory.decodeResource(context.getResources(), R.drawable.watermark_wompwomp);
         Bitmap scaledWatermark = Bitmap.createScaledBitmap(watermark,
                 (int) (aView.getWidth() * SHRINK_FACTOR),
                 (int) (aView.getHeight()*0.1),
                 false);
         Paint bgPaint=new Paint();
         bgPaint.setAntiAlias(true);
-        // TODO: Uncomment below code block when you're ready to include watermarks
-        //myCanvas.drawBitmap(scaledWatermark,
-                //(int) (aView.getWidth()* HORIZONTAL_MARGIN_FACTOR)/* left */,
-                //(int) (imageView.getHeight() * 0.9) /* top */,
-               // bgPaint);
+        myCanvas.drawBitmap(scaledWatermark,
+                (int) (aView.getWidth()* HORIZONTAL_MARGIN_FACTOR)/* left */,
+                (int) (imageView.getHeight() * 0.9) /* top */,
+                bgPaint);
 
         // Store image to default external storage directory
         Uri bmpUri = null;
