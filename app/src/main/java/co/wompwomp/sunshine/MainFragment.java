@@ -24,6 +24,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.crashlytics.android.answers.Answers;
+import com.crashlytics.android.answers.CustomEvent;
+
 import co.wompwomp.sunshine.accounts.GenericAccountService;
 import co.wompwomp.sunshine.provider.FeedContract;
 import co.wompwomp.sunshine.util.ImageCache;
@@ -121,6 +124,7 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
                 new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
                     public void onRefresh() {
+                        Answers.getInstance().logCustom(new CustomEvent("Swiped to refresh"));
                         SyncUtils.TriggerRefresh();
                     }
                 }
@@ -260,7 +264,6 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
                             account, FeedContract.CONTENT_AUTHORITY);
                     boolean syncPending = ContentResolver.isSyncPending(
                             account, FeedContract.CONTENT_AUTHORITY);
-                    //setRefreshActionButtonState(syncActive || syncPending);
                     mSwipeRefreshLayout.setRefreshing(syncActive || syncPending);
                 }
             });

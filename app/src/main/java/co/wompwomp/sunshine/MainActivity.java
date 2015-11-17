@@ -14,6 +14,8 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
+import com.crashlytics.android.answers.Answers;
+import com.crashlytics.android.answers.CustomEvent;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
@@ -54,6 +56,21 @@ public class MainActivity extends AppCompatActivity{
     }
 
     @Override
+    protected void onNewIntent(Intent intent){
+        Bundle extras = intent.getExtras();
+        Log.i(TAG, "new Intent");
+        if(extras != null) {
+            String itemId = extras.getString("itemid");
+            Log.i(TAG, "intent extras");
+            if(itemId != null) {
+                Log.i(TAG, "got item id from intent");
+                Answers.getInstance().logCustom(new CustomEvent("Push notification clicked")
+                        .putCustomAttribute("itemlink", FeedContract.ITEM_VIEW_URL+itemId));
+            }
+        }
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
@@ -69,21 +86,25 @@ public class MainActivity extends AppCompatActivity{
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_refresh) {
+            Answers.getInstance().logCustom(new CustomEvent("Options menu: Refresh"));
             MainFragment f = (MainFragment) getSupportFragmentManager().findFragmentByTag(TAG);
             f.update();
             return true;
         }
         else if (id == R.id.action_likes) {
+            Answers.getInstance().logCustom(new CustomEvent("Options menu: Likes"));
             Intent favoritesIntent = new Intent(this, LikesActivity.class);
             startActivity(favoritesIntent);
             return true;
         }
         else if( id == R.id.action_rate_us) {
+            Answers.getInstance().logCustom(new CustomEvent("Options menu: Rate"));
             Toast toast = Toast.makeText(this, getResources().getString(R.string.rate_us_placeholder), Toast.LENGTH_SHORT);
             toast.show();
             return true;
         }
         else if(id == R.id.action_share_app) {
+            Answers.getInstance().logCustom(new CustomEvent("Options menu: Share_app"));
             Intent shareIntent = new Intent();
             shareIntent.setAction(Intent.ACTION_SEND);
             shareIntent.putExtra(Intent.EXTRA_TEXT, getResources().getString(R.string.share_app) + ": " + FeedContract.BASE_URL);

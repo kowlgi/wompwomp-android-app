@@ -148,7 +148,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 holder.shareButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Answers.getInstance().logShare(new ShareEvent().putMethod("Destination: unspecified").putContentId(myListItem.getId()));
+                        Answers.getInstance().logShare(new ShareEvent().putMethod("Destination: unspecified")
+                                .putContentId(FeedContract.ITEM_VIEW_URL+myListItem.getId()));
 
                         Uri updateUri = FeedContract.Entry.CONTENT_URI.buildUpon()
                                 .appendPath(myListItem.get_id().toString()).build();
@@ -158,7 +159,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 
                         AsyncHttpClient client = new AsyncHttpClient();
                         RequestParams params = new RequestParams();
-                        client.post(FeedContract.BASE_URL + "/s/" + myListItem.getId(), params, new TextHttpResponseHandler() {
+                        client.post(FeedContract.ITEM_SHARE_URL + myListItem.getId(), params, new TextHttpResponseHandler() {
                             @Override
                             public void onSuccess(int statusCode, Header[] headers, String res) {
                                 // we received status 200 OK..wohoo!
@@ -172,7 +173,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 
                         Intent shareIntent = new Intent();
                         shareIntent.setAction(Intent.ACTION_SEND);
-                        shareIntent.putExtra(Intent.EXTRA_TEXT, FeedContract.BASE_URL + "/v/" + myListItem.getId());
+                        shareIntent.putExtra(Intent.EXTRA_TEXT, FeedContract.ITEM_VIEW_URL + myListItem.getId());
                         shareIntent.setType("text/plain");
 
                         View parentView = (View) holder.imageView.getParent();
@@ -189,7 +190,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 holder.favoriteButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        String SUB_URL = "";
+                        String URL = "";
                         Uri updateUri = FeedContract.Entry.CONTENT_URI.buildUpon()
                                 .appendPath(myListItem.get_id().toString()).build();
                         ContentValues values = new ContentValues();
@@ -200,22 +201,24 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                             }
 
                             values.put(FeedContract.Entry.COLUMN_NAME_FAVORITE, 0);
-                            SUB_URL = "/uf/";
-                            Answers.getInstance().logCustom(new CustomEvent("Unlike button clicked").putCustomAttribute("id", myListItem.getId()));
+                            URL = FeedContract.ITEM_UNFAVORITE_URL;
+                            Answers.getInstance().logCustom(new CustomEvent("Unlike button clicked")
+                                    .putCustomAttribute("itemlink", FeedContract.ITEM_VIEW_URL+myListItem.getId()));
                         } else {
                             // she likes me :)
                             values.put(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, myListItem.getNumFavorites() + 1);
                             values.put(FeedContract.Entry.COLUMN_NAME_FAVORITE, 1);
-                            SUB_URL = "/f/";
-                            Answers.getInstance().logCustom(new CustomEvent("Like button clicked").putCustomAttribute("id", myListItem.getId()));
+                            URL = FeedContract.ITEM_FAVORITE_URL;
+                            Answers.getInstance().logCustom(new CustomEvent("Like button clicked")
+                                    .putCustomAttribute("itemlink", FeedContract.ITEM_VIEW_URL+myListItem.getId()));
                         }
 
                         mContext.getContentResolver().update(updateUri, values, null, null);
-                        SUB_URL += myListItem.getId();
+                        URL += myListItem.getId();
 
                         AsyncHttpClient client = new AsyncHttpClient();
                         RequestParams params = new RequestParams();
-                        client.post(FeedContract.BASE_URL + SUB_URL, params, new TextHttpResponseHandler() {
+                        client.post(URL, params, new TextHttpResponseHandler() {
                             @Override
                             public void onSuccess(int statusCode, Header[] headers, String res) {
                                 // called when response HTTP status is "200 OK"
@@ -232,7 +235,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 holder.whatsappshareButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Answers.getInstance().logShare(new ShareEvent().putMethod("Destination: whatsapp").putContentId(myListItem.getId()));
+                        Answers.getInstance().logShare(new ShareEvent().putMethod("Destination: whatsapp")
+                                .putContentId(FeedContract.ITEM_VIEW_URL+myListItem.getId()));
 
                         Uri updateUri = FeedContract.Entry.CONTENT_URI.buildUpon()
                                 .appendPath(myListItem.get_id().toString()).build();
@@ -242,7 +246,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 
                         AsyncHttpClient client = new AsyncHttpClient();
                         RequestParams params = new RequestParams();
-                        client.post(FeedContract.BASE_URL + "/s/" + myListItem.getId(), params, new TextHttpResponseHandler() {
+                        client.post(FeedContract.ITEM_SHARE_URL + myListItem.getId(), params, new TextHttpResponseHandler() {
                             @Override
                             public void onSuccess(int statusCode, Header[] headers, String res) {
                                 // we received status 200 OK..wohoo!
@@ -256,7 +260,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 
                         Intent shareIntent = new Intent();
                         shareIntent.setAction(Intent.ACTION_SEND);
-                        shareIntent.putExtra(Intent.EXTRA_TEXT, FeedContract.BASE_URL + "/v/" + myListItem.getId());
+                        shareIntent.putExtra(Intent.EXTRA_TEXT, FeedContract.ITEM_VIEW_URL + myListItem.getId());
                         shareIntent.setType("text/plain");
 
                         View parentView = (View) holder.imageView.getParent();
@@ -277,6 +281,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 share_button.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        Answers.getInstance().logCustom(new CustomEvent("Share card clicked"));
                         Intent shareIntent = new Intent();
                         shareIntent.setAction(Intent.ACTION_SEND);
                         shareIntent.putExtra(Intent.EXTRA_TEXT,
@@ -292,6 +297,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 rate_button.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        Answers.getInstance().logCustom(new CustomEvent("Rate card clicked"));
                         Toast toast = Toast.makeText(mContext,
                                 mContext.getResources().getString(R.string.rate_us_placeholder),
                                 Toast.LENGTH_SHORT);

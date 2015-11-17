@@ -58,12 +58,13 @@ public class MyGcmListenerService extends GcmListenerService {
         if (from.startsWith("/topics/content")) {
             String message = data.getString("message");
             String imageUri = data.getString("imageuri");
+            String itemId = data.getString("itemid");
             // message received from some topic.
             /**
              * In some cases it may be useful to show a notification indicating to the user
              * that a message was received.
              */
-            pushNotification(message, imageUri);
+            pushNotification(message, imageUri, itemId);
         } else if (from.startsWith("/topics/sync")){
             SyncUtils.TriggerRefresh();
         } else if(from.startsWith("/topics/cta_share")) {
@@ -103,11 +104,12 @@ public class MyGcmListenerService extends GcmListenerService {
      *
      * @param message GCM message received.
      */
-    private void pushNotification(String message, String imageUri) {
+    private void pushNotification(String message, String imageUri, String itemId) {
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.putExtra("itemid", itemId);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
-                PendingIntent.FLAG_ONE_SHOT);
+                PendingIntent.FLAG_UPDATE_CURRENT);
 
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
