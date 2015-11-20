@@ -107,6 +107,7 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
 
         Toolbar myToolbar = (Toolbar) v.findViewById(R.id.toolbar);
         ((AppCompatActivity) getActivity()).setSupportActionBar(myToolbar);
+        myToolbar.setNavigationIcon(R.drawable.ic_action_trombone_white);
 
         // 2. Set up the image cache
         ImageCache.ImageCacheParams cacheParams =

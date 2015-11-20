@@ -2,7 +2,20 @@
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
-        <!-- Customize your theme here. -->
+        <!-- customize here -->
+    </style>
+
+    <style name="WompWompActionBarTheme" parent="AppTheme">
+
+        <!-- action bar background color -->
+        <item name="android:background">#6985EC</item>
+
+        <!-- color of title text -->
+        <item name="android:textColorPrimary">@android:color/white</item>
+
+        <!-- color of the menu overflow icon (three vertical dots) -->
+        <item name="android:textColorSecondary">@android:color/white</item>
+
     </style>
 
 </resources>

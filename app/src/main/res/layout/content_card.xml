@@ -15,10 +15,11 @@
 
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:orientation="vertical" android:layout_width="match_parent"
-        android:background="@android:color/white" android:layout_height="match_parent">
+        android:layout_height="match_parent">
 
         <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
             android:orientation="vertical" android:layout_width="match_parent"
+            android:id="@+id/shareCard"
             android:layout_height="match_parent">
 
             <co.wompwomp.sunshine.SquareImageView
@@ -34,8 +35,8 @@
                 style="@android:style/TextAppearance.Medium"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="15dp"
                 android:background="@android:color/white"
+                android:padding="15dp"
                 android:layout_below="@+id/imageView"/>
 
         </LinearLayout>
@@ -46,6 +47,7 @@
             android:id="@+id/timeandbuttons"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
+            android:background="@android:color/white"
             android:padding="10dp">
 
             <TextView

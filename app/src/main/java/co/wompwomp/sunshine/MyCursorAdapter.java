@@ -149,7 +149,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                     @Override
                     public void onClick(View v) {
                         Answers.getInstance().logShare(new ShareEvent().putMethod("Destination: unspecified")
-                                .putContentId(FeedContract.ITEM_VIEW_URL+myListItem.getId()));
+                                .putContentId(myListItem.getId()));
 
                         Uri updateUri = FeedContract.Entry.CONTENT_URI.buildUpon()
                                 .appendPath(myListItem.get_id().toString()).build();
@@ -203,14 +203,14 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                             values.put(FeedContract.Entry.COLUMN_NAME_FAVORITE, 0);
                             URL = FeedContract.ITEM_UNFAVORITE_URL;
                             Answers.getInstance().logCustom(new CustomEvent("Unlike button clicked")
-                                    .putCustomAttribute("itemlink", FeedContract.ITEM_VIEW_URL+myListItem.getId()));
+                                    .putCustomAttribute("itemid", myListItem.getId()));
                         } else {
                             // she likes me :)
                             values.put(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, myListItem.getNumFavorites() + 1);
                             values.put(FeedContract.Entry.COLUMN_NAME_FAVORITE, 1);
                             URL = FeedContract.ITEM_FAVORITE_URL;
                             Answers.getInstance().logCustom(new CustomEvent("Like button clicked")
-                                    .putCustomAttribute("itemlink", FeedContract.ITEM_VIEW_URL+myListItem.getId()));
+                                    .putCustomAttribute("itemid", myListItem.getId()));
                         }
 
                         mContext.getContentResolver().update(updateUri, values, null, null);
@@ -236,7 +236,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                     @Override
                     public void onClick(View v) {
                         Answers.getInstance().logShare(new ShareEvent().putMethod("Destination: whatsapp")
-                                .putContentId(FeedContract.ITEM_VIEW_URL+myListItem.getId()));
+                                .putContentId(myListItem.getId()));
 
                         Uri updateUri = FeedContract.Entry.CONTENT_URI.buildUpon()
                                 .appendPath(myListItem.get_id().toString()).build();

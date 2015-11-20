@@ -2,7 +2,6 @@ package co.wompwomp.sunshine;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
@@ -10,7 +9,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
@@ -20,7 +18,6 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
 import co.wompwomp.sunshine.provider.FeedContract;
-import co.wompwomp.sunshine.util.Utils;
 
 public class MainActivity extends AppCompatActivity{
 
@@ -57,15 +54,14 @@ public class MainActivity extends AppCompatActivity{
 
     @Override
     protected void onNewIntent(Intent intent){
+        super.onNewIntent(intent);
+        setIntent(intent);
         Bundle extras = intent.getExtras();
-        Log.i(TAG, "new Intent");
         if(extras != null) {
             String itemId = extras.getString("itemid");
-            Log.i(TAG, "intent extras");
             if(itemId != null) {
-                Log.i(TAG, "got item id from intent");
                 Answers.getInstance().logCustom(new CustomEvent("Push notification clicked")
-                        .putCustomAttribute("itemlink", FeedContract.ITEM_VIEW_URL+itemId));
+                        .putCustomAttribute("itemlink", itemId));
             }
         }
     }

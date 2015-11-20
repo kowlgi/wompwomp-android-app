@@ -23,11 +23,13 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.drawable.PictureDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Build.VERSION_CODES;
 import android.os.Environment;
 import android.os.StrictMode;
+import android.util.Log;
 import android.view.View;
 
 import java.io.File;
@@ -42,7 +44,6 @@ import co.wompwomp.sunshine.R;
  */
 public class Utils {
     private Utils() {};
-
 
     @TargetApi(VERSION_CODES.HONEYCOMB)
     public static void enableStrictMode() {
@@ -94,6 +95,7 @@ public class Utils {
     }
 
     public static Uri getLocalViewBitmapUri(View aView, Context context){
+        String TAG = "WompWompUtils";
         // Example: Extract Bitmap from ImageView drawable
         // final Bitmap bmp  = ((BitmapDrawable) networkImageview.getDrawable()).getBitmap();
 
@@ -106,20 +108,21 @@ public class Utils {
         //Draw the view inside the Bitmap
         aView.draw(myCanvas);
 
-        View imageView = aView.findViewById(co.wompwomp.sunshine.R.id.imageView);
-        final double SHRINK_FACTOR = 0.7;
-        final double HORIZONTAL_MARGIN_FACTOR = (1-SHRINK_FACTOR)/2;
+        final double SHRINK_FACTOR = 0.25;
+        final double LEFT_MARGIN_FACTOR = 1-SHRINK_FACTOR;
 
-        Bitmap watermark = BitmapFactory.decodeResource(context.getResources(), R.drawable.watermark_wompwomp);
+        Bitmap watermark = BitmapFactory.decodeResource(context.getResources(), R.drawable.watermark_wompwomp_stylized);
+        double new_width = (int) (aView.getWidth() * SHRINK_FACTOR);
+        double new_height = (new_width/watermark.getWidth()) * watermark.getHeight(); /* scale proportionally */
         Bitmap scaledWatermark = Bitmap.createScaledBitmap(watermark,
-                (int) (aView.getWidth() * SHRINK_FACTOR),
-                (int) (aView.getHeight()*0.1),
+                (int)new_width,
+                (int)new_height,
                 false);
         Paint bgPaint=new Paint();
         bgPaint.setAntiAlias(true);
         myCanvas.drawBitmap(scaledWatermark,
-                (int) (aView.getWidth()* HORIZONTAL_MARGIN_FACTOR)/* left */,
-                (int) (imageView.getHeight() * 0.9) /* top */,
+                aView.getWidth() - (int) new_width/* left */,
+                aView.getHeight() - (int) new_height /* top */,
                 bgPaint);
 
         // Store image to default external storage directory
