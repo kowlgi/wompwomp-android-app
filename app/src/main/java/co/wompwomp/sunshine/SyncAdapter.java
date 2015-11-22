@@ -29,6 +29,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.RemoteException;
 import android.util.Log;
 
@@ -138,7 +139,6 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             InputStream stream = null;
 
             try {
-                Log.i(TAG, "Streaming data from network: " + location);
                 stream = downloadUrl(location);
                 updateLocalFeedData(stream, syncResult);
                 // Makes sure that the InputStream is closed after the app is
@@ -235,11 +235,8 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             syncResult.stats.numEntries++;
             id = c.getInt(COLUMN_ID);
             entryId = c.getString(COLUMN_ENTRY_ID);
-            imageSourceUri = c.getString(COLUMN_IMAGE_SOURCE_URI);
-            quoteText = c.getString(COLUMN_QUOTE_TEXT);
             numFavorites = c.getInt(COLUMN_NUM_FAVORITES);
             numShares = c.getInt(COLUMN_NUM_SHARES);
-            createdOn = c.getString(COLUMN_CREATED_ON);
 
             FeedParser.Entry match = entryMap.get(entryId);
             if (match != null) {
@@ -248,33 +245,24 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 // Check to see if the entry needs to be updated
                 Uri existingUri = FeedContract.Entry.CONTENT_URI.buildUpon()
                         .appendPath(Integer.toString(id)).build();
-                if ((match.imageSourceUri != null && !match.imageSourceUri.equals(imageSourceUri)) ||
-                        (match.quoteText != null && !match.quoteText.equals(quoteText)) ||
-                        (match.numFavorites != numFavorites) ||
-                        (match.numShares != numShares) ||
-                        (match.createdOn != null && !match.createdOn.equals(createdOn))) {
+                if ((match.numFavorites != numFavorites) ||
+                        (match.numShares != numShares)) {
                     // Update existing record
-                    Log.i(TAG, "Scheduling update: " + existingUri);
                     batch.add(ContentProviderOperation.newUpdate(existingUri)
-                            .withValue(FeedContract.Entry.COLUMN_NAME_QUOTE_TEXT, match.quoteText)
-                            .withValue(FeedContract.Entry.COLUMN_NAME_IMAGE_SOURCE_URI, match.imageSourceUri)
                             .withValue(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, match.numFavorites)
                             .withValue(FeedContract.Entry.COLUMN_NAME_NUM_SHARES, match.numShares)
-                            .withValue(FeedContract.Entry.COLUMN_NAME_CREATED_ON, match.createdOn)
                             .build());
                     syncResult.stats.numUpdates++;
                 } else {
-                    Log.i(TAG, "No action: " + existingUri);
+                    //no action
                 }
             } else {
                 // Entry doesn't exist on server. Remove it from the database if it's not a CTA card
                 if(Arrays.asList(WompWompConstants.WOMPWOMP_CTA_LIST).contains(entryId)) {
-                    Log.i(TAG, "Don't delete");
                 }
                 else {
                     Uri deleteUri = FeedContract.Entry.CONTENT_URI.buildUpon()
                             .appendPath(Integer.toString(id)).build();
-                    Log.i(TAG, "Scheduling delete: " + deleteUri);
                     batch.add(ContentProviderOperation.newDelete(deleteUri).build());
                     syncResult.stats.numDeletes++;
                 }
@@ -284,7 +272,6 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
 
         // Add new items
         for (FeedParser.Entry e : entryMap.values()) {
-            Log.i(TAG, "Scheduling insert: entry_id=" + e.id);
             batch.add(ContentProviderOperation.newInsert(FeedContract.Entry.CONTENT_URI)
                     .withValue(FeedContract.Entry.COLUMN_NAME_ENTRY_ID, e.id)
                     .withValue(FeedContract.Entry.COLUMN_NAME_QUOTE_TEXT, e.quoteText)

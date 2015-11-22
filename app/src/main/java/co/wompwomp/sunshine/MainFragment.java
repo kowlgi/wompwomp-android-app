@@ -9,6 +9,7 @@ import android.database.Cursor;
 
 import android.os.Bundle;
 
+import android.os.Debug;
 import android.support.v4.app.Fragment;
 
 import android.support.v4.app.LoaderManager;
@@ -31,7 +32,6 @@ import co.wompwomp.sunshine.accounts.GenericAccountService;
 import co.wompwomp.sunshine.provider.FeedContract;
 import co.wompwomp.sunshine.util.ImageCache;
 import co.wompwomp.sunshine.util.ImageFetcher;
-
 
 
 /**
@@ -206,6 +206,7 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
      */
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+
         // We only have one loader, so we can ignore the value of i.
         // (It'll be '0', as set in onCreate().)
         return new CursorLoader(getActivity(),  // Context

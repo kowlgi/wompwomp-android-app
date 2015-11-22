@@ -21,12 +21,12 @@ public class WompWompConstants {
     public static final int TYPE_RATE_CARD = 102;
 
     // Constants indicting XML element names that we're interested in
-    public static final String WOMPWOMP_ID = "id";
-    public static final String WOMPWOMP_TEXT = "text";
-    public static final String WOMPWOMP_IMAGEURI = "imageuri";
-    public static final String WOMPWOMP_CREATEDON = "created_on";
-    public static final String WOMPWOMP_NUMFAVORITES = "numfavorites";
-    public static final String WOMPWOMP_NUMSHARES = "numshares";
+    public static final String WOMPWOMP_ID = "i";
+    public static final String WOMPWOMP_TEXT = "t";
+    public static final String WOMPWOMP_IMAGEURI = "u";
+    public static final String WOMPWOMP_CREATEDON = "c";
+    public static final String WOMPWOMP_NUMFAVORITES = "f";
+    public static final String WOMPWOMP_NUMSHARES = "s";
 
     // Constants for entry id for prompt cards
     public static final String WOMPWOMP_CTA_SHARE = "CTA_SHARE";

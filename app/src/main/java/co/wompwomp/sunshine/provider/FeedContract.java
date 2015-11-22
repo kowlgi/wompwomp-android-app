@@ -36,7 +36,7 @@ public class FeedContract {
      */
 
     public static final String BASE_URL = "http://wompwomp.co";
-    public static final String FEED_URL = BASE_URL + "/items";
+    public static final String FEED_URL = BASE_URL + "/i";
     public static final String ITEM_VIEW_URL = BASE_URL + "/v/";
     public static final String ITEM_FAVORITE_URL = BASE_URL + "/f/";
     public static final String ITEM_UNFAVORITE_URL = BASE_URL + "/uf/";
