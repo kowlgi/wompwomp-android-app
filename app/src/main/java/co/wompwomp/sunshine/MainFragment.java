@@ -29,6 +29,8 @@ import android.widget.TextView;
 import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
 
+import java.util.Random;
+
 import co.wompwomp.sunshine.accounts.GenericAccountService;
 import co.wompwomp.sunshine.provider.FeedContract;
 import co.wompwomp.sunshine.util.ImageCache;
@@ -40,11 +42,12 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
     private LinearLayoutManager mLayoutManager;
     private ImageFetcher mImageFetcher = null;
     private static final String IMAGE_CACHE_DIR = "thumbs";
-    SwipeRefreshLayout mSwipeRefreshLayout = null;
+    private SwipeRefreshLayout mSwipeRefreshLayout = null;
     private int mPreviousTotal = 0;
     private boolean mLoadingMore = true;
     private int mVisibleThreshold = 1;
     private int mFirstVisibleItem, mVisibleItemCount, mTotalItemCount;
+    private View mProgressBarLayout;
 
     /**
      * Handle to a SyncObserver. The ProgressBar element is visible until the SyncObserver reports
@@ -113,6 +116,12 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
                 }
             }
         });
+
+        mProgressBarLayout = v.findViewById(R.id.progressBarLayout);
+        String[] contentLoadingMessages = getResources().getStringArray(R.array.loading_messages);
+        TextView progressBarText = (TextView) mProgressBarLayout.findViewById(R.id.progressBarText);
+        int randomIndex = new Random().nextInt(contentLoadingMessages.length);
+        progressBarText.setText(contentLoadingMessages[randomIndex]);
 
         /* Set up the swipe refresh layout */
         mSwipeRefreshLayout = ( SwipeRefreshLayout) v.findViewById(R.id.swiperefresh);
@@ -221,6 +230,7 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
 
         mAdapter = new MyCursorAdapter(getActivity(), null,mImageFetcher);
         mRecyclerView.setAdapter(mAdapter);
+        mProgressBarLayout.setVisibility(View.VISIBLE);
         getLoaderManager().initLoader(0, null, this);
     }/* Add recycler view scrolling behavior */
 
@@ -251,6 +261,7 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
      */
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+        mProgressBarLayout.setVisibility(View.GONE);
         mAdapter.changeCursor(cursor);
     }
 

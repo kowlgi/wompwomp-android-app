@@ -14,11 +14,23 @@
 
     <string name="no_network_connection_toast">No network connection found</string>
     <string name="title_activity_likes">Likes</string>
-    <string name="rate_us_placeholder">Next bus to the Play store arriving shortly...</string>
+    <string name="rate_us_placeholder">Next bus to the Play store arriving shortly…</string>
     <string name="share_app">Install the wompwomp app for amazing content to share with others</string>
     <string name="share_us_if_you_like">If you like our app share it with others</string>
     <string name="rate_us_on_play_store">We want your feedback. Rate us on the Play store</string>
     <string name="title_activity_about">AboutActivity</string>
     <string name="whatsapp_share_button">whatsapp share button</string>
     <string name="favorite_button">favorite button</string>
+    <string-array name="loading_messages">
+        <item>Bringing you funny content from Antarctica in a bit …</item>
+        <item>Loading best content from the Voyager mission …</item>
+        <item>Today\'s content is sponsored by emperor penguins …</item>
+        <item>Loading lost content from Atlantis in a bit …</item>
+        <item>Carrier pigeons bringing content to you shortly …</item>
+        <item>Delivery vehicle is reentering the earth\'s atmosphere …</item>
+        <item>Waiting for popping to stop before opening the microwave …</item>
+        <item>Just a few moments before we take content out of the oven …</item>
+        <item>Waiting on kittens to approve content …</item>
+    </string-array>
+
 </resources>

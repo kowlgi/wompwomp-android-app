@@ -32,7 +32,7 @@ public class WompWompConstants {
 
     // item fetch limit/cursor
     public static final String SYNC_METHOD = "sync_method";
-    public static final int SYNC_NUM_SUBSET_ITEMS = 2;
+    public static final int SYNC_NUM_SUBSET_ITEMS = 10;
     public static final int SYNC_NUM_ALL_ITEMS = 0;
 
     public enum SyncMethod {
