@@ -18,8 +18,6 @@ package co.wompwomp.sunshine;
 
 import android.util.JsonReader;
 
-import org.xmlpull.v1.XmlPullParserException;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -27,26 +25,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * This class parses generic Atom feeds.
- *
- * <p>Given an InputStream representation of a feed, it returns a List of entries,
- * where each list element represents a single entry (post) in the XML feed.
- *
- * <p>An example of an Atom feed can be found at:
- * http://en.wikipedia.org/w/index.php?title=Atom_(standard)&oldid=560239173#Example_of_an_Atom_1.0_feed
- */
 public class FeedParser {
-    // We don't use XML namespaces
-    private static final String ns = null;
-
-    /** Parse an Atom feed, returning a collection of Entry objects.
-     *
-     * @param in Atom feed, as a stream.
-     * @return List of {@link FeedParser.Entry} objects.
-     * @throws XmlPullParserException on error parsing feed.
-     * @throws IOException on I/O error.
-     */
     public List<Entry> parse(InputStream in)
             throws IOException, ParseException {
         JsonReader reader =  new JsonReader(new InputStreamReader(in, "UTF-8"));
@@ -55,12 +34,11 @@ public class FeedParser {
         } finally {
             reader.close();
             in.close();
-            
         }
     }
 
     public List<Entry> readEntriesArray(JsonReader reader) throws IOException {
-        List entries = new ArrayList<Entry>();
+        ArrayList<Entry> entries = new ArrayList<Entry>();
 
         reader.beginArray();
         while (reader.hasNext()) {
@@ -81,20 +59,28 @@ public class FeedParser {
         reader.beginObject();
         while (reader.hasNext()) {
             String name = reader.nextName();
-            if (name.equals(WompWompConstants.WOMPWOMP_ID)) {
-                id = reader.nextString();
-            } else if (name.equals(WompWompConstants.WOMPWOMP_TEXT)) {
-                quoteText = reader.nextString();
-            } else if (name.equals(WompWompConstants.WOMPWOMP_IMAGEURI)) {
-                imageSourceUri = reader.nextString();
-            } else if (name.equals(WompWompConstants.WOMPWOMP_NUMFAVORITES)) {
-                numFavorites = reader.nextInt();
-            } else if (name.equals(WompWompConstants.WOMPWOMP_NUMSHARES)) {
-                numShares = reader.nextInt();
-            } else if (name.equals(WompWompConstants.WOMPWOMP_CREATEDON)) {
-                createdOn = reader.nextString();
-            } else {
-                reader.skipValue();
+            switch (name) {
+                case WompWompConstants.WOMPWOMP_ID:
+                    id = reader.nextString();
+                    break;
+                case WompWompConstants.WOMPWOMP_TEXT:
+                    quoteText = reader.nextString();
+                    break;
+                case WompWompConstants.WOMPWOMP_IMAGEURI:
+                    imageSourceUri = reader.nextString();
+                    break;
+                case WompWompConstants.WOMPWOMP_NUMFAVORITES:
+                    numFavorites = reader.nextInt();
+                    break;
+                case WompWompConstants.WOMPWOMP_NUMSHARES:
+                    numShares = reader.nextInt();
+                    break;
+                case WompWompConstants.WOMPWOMP_CREATEDON:
+                    createdOn = reader.nextString();
+                    break;
+                default:
+                    reader.skipValue();
+                    break;
             }
         }
         reader.endObject();

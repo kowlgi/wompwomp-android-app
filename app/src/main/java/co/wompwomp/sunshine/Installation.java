@@ -11,12 +11,18 @@ import java.io.RandomAccessFile;
 import java.util.UUID;
 
 public class Installation {
-    private static String sID = null;
-    private static final String INSTALLATION = "INSTALLATION";
+    private static String sID;
+    private static final String INSTALLATION;
+
+    static {
+        INSTALLATION = "INSTALLATION";
+        sID = null;
+    }
 
     public synchronized static String id(Context context) {
         if (sID == null) {
-            File installation = new File(context.getFilesDir(), INSTALLATION);
+            File installation;
+            installation = new File(context.getFilesDir(), INSTALLATION);
             try {
                 if (!installation.exists())
                     writeInstallationFile(installation);

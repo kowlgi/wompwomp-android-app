@@ -62,6 +62,11 @@ public class MainActivity extends AppCompatActivity{
             if(itemId != null) {
                 Answers.getInstance().logCustom(new CustomEvent("Push notification clicked")
                         .putCustomAttribute("itemlink", itemId));
+                // smooth
+                MainFragment f = (MainFragment) getSupportFragmentManager().findFragmentByTag(TAG);
+                if(f != null) {
+                    f.smoothScrollToTop();
+                }
             }
         }
     }
@@ -84,7 +89,7 @@ public class MainActivity extends AppCompatActivity{
         if (id == R.id.action_refresh) {
             Answers.getInstance().logCustom(new CustomEvent("Options menu: Refresh"));
             MainFragment f = (MainFragment) getSupportFragmentManager().findFragmentByTag(TAG);
-            f.update();
+            f.syncNewItems();
             return true;
         }
         else if (id == R.id.action_likes) {
@@ -106,6 +111,9 @@ public class MainActivity extends AppCompatActivity{
             shareIntent.putExtra(Intent.EXTRA_TEXT, getResources().getString(R.string.share_app) + ": " + FeedContract.BASE_URL);
             shareIntent.setType("text/plain");
             startActivity(Intent.createChooser(shareIntent, "Share the app"));
+            return true;
+        }
+        else if(id == R.id.action_about) {
             return true;
         }
 
@@ -131,18 +139,6 @@ public class MainActivity extends AppCompatActivity{
             return false;
         }
         return true;
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int permsRequestCode, String[] permissions, int[] grantResults){
-
-        switch(permsRequestCode){
-            case 200:
-                Log.v(TAG, "write external storage accepted");
-                boolean writeExternalStorageAccepted = grantResults[0]==PackageManager.PERMISSION_GRANTED;
-                break;
-
-        }
     }
 
     private void logUser() {

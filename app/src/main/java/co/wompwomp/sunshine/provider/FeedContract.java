@@ -20,6 +20,8 @@ import android.content.ContentResolver;
 import android.net.Uri;
 import android.provider.BaseColumns;
 
+import co.wompwomp.sunshine.BuildConfig;
+
 /**
  * Field and table name constants for
  * {@link co.wompwomp.sunshine}.
@@ -45,7 +47,7 @@ public class FeedContract {
     /**
      * Content provider authority.
      */
-    public static final String CONTENT_AUTHORITY = "co.wompwomp.sunshine";
+    public static final String CONTENT_AUTHORITY = BuildConfig.APPLICATION_ID;
 
     /**
      * Base URI. (content://com.example.android.basicsyncadapter)

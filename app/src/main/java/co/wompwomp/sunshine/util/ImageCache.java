@@ -62,7 +62,7 @@ public class ImageCache {
     private static final int DEFAULT_MEM_CACHE_SIZE = 1024 * 2; // 2MB
 
     // Default disk cache size in bytes
-    private static final int DEFAULT_DISK_CACHE_SIZE = 1024 * 1024 * 10; // 10MB
+    private static final int DEFAULT_DISK_CACHE_SIZE = 1024 * 1024 * 5; // 5MB
 
     // Compression settings when writing images to disk cache
     private static final CompressFormat DEFAULT_COMPRESS_FORMAT = CompressFormat.JPEG;
@@ -590,8 +590,8 @@ public class ImageCache {
     private static String bytesToHexString(byte[] bytes) {
         // http://stackoverflow.com/questions/332079
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < bytes.length; i++) {
-            String hex = Integer.toHexString(0xFF & bytes[i]);
+        for (byte aByte : bytes) {
+            String hex = Integer.toHexString(0xFF & aByte);
             if (hex.length() == 1) {
                 sb.append('0');
             }

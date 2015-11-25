@@ -16,9 +16,9 @@ limitations under the License.
 -->
 
 <sync-adapter xmlns:android="http://schemas.android.com/apk/res/android"
-              android:contentAuthority="co.wompwomp.sunshine"
-              android:accountType="co.wompwomp.sunshine.account"
-              android:userVisible="false"
+              android:contentAuthority="@string/authorities"
+              android:accountType="@string/account_type"
+              android:userVisible="true"
               android:supportsUploading="false"
               android:allowParallelSyncs="false"
               android:isAlwaysSyncable="true"

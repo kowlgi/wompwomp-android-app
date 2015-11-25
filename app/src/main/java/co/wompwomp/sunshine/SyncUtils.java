@@ -32,11 +32,11 @@ import co.wompwomp.sunshine.accounts.GenericAccountService;
  * Static helper methods for working with the sync framework.
  */
 public class SyncUtils {
-    private static final long SYNC_FREQUENCY = 60 * 60;  // 1 hr in seconds
+    private static final long SYNC_FREQUENCY_IN_SECONDS = 60;
     private static final String CONTENT_AUTHORITY = FeedContract.CONTENT_AUTHORITY;
     private static final String PREF_SETUP_COMPLETE = "setup_complete";
     // Value below must match the account type specified in res/xml/syncadapter.xml
-    public static final String ACCOUNT_TYPE = "co.wompwomp.sunshine.account";
+    public static final String ACCOUNT_TYPE = BuildConfig.ACCOUNT_TYPE;
 
     /**
      * Create an entry for this application in the system account list, if it isn't already there.
@@ -61,7 +61,7 @@ public class SyncUtils {
             // Recommend a schedule for automatic synchronization. The system may modify this based
             // on other scheduled syncs and network utilization.
             ContentResolver.addPeriodicSync(
-                    account, CONTENT_AUTHORITY, new Bundle(),SYNC_FREQUENCY);
+                    account, CONTENT_AUTHORITY, new Bundle(),SYNC_FREQUENCY_IN_SECONDS);
             newAccount = true;
         }
 
@@ -69,7 +69,7 @@ public class SyncUtils {
         // data has been deleted. (Note that it's possible to clear app data WITHOUT affecting
         // the account list, so wee need to check both.)
         if (newAccount || !setupComplete) {
-            TriggerRefresh();
+            TriggerRefresh(WompWompConstants.SyncMethod.SUBSET_OF_LATEST_ITEMS_NO_CURSOR);
             PreferenceManager.getDefaultSharedPreferences(context).edit()
                     .putBoolean(PREF_SETUP_COMPLETE, true).commit();
         }
@@ -86,11 +86,13 @@ public class SyncUtils {
      * but the user is not actively waiting for that data, you should omit this flag; this will give
      * the OS additional freedom in scheduling your sync request.
      */
-    public static void TriggerRefresh() {
+    public static void TriggerRefresh(WompWompConstants.SyncMethod syncMethod) {
         Bundle b = new Bundle();
         // Disable sync backoff and ignore sync preferences. In other words...perform sync NOW!
         b.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
         b.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+        b.putString(WompWompConstants.SYNC_METHOD, syncMethod.name());
+
         ContentResolver.requestSync(
                 GenericAccountService.GetAccount(ACCOUNT_TYPE), // Sync account
                 FeedContract.CONTENT_AUTHORITY,                 // Content authority

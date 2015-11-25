@@ -1,8 +1,5 @@
 package co.wompwomp.sunshine;
 
-/**
- * Created by kowlgi on 11/5/15.
- */
 public class WompWompConstants {
     // Constants representing column positions from PROJECTION.
     public static final int COLUMN_ID = 0;
@@ -32,4 +29,16 @@ public class WompWompConstants {
     public static final String WOMPWOMP_CTA_SHARE = "CTA_SHARE";
     public static final String WOMPWOMP_CTA_RATE = "CTA_RATE";
     public static final String[] WOMPWOMP_CTA_LIST = {WOMPWOMP_CTA_SHARE, WOMPWOMP_CTA_RATE};
+
+    // item fetch limit/cursor
+    public static final String SYNC_METHOD = "sync_method";
+    public static final int SYNC_NUM_SUBSET_ITEMS = 2;
+    public static final int SYNC_NUM_ALL_ITEMS = 0;
+
+    public enum SyncMethod {
+        EXISTING_AND_NEW_ABOVE_LOW_CURSOR, /* insert and update db in automatic background sync scenario */
+        ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR, /* insert only into db in in-app refresh scenario */
+        SUBSET_OF_LATEST_ITEMS_NO_CURSOR, /* insert only into db in first sync when db is empty scenario */
+        SUBSET_OF_ITEMS_BELOW_LOW_CURSOR /* insert only into db in in-app scroll down to bottom scenario */
+    }
 }

@@ -43,7 +43,7 @@ import java.net.URL;
  */
 public class ImageFetcher extends ImageWorker {
     private static final String TAG = "ImageFetcher";
-    private static final int HTTP_CACHE_SIZE = 10 * 1024 * 1024; // 10MB
+    private static final int HTTP_CACHE_SIZE = 5 * 1024 * 1024; // 5MB
     private static final String HTTP_CACHE_DIR = "http";
     private static final int IO_BUFFER_SIZE = 8 * 1024;
 

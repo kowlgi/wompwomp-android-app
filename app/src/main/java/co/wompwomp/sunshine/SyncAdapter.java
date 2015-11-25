@@ -29,9 +29,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Debug;
 import android.os.RemoteException;
-import android.util.Log;
 
 import co.wompwomp.sunshine.provider.FeedContract;
 
@@ -88,15 +86,10 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             FeedContract.Entry.COLUMN_NAME_NUM_SHARES,
             FeedContract.Entry.COLUMN_NAME_CREATED_ON};
 
-    // Constants representing column positions from PROJECTION.
-    public static final int COLUMN_ID = 0;
-    public static final int COLUMN_ENTRY_ID = 1;
-    public static final int COLUMN_IMAGE_SOURCE_URI = 2;
-    public static final int COLUMN_QUOTE_TEXT = 3;
-    public static final int COLUMN_FAVORITE = 4;
-    public static final int COLUMN_NUM_FAVORITES = 5;
-    public static final int COLUMN_NUM_SHARES = 6;
-    public static final int COLUMN_CREATED_ON = 7;
+    /* Projection used for obtaining high and low cursors for fetching feed data */
+    final String[] CURSOR_PROJECTION = new String[]{
+            FeedContract.Entry.COLUMN_NAME_CREATED_ON
+    };
 
     /**
      * Constructor. Obtains handle to content resolver for later use.
@@ -133,14 +126,72 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority,
                               ContentProviderClient provider, SyncResult syncResult) {
-        Log.i(TAG, "Beginning network synchronization");
         try {
-            final URL location = new URL(FeedContract.FEED_URL);
-            InputStream stream = null;
+            String syncMethodStr = extras.getString(WompWompConstants.SYNC_METHOD);
+            WompWompConstants.SyncMethod syncMethod;
+            if(syncMethodStr == null) {
+                // this happens during periodic auto sync
+                syncMethod = WompWompConstants.SyncMethod.EXISTING_AND_NEW_ABOVE_LOW_CURSOR;
+            }
+            else {
+                syncMethod = WompWompConstants.SyncMethod.valueOf(syncMethodStr);
+            }
 
+            int limit = 0;
+            boolean updateAndDeleteStaleItems = true;
+            String cursor = null, params = "", cursorInclusive = null;
+
+            Cursor c = mContentResolver.query(
+                    FeedContract.Entry.CONTENT_URI,
+                    CURSOR_PROJECTION,
+                    null,
+                    null,
+                    FeedContract.Entry.COLUMN_NAME_CREATED_ON + " DESC");
+
+            if((c == null) || (c.getCount() < 1)) {
+                // this happens when the db is empty
+                syncMethod = WompWompConstants.SyncMethod.SUBSET_OF_LATEST_ITEMS_NO_CURSOR;
+            }
+
+            if(syncMethod == WompWompConstants.SyncMethod.SUBSET_OF_LATEST_ITEMS_NO_CURSOR) {
+                limit = WompWompConstants.SYNC_NUM_SUBSET_ITEMS;
+                updateAndDeleteStaleItems =  false;
+            }
+            else if (syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR) {
+                limit = WompWompConstants.SYNC_NUM_ALL_ITEMS;
+                c.moveToFirst();
+                cursor = c.getString(0);
+                updateAndDeleteStaleItems = false;
+            }
+            else if(syncMethod == WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR) {
+                limit = WompWompConstants.SYNC_NUM_SUBSET_ITEMS * -1; // get items below cursor
+                c.moveToLast();
+                cursor = c.getString(0);
+                updateAndDeleteStaleItems = false;
+            }
+            else if(syncMethod == WompWompConstants.SyncMethod.EXISTING_AND_NEW_ABOVE_LOW_CURSOR) {
+                limit = WompWompConstants.SYNC_NUM_ALL_ITEMS;
+                c.moveToLast();
+                cursor = c.getString(0);
+                updateAndDeleteStaleItems = true;
+                cursorInclusive = "yes";
+            }
+            if(c != null) {
+                c.close();
+            }
+
+            params += "?limit=" + Integer.valueOf(limit).toString();
+            if(cursor != null) {
+                params += "&cursor=" + cursor;
+            }
+            if(cursorInclusive != null) {
+                params+= "&cursorInclusive=" + cursorInclusive;
+            }
+            final URL location = new URL(FeedContract.FEED_URL + params);
+            InputStream stream = null;
             try {
                 stream = downloadUrl(location);
-                updateLocalFeedData(stream, syncResult);
+                updateLocalFeedData(stream, syncResult, updateAndDeleteStaleItems);
                 // Makes sure that the InputStream is closed after the app is
                 // finished using it.
             } finally {
@@ -149,31 +200,14 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 }
             }
         } catch (MalformedURLException e) {
-            Log.e(TAG, "Feed URL is malformed", e);
             syncResult.stats.numParseExceptions++;
-            return;
         } catch (IOException e) {
-            Log.e(TAG, "Error reading from network: " + e.toString());
             syncResult.stats.numIoExceptions++;
-            return;
-        } catch (XmlPullParserException e) {
-            Log.e(TAG, "Error parsing feed: " + e.toString());
+        } catch (XmlPullParserException | ParseException e) {
             syncResult.stats.numParseExceptions++;
-            return;
-        } catch (ParseException e) {
-            Log.e(TAG, "Error parsing feed: " + e.toString());
-            syncResult.stats.numParseExceptions++;
-            return;
-        } catch (RemoteException e) {
-            Log.e(TAG, "Error updating database: " + e.toString());
+        } catch (RemoteException | OperationApplicationException e) {
             syncResult.databaseError = true;
-            return;
-        } catch (OperationApplicationException e) {
-            Log.e(TAG, "Error updating database: " + e.toString());
-            syncResult.databaseError = true;
-            return;
         }
-        Log.i(TAG, "Network synchronization complete");
     }
 
     /**
@@ -196,79 +230,78 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
      * (At this point, incoming database only contains missing items.)<br/>
      * 3. For any items remaining in incoming list, ADD to database.
      */
-    public void updateLocalFeedData(final InputStream stream, final SyncResult syncResult)
+    public void updateLocalFeedData(final InputStream stream,
+                                    final SyncResult syncResult,
+                                    final boolean updateAndDeleteStaleItems)
             throws IOException, XmlPullParserException, RemoteException,
             OperationApplicationException, ParseException {
         final FeedParser feedParser = new FeedParser();
         final ContentResolver contentResolver = getContext().getContentResolver();
-
-        Log.i(TAG, "Parsing stream as Atom feed");
         final List<FeedParser.Entry> entries = feedParser.parse(stream);
-        Log.i(TAG, "Parsing complete. Found " + entries.size() + " entries");
 
 
-        ArrayList<ContentProviderOperation> batch = new ArrayList<ContentProviderOperation>();
+        ArrayList<ContentProviderOperation> batch;
+        batch = new ArrayList<>();
 
         // Build hash table of incoming entries
-        HashMap<String, FeedParser.Entry> entryMap = new HashMap<String, FeedParser.Entry>();
+        HashMap<String, FeedParser.Entry> entryMap;
+        entryMap = new HashMap<String, FeedParser.Entry>();
         for (FeedParser.Entry e : entries) {
             entryMap.put(e.id, e);
         }
 
         // Get list of all items
-        Log.i(TAG, "Fetching local entries for merge");
+
         Uri uri = FeedContract.Entry.CONTENT_URI; // Get all entries
         Cursor c = contentResolver.query(uri, PROJECTION, null, null, null);
         assert c != null;
-        Log.i(TAG, "Found " + c.getCount() + " local entries. Computing merge solution...");
 
-        // Find stale data
-        int id;
-        String entryId;
-        String imageSourceUri;
-        String quoteText;
-        Boolean favorite;
-        Integer numFavorites;
-        Integer numShares;
-        String createdOn;
-        while (c.moveToNext()) {
-            syncResult.stats.numEntries++;
-            id = c.getInt(COLUMN_ID);
-            entryId = c.getString(COLUMN_ENTRY_ID);
-            numFavorites = c.getInt(COLUMN_NUM_FAVORITES);
-            numShares = c.getInt(COLUMN_NUM_SHARES);
+        // Update stale data
+        if(updateAndDeleteStaleItems) {
+            int id;
+            String entryId;
+            Integer numFavorites;
+            Integer numShares;
 
-            FeedParser.Entry match = entryMap.get(entryId);
-            if (match != null) {
-                // Entry exists. Remove from entry map to prevent insert later.
-                entryMap.remove(entryId);
-                // Check to see if the entry needs to be updated
-                Uri existingUri = FeedContract.Entry.CONTENT_URI.buildUpon()
-                        .appendPath(Integer.toString(id)).build();
-                if ((match.numFavorites != numFavorites) ||
-                        (match.numShares != numShares)) {
-                    // Update existing record
-                    batch.add(ContentProviderOperation.newUpdate(existingUri)
-                            .withValue(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, match.numFavorites)
-                            .withValue(FeedContract.Entry.COLUMN_NAME_NUM_SHARES, match.numShares)
-                            .build());
-                    syncResult.stats.numUpdates++;
-                } else {
-                    //no action
-                }
-            } else {
-                // Entry doesn't exist on server. Remove it from the database if it's not a CTA card
-                if(Arrays.asList(WompWompConstants.WOMPWOMP_CTA_LIST).contains(entryId)) {
-                }
-                else {
-                    Uri deleteUri = FeedContract.Entry.CONTENT_URI.buildUpon()
+            while (c.moveToNext()) {
+                syncResult.stats.numEntries++;
+                id = c.getInt(WompWompConstants.COLUMN_ID);
+                entryId = c.getString(WompWompConstants.COLUMN_ENTRY_ID);
+                numFavorites = c.getInt(WompWompConstants.COLUMN_NUM_FAVORITES);
+                numShares = c.getInt(WompWompConstants.COLUMN_NUM_SHARES);
+
+                FeedParser.Entry match = entryMap.get(entryId);
+                if (match != null) {
+                    // Entry exists. Remove from entry map to prevent insert later.
+                    entryMap.remove(entryId);
+                    // Check to see if the entry needs to be updated
+                    Uri existingUri = FeedContract.Entry.CONTENT_URI.buildUpon()
                             .appendPath(Integer.toString(id)).build();
-                    batch.add(ContentProviderOperation.newDelete(deleteUri).build());
-                    syncResult.stats.numDeletes++;
+                    if ((match.numFavorites != numFavorites) ||
+                            (match.numShares != numShares)) {
+                        // Update existing record
+                        batch.add(ContentProviderOperation.newUpdate(existingUri)
+                                .withValue(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, match.numFavorites)
+                                .withValue(FeedContract.Entry.COLUMN_NAME_NUM_SHARES, match.numShares)
+                                .build());
+                        syncResult.stats.numUpdates++;
+                    } else {
+                        //no action
+                    }
+                } else {
+                    // Entry doesn't exist on server. Remove it from the database if it's not a CTA card
+                    if (Arrays.asList(WompWompConstants.WOMPWOMP_CTA_LIST).contains(entryId)) {
+                        // It's a CTA card, don't remove it
+                    } else {
+                        Uri deleteUri = FeedContract.Entry.CONTENT_URI.buildUpon()
+                                .appendPath(Integer.toString(id)).build();
+                        batch.add(ContentProviderOperation.newDelete(deleteUri).build());
+                        syncResult.stats.numDeletes++;
+                    }
                 }
             }
+            c.close();
         }
-        c.close();
 
         // Add new items
         for (FeedParser.Entry e : entryMap.values()) {
@@ -284,7 +317,6 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                     .build());
             syncResult.stats.numInserts++;
         }
-        Log.i(TAG, "Merge solution ready. Applying batch update");
         mContentResolver.applyBatch(FeedContract.CONTENT_AUTHORITY, batch);
         mContentResolver.notifyChange(
                 FeedContract.Entry.CONTENT_URI, // URI where data was modified

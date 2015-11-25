@@ -43,7 +43,7 @@ public abstract class ImageWorker {
     private ImageCache mImageCache;
     private ImageCache.ImageCacheParams mImageCacheParams;
     private Bitmap mLoadingBitmap;
-    private boolean mFadeInBitmap = true;
+    private boolean mFadeInBitmap;
     private boolean mExitTasksEarly = false;
     protected boolean mPauseWork = false;
     private final Object mPauseWorkLock = new Object();
@@ -57,6 +57,7 @@ public abstract class ImageWorker {
 
     protected ImageWorker(Context context) {
         mResources = context.getResources();
+        mFadeInBitmap = true;
     }
 
     /**
@@ -248,9 +249,7 @@ public abstract class ImageWorker {
         @Override
         protected BitmapDrawable doInBackground(Void... params) {
             //BEGIN_INCLUDE(load_bitmap_in_background)
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "doInBackground - starting work");
-            }
+            if (BuildConfig.DEBUG) Log.d(TAG, "doInBackground - starting work");
 
             final String dataString = String.valueOf(mData);
             Bitmap bitmap = null;
@@ -467,10 +466,6 @@ public abstract class ImageWorker {
             mImageCache.close();
             mImageCache = null;
         }
-    }
-
-    public void clearCache() {
-        new CacheAsyncTask().execute(MESSAGE_CLEAR);
     }
 
     public void flushCache() {

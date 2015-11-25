@@ -15,25 +15,27 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <!-- [END sharing_bitmap_permission] -->
 
+
     <!-- Required to register a SyncStatusObserver to display a "syncing..." progress indicator. -->
-    <uses-permission android:name="android.permission.READ_SYNC_STATS"/>
+    <uses-permission android:name="android.permission.READ_SYNC_STATS" />
     <!-- Required to enable our SyncAdapter after it's created. -->
-    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS"/>
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
     <!-- Required because we're manually creating a new account. -->
-    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
+    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
 
     <application
-        android:name="co.wompwomp.sunshine.MyApplication"
+        android:name=".MyApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="co.wompwomp.sunshine.MainActivity"
+            android:name=".MainActivity"
             android:label="@string/app_name"
-            android:launchMode="singleTop">
+            android:launchMode="singleTop" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -53,7 +55,7 @@
 
         <!-- [START gcm_listener] -->
         <service
-            android:name="co.wompwomp.sunshine.MyGcmListenerService"
+            android:name=".MyGcmListenerService"
             android:exported="false" >
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
@@ -62,7 +64,7 @@
         <!-- [END gcm_listener] -->
         <!-- [START instanceId_listener] -->
         <service
-            android:name="co.wompwomp.sunshine.MyInstanceIDListenerService"
+            android:name=".MyInstanceIDListenerService"
             android:exported="false" >
             <intent-filter>
                 <action android:name="com.google.android.gms.iid.InstanceID" />
@@ -70,57 +72,79 @@
         </service>
         <!-- [END instanceId_listener] -->
         <service
-            android:name="co.wompwomp.sunshine.RegistrationIntentService"
+            android:name=".RegistrationIntentService"
             android:exported="false" >
         </service>
 
         <provider
             android:name="co.wompwomp.sunshine.provider.FeedProvider"
-            android:authorities="co.wompwomp.sunshine"
+            android:authorities="${applicationId}"
             android:exported="false" />
 
-        <!-- This service implements our SyncAdapter. It needs to be exported, so that the system
-        sync framework can access it. -->
-        <service android:name="co.wompwomp.sunshine.SyncService"
-            android:exported="true">
-            <!-- This intent filter is required. It allows the system to launch our sync service
-            as needed. -->
+        <!--
+        This service implements our SyncAdapter. It needs to be exported, so that the system
+        sync framework can access it.
+        -->
+        <service
+            android:name=".SyncService"
+            android:exported="true" >
+
+            <!--
+            This intent filter is required. It allows the system to launch our sync service
+            as needed.
+            -->
             <intent-filter>
                 <action android:name="android.content.SyncAdapter" />
             </intent-filter>
             <!-- This points to a required XML file which describes our SyncAdapter. -->
-            <meta-data android:name="android.content.SyncAdapter"
+            <meta-data
+                android:name="android.content.SyncAdapter"
                 android:resource="@xml/syncadapter" />
         </service>
 
-        <!-- This implements the account we'll use as an attachment point for our SyncAdapter. Since
+        <!--
+        This implements the account we'll use as an attachment point for our SyncAdapter. Since
         our SyncAdapter doesn't need to authenticate the current user (it just fetches a public RSS
         feed), this account's implementation is largely empty.
 
         It's also possible to attach a SyncAdapter to an existing account provided by another
-        package. In that case, this element could be omitted here. -->
-        <service android:name="co.wompwomp.sunshine.accounts.GenericAccountService">
+        package. In that case, this element could be omitted here.
+        -->
+        <service android:name=".accounts.GenericAccountService" >
+
             <!-- Required filter used by the system to launch our account service. -->
             <intent-filter>
                 <action android:name="android.accounts.AccountAuthenticator" />
             </intent-filter>
             <!-- This points to an XMLf ile which describes our account service. -->
-            <meta-data android:name="android.accounts.AccountAuthenticator"
+            <meta-data
+                android:name="android.accounts.AccountAuthenticator"
                 android:resource="@xml/authenticator" />
         </service>
 
         <activity
-            android:name="co.wompwomp.sunshine.LikesActivity"
+            android:name=".LikesActivity"
             android:label="@string/title_activity_likes"
-            android:parentActivityName="co.wompwomp.sunshine.MainActivity"
+            android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="co.wompwomp.sunshine.MainActivity" />
         </activity>
+
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="927db89b92d122f76adb5b2ede34e798bd6caa60" />
+
+        <activity
+            android:name=".AboutActivity"
+            android:label="@string/title_activity_about"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="MainActivity" />
+        </activity>
     </application>
 
 </manifest>

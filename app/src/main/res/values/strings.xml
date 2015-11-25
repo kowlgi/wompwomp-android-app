@@ -1,9 +1,10 @@
 <resources>
-    <string name="app_name">WompWomp</string>
+    <string name="app_name">wompwomp</string>
     <string name="action_share_app">Share the app</string>
     <string name="action_rate">Rate us</string>
     <string name="action_refresh">Refresh</string>
     <string name="action_likes">Likes</string>
+    <string name="action_about">About</string>
 
 <!-- TODO: Remove or change this placeholder text -->
     <string name="title_activity_main">MainActivity</string>
@@ -14,7 +15,10 @@
     <string name="no_network_connection_toast">No network connection found</string>
     <string name="title_activity_likes">Likes</string>
     <string name="rate_us_placeholder">Next bus to the Play store arriving shortly...</string>
-    <string name="share_app">Install the WompWomp app for amazing content to share with others</string>
+    <string name="share_app">Install the wompwomp app for amazing content to share with others</string>
     <string name="share_us_if_you_like">If you like our app share it with others</string>
     <string name="rate_us_on_play_store">We want your feedback. Rate us on the Play store</string>
+    <string name="title_activity_about">AboutActivity</string>
+    <string name="whatsapp_share_button">whatsapp share button</string>
+    <string name="favorite_button">favorite button</string>
 </resources>

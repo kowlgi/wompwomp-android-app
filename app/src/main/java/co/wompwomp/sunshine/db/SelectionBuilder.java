@@ -91,26 +91,10 @@ import java.util.Map;
  * This class is <em>not</em> thread safe.
  */
 public class SelectionBuilder {
-    private static final String TAG = "wompwompselectionbuilder";
-
     private String mTable = null;
     private Map<String, String> mProjectionMap = new HashMap<String, String>();
     private StringBuilder mSelection = new StringBuilder();
-    private ArrayList<String> mSelectionArgs = new ArrayList<String>();
-
-    /**
-     * Reset any internal state, allowing this builder to be recycled.
-     *
-     * <p>Calling this method is more efficient than creating a new SelectionBuilder object.
-     *
-     * @return Fluent interface
-     */
-    public SelectionBuilder reset() {
-        mTable = null;
-        mSelection.setLength(0);
-        mSelectionArgs.clear();
-        return this;
-    }
+    private ArrayList<String> mSelectionArgs = new ArrayList<>();
 
     /**
      * Append the given selection clause to the internal state. Each clause is
@@ -192,22 +176,6 @@ public class SelectionBuilder {
         if (mTable == null) {
             throw new IllegalStateException("Table not specified");
         }
-    }
-
-    /**
-     * Perform an inner join.
-     *
-     * <p>Map columns from a secondary table onto the current result set. References to the column
-     * specified in {@code column} will be replaced with {@code table.column} in the SQL {@code
-     * SELECT} clause.
-     *
-     * @param column Column name to join on. Must be the same in both tables.
-     * @param table Secondary table to join.
-     * @return Fluent interface
-     */
-    public SelectionBuilder mapToTable(String column, String table) {
-        mProjectionMap.put(column, table + "." + column);
-        return this;
     }
 
     /**
@@ -323,7 +291,6 @@ public class SelectionBuilder {
                         String having, String orderBy, String limit) {
         assertTable();
         if (columns != null) mapColumns(columns);
-        Log.v(TAG, "query(columns=" + Arrays.toString(columns) + ") " + this);
         return db.query(mTable, columns, getSelection(), getSelectionArgs(), groupBy, having,
                 orderBy, limit);
     }
@@ -338,7 +305,6 @@ public class SelectionBuilder {
      */
     public int update(SQLiteDatabase db, ContentValues values) {
         assertTable();
-        Log.v(TAG, "update() " + this);
         return db.update(mTable, values, getSelection(), getSelectionArgs());
     }
 
@@ -350,7 +316,6 @@ public class SelectionBuilder {
      */
     public int delete(SQLiteDatabase db) {
         assertTable();
-        Log.v(TAG, "delete() " + this);
         return db.delete(mTable, getSelection(), getSelectionArgs());
     }
 }

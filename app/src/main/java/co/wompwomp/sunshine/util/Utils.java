@@ -94,10 +94,19 @@ public class Utils {
         return Build.VERSION.SDK_INT >= VERSION_CODES.KITKAT;
     }
 
-    public static Uri getLocalViewBitmapUri(View aView, Context context){
+    public static Uri getLocalViewBitmapUri(String filename, View aView, Context context){
         String TAG = "WompWompUtils";
+        Uri bmpUri = null;
+        File file =  new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_DOWNLOADS), filename + ".jpg");
+
+        if(file.exists()) {
+            bmpUri = Uri.fromFile(file);
+            return bmpUri;
+        }
+
         // Example: Extract Bitmap from ImageView drawable
-        // final Bitmap bmp  = ((BitmapDrawable) networkImageview.getDrawable()).getBitmap();
+        // final Bitmap bmp  = ((BitmapDrawable) imageview.getDrawable()).getBitmap();
 
         //Create a Bitmap with the same dimensions
         Bitmap image = Bitmap.createBitmap(aView.getWidth(),
@@ -126,18 +135,15 @@ public class Utils {
                 bgPaint);
 
         // Store image to default external storage directory
-        Uri bmpUri = null;
         try {
             if(Build.VERSION.SDK_INT> Build.VERSION_CODES.LOLLIPOP_MR1 &&
                     context.checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") == PackageManager.PERMISSION_DENIED) {
                 return  null;
             }
 
-            File file =  new File(Environment.getExternalStoragePublicDirectory(
-                    Environment.DIRECTORY_DOWNLOADS), "share_image_" + System.currentTimeMillis() + ".png");
             file.getParentFile().mkdirs();
             FileOutputStream out = new FileOutputStream(file);
-            image.compress(Bitmap.CompressFormat.PNG, 90, out); //Output
+            image.compress(Bitmap.CompressFormat.JPEG, 90, out); //Output
             bmpUri = Uri.fromFile(file);
         } catch (Exception e) {
             e.printStackTrace();

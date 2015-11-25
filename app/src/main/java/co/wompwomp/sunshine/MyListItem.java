@@ -2,103 +2,56 @@ package co.wompwomp.sunshine;
 
 import android.database.Cursor;
 
-/**
- * Created by kowlgi on 10/29/15.
- */
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
+
 public class MyListItem {
-    private Integer _id; // database id
-    private String id; //  globally unique item id
-    private String imageSourceUri;
-    private String quoteText;
-    private Boolean favorite;
-    private Integer numFavorites;
-    private Integer numShares;
-    private String createdOn;
-    private Integer cardType;
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getImageSourceUri() {
-        return imageSourceUri;
-    }
-
-    public void setImageSourceUri(String imageSourceUri) {
-        this.imageSourceUri = imageSourceUri;
-    }
-
-    public String getQuoteText() {
-        return quoteText;
-    }
-
-    public void setQuoteText(String quoteText) {
-        this.quoteText = quoteText;
-    }
-
-    public Boolean getFavorite() {
-        return favorite;
-    }
-
-    public void setFavorite(Boolean favorite) {
-        this.favorite = favorite;
-    }
-
-    public Integer getNumFavorites() {
-        return numFavorites;
-    }
-
-    public void setNumFavorites(Integer numFavorites) {
-        this.numFavorites = numFavorites;
-    }
-
-    public Integer getNumShares() {
-        return numShares;
-    }
-
-    public void setNumShares(Integer numShares) {
-        this.numShares = numShares;
-    }
-
-    public String getCreatedOn() {
-        return createdOn;
-    }
-
-    public void setCreatedOn(String createdOn) {
-        this.createdOn = createdOn;
-    }
-
-    public Integer get_id() {
-        return _id;
-    }
-
-    public void set_id(Integer _id) {
-        this._id = _id;
-    }
-
-    public Integer getCardType() {
-        return cardType;
-    }
-
-    public void setCardType(Integer cardType) {
-        this.cardType = cardType;
-    }
+    public Integer _id; // database id
+    public String id; //  globally unique item id
+    public String imageSourceUri;
+    public String quoteText;
+    public Boolean favorite;
+    public Integer numFavorites;
+    public Integer numShares;
+    public String createdOn;
 
     public static MyListItem fromCursor(Cursor c) {
         MyListItem myItem = new MyListItem();
-        myItem.set_id(c.getInt(WompWompConstants.COLUMN_ID));
-        myItem.setId(c.getString(WompWompConstants.COLUMN_ENTRY_ID));
-        myItem.setImageSourceUri(c.getString(WompWompConstants.COLUMN_IMAGE_SOURCE_URI));
-        myItem.setQuoteText(c.getString(WompWompConstants.COLUMN_QUOTE_TEXT));
-        myItem.setFavorite(c.getInt(WompWompConstants.COLUMN_FAVORITE) > 0);
-        myItem.setNumFavorites(c.getInt(WompWompConstants.COLUMN_NUM_FAVORITES));
-        myItem.setNumShares(c.getInt(WompWompConstants.COLUMN_NUM_SHARES));
-        myItem.setCreatedOn(c.getString(WompWompConstants.COLUMN_CREATED_ON));
-        myItem.setCardType(c.getInt(WompWompConstants.COLUMN_CARD_TYPE));
+        myItem._id = c.getInt(WompWompConstants.COLUMN_ID);
+        myItem.id = c.getString(WompWompConstants.COLUMN_ENTRY_ID);
+        myItem.imageSourceUri = c.getString(WompWompConstants.COLUMN_IMAGE_SOURCE_URI);
+        myItem.quoteText = c.getString(WompWompConstants.COLUMN_QUOTE_TEXT);
+        myItem.favorite = c.getInt(WompWompConstants.COLUMN_FAVORITE) > 0;
+        myItem.numFavorites = c.getInt(WompWompConstants.COLUMN_NUM_FAVORITES);
+        myItem.numShares = c.getInt(WompWompConstants.COLUMN_NUM_SHARES);
+        myItem.createdOn = c.getString(WompWompConstants.COLUMN_CREATED_ON);
         return myItem;
+    }
+
+
+    // http://stackoverflow.com/questions/4753251/how-to-go-about-formatting-1200-to-1-2k-in-java
+    private static final NavigableMap<Long, String> suffixes = new TreeMap<>();
+    static {
+        suffixes.put(1_000L, "k");
+        suffixes.put(1_000_000L, "M");
+        suffixes.put(1_000_000_000L, "G");
+        suffixes.put(1_000_000_000_000L, "T");
+        suffixes.put(1_000_000_000_000_000L, "P");
+        suffixes.put(1_000_000_000_000_000_000L, "E");
+    }
+
+    public static String format(long value) {
+        //Long.MIN_VALUE == -Long.MIN_VALUE so we need an adjustment here
+        if (value == Long.MIN_VALUE) return format(Long.MIN_VALUE + 1);
+        if (value < 1000) return String.format("%d", value); //deal with easy case
+
+        Map.Entry<Long, String> e = suffixes.floorEntry(value);
+        Long divideBy = e.getKey();
+        String suffix = e.getValue();
+
+        long truncated = value / (divideBy / 10); //the number part of the output times 10
+        boolean hasDecimal = truncated < 100 && (truncated / 10d) != (truncated / 10);
+        return hasDecimal ? (truncated / 10d) + suffix : (truncated / 10) + suffix;
     }
 }

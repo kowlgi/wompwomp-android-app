@@ -41,9 +41,6 @@ import java.net.URL;
 public class MyGcmListenerService extends GcmListenerService {
 
     private static final String TAG = "MyGcmListenerService";
-    // Incoming Intent key for extended data
-    public static final String KEY_SYNC_REQUEST =
-            "com.example.android.datasync.KEY_SYNC_REQUEST";
 
     /**
      * Called when message is received.
@@ -66,7 +63,7 @@ public class MyGcmListenerService extends GcmListenerService {
              */
             pushNotification(message, imageUri, itemId);
         } else if (from.startsWith("/topics/sync")){
-            SyncUtils.TriggerRefresh();
+            SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR);
         } else if(from.startsWith("/topics/cta_share")) {
             String timestamp = data.getString("message");
             // push 'share now' card to feed
@@ -144,8 +141,6 @@ public class MyGcmListenerService extends GcmListenerService {
         // These two need to be declared outside the try/catch
         // so that they can be closed in the finally block.
         HttpURLConnection urlConnection = null;
-        BufferedReader reader = null;
-        String JSONResponse = null;
         Bitmap aBitmap = null;
 
         try {
@@ -162,13 +157,12 @@ public class MyGcmListenerService extends GcmListenerService {
 
         }catch (IOException e) {
             Log.e(TAG, "Error ", e);
-        } finally
-        {
+        } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();
             }
-            return aBitmap;
         }
+        return aBitmap;
     }
 
     private ContentValues populateContentValues(Integer card_type, String timestamp) {

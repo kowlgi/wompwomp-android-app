@@ -1,7 +1,0 @@
-10/31/2015
-
-MainFragment.java:
-Whenever the content provider changes, it invokes onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor)
-
-
--------------

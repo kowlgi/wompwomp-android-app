@@ -20,6 +20,7 @@ import android.annotation.TargetApi;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Process;
+import android.support.annotation.NonNull;
 
 import java.util.ArrayDeque;
 import java.util.concurrent.BlockingQueue;
@@ -204,7 +205,7 @@ public abstract class AsyncTask<Params, Progress, Result> {
     private static final ThreadFactory  sThreadFactory = new ThreadFactory() {
         private final AtomicInteger mCount = new AtomicInteger(1);
 
-        public Thread newThread(Runnable r) {
+        public Thread newThread(@NonNull Runnable r) {
             return new Thread(r, "AsyncTask #" + mCount.getAndIncrement());
         }
     };
@@ -407,8 +408,9 @@ public abstract class AsyncTask<Params, Progress, Result> {
      * @see #publishProgress
      * @see #doInBackground
      */
+    @SafeVarargs
     @SuppressWarnings({"UnusedDeclaration"})
-    protected void onProgressUpdate(Progress... values) {
+    protected final void onProgressUpdate(Progress... values) {
     }
 
     /**
@@ -556,6 +558,7 @@ public abstract class AsyncTask<Params, Progress, Result> {
      * @see #executeOnExecutor(Executor, Object[])
      * @see #execute(Runnable)
      */
+    @SafeVarargs
     public final AsyncTask<Params, Progress, Result> execute(Params... params) {
         return executeOnExecutor(sDefaultExecutor, params);
     }
@@ -643,6 +646,7 @@ public abstract class AsyncTask<Params, Progress, Result> {
      * @see #onProgressUpdate
      * @see #doInBackground
      */
+    @SafeVarargs
     protected final void publishProgress(Progress... values) {
         if (!isCancelled()) {
             sHandler.obtainMessage(MESSAGE_POST_PROGRESS,
@@ -685,6 +689,7 @@ public abstract class AsyncTask<Params, Progress, Result> {
         final AsyncTask mTask;
         final Data[] mData;
 
+        @SafeVarargs
         AsyncTaskResult(AsyncTask task, Data... data) {
             mTask = task;
             mData = data;

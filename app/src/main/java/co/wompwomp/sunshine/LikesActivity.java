@@ -1,8 +1,6 @@
 package co.wompwomp.sunshine;
 
-import android.accounts.Account;
 import android.content.ContentResolver;
-import android.content.SyncStatusObserver;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
@@ -13,7 +11,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 
-import co.wompwomp.sunshine.accounts.GenericAccountService;
 import co.wompwomp.sunshine.provider.FeedContract;
 import co.wompwomp.sunshine.util.ImageCache;
 import co.wompwomp.sunshine.util.ImageFetcher;
@@ -21,18 +18,9 @@ import co.wompwomp.sunshine.util.ImageFetcher;
 public class LikesActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
     private RecyclerView mRecyclerView = null;
     private MyCursorAdapter mAdapter = null;
-    private LinearLayoutManager mLayoutManager;
-    private static final String TAG = "LikesActivity";
+    protected LinearLayoutManager mLayoutManager;
     private ImageFetcher mImageFetcher = null;
     private static final String IMAGE_CACHE_DIR = "thumbs";
-    /**
-     * Handle to a SyncObserver. The ProgressBar element is visible until the SyncObserver reports
-     * that the sync is complete.
-     *
-     * <p>This allows us to delete our SyncObserver once the application is no longer in the
-     * foreground.
-     */
-    private Object mSyncObserverHandle;
 
     /**
      * Projection for querying the content provider.
@@ -65,7 +53,10 @@ public class LikesActivity extends AppCompatActivity implements LoaderManager.Lo
 
         Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(myToolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        android.support.v7.app.ActionBar actionBar = getSupportActionBar();
+        if(actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
 
         // 2. Set up the image cache
         ImageCache.ImageCacheParams cacheParams =
@@ -82,15 +73,6 @@ public class LikesActivity extends AppCompatActivity implements LoaderManager.Lo
     public void onResume() {
         super.onResume();
         mImageFetcher.setExitTasksEarly(false);
-
-        mSyncStatusObserver.onStatusChanged(0);
-        // Watch for sync state changes
-        final int mask = ContentResolver.SYNC_OBSERVER_TYPE_PENDING |
-                ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE;
-        mSyncObserverHandle = ContentResolver.addStatusChangeListener(mask, mSyncStatusObserver);
-
-        // Create account, if needed
-        SyncUtils.CreateSyncAccount(this);
 
         mAdapter = new MyCursorAdapter(this, null,mImageFetcher);
         mRecyclerView.setAdapter(mAdapter);
@@ -149,42 +131,5 @@ public class LikesActivity extends AppCompatActivity implements LoaderManager.Lo
     @Override
     public void onLoaderReset(Loader<Cursor> cursorLoader) {
         mAdapter.changeCursor(null);
-    }
-
-    private SyncStatusObserver mSyncStatusObserver = new SyncStatusObserver() {
-        /** Callback invoked with the sync adapter status changes. */
-        @Override
-        public void onStatusChanged(int which) {
-            runOnUiThread(new Runnable() {
-                /**
-                 * The SyncAdapter runs on a background thread. To update the UI, onStatusChanged()
-                 * runs on the UI thread.
-                 */
-                @Override
-                public void run() {
-                    // Create a handle to the account that was created by
-                    // SyncService.CreateSyncAccount(). This will be used to query the system to
-                    // see how the sync status has changed.
-                    Account account = GenericAccountService.GetAccount(SyncUtils.ACCOUNT_TYPE);
-                    if (account == null) {
-                        // GetAccount() returned an invalid value. This shouldn't happen, but
-                        // we'll set the status to "not refreshing".
-                        //setRefreshActionButtonState(false);
-                        return;
-                    }
-
-                    // Test the ContentResolver to see if the sync adapter is active or pending.
-                    // Set the state of the refresh button accordingly.
-                    boolean syncActive = ContentResolver.isSyncActive(
-                            account, FeedContract.CONTENT_AUTHORITY);
-                    boolean syncPending = ContentResolver.isSyncPending(
-                            account, FeedContract.CONTENT_AUTHORITY);
-                }
-            });
-        }
-    };
-
-    public void update() {
-        SyncUtils.TriggerRefresh();
     }
 }

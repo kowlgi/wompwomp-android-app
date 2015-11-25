@@ -1,15 +1,15 @@
 package co.wompwomp.sunshine;
 
 import android.accounts.Account;
-import android.app.Activity;
 import android.content.ContentResolver;
 
+import android.content.Context;
 import android.content.SyncStatusObserver;
 import android.database.Cursor;
 
+import android.graphics.Typeface;
 import android.os.Bundle;
 
-import android.os.Debug;
 import android.support.v4.app.Fragment;
 
 import android.support.v4.app.LoaderManager;
@@ -24,6 +24,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
@@ -33,18 +34,18 @@ import co.wompwomp.sunshine.provider.FeedContract;
 import co.wompwomp.sunshine.util.ImageCache;
 import co.wompwomp.sunshine.util.ImageFetcher;
 
-
-/**
- * Created by kowlgi on 10/21/15.
- */
 public class MainFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
     private RecyclerView mRecyclerView = null;
     private MyCursorAdapter mAdapter = null;
     private LinearLayoutManager mLayoutManager;
-    private static final String TAG = "MainFragment";
     private ImageFetcher mImageFetcher = null;
     private static final String IMAGE_CACHE_DIR = "thumbs";
     SwipeRefreshLayout mSwipeRefreshLayout = null;
+    private int mPreviousTotal = 0;
+    private boolean mLoadingMore = true;
+    private int mVisibleThreshold = 1;
+    private int mFirstVisibleItem, mVisibleItemCount, mTotalItemCount;
+
     /**
      * Handle to a SyncObserver. The ProgressBar element is visible until the SyncObserver reports
      * that the sync is complete.
@@ -81,35 +82,81 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // 1. Set up the recycler view
+        /* Set up the recycler view */
         View v = inflater.inflate(R.layout.main_activity, container, false);
         mRecyclerView = (RecyclerView) v.findViewById(R.id.quotesRecyclerView);
-
         // use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
         mRecyclerView.setHasFixedSize(true);
-
         // use a linear layout manager
         mLayoutManager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(mLayoutManager);
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onScrollStateChanged(RecyclerView view, int scrollState) {
-
-            }
-
-            @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                mSwipeRefreshLayout.setEnabled(mLayoutManager.findFirstCompletelyVisibleItemPosition() == 0);
+                mVisibleItemCount = mRecyclerView.getChildCount();
+                mTotalItemCount = mLayoutManager.getItemCount();
+                mFirstVisibleItem = mLayoutManager.findFirstVisibleItemPosition();
+
+                if (mLoadingMore) {
+                    // Avoid syncing from server to load older items as there aren't any older items
+                    if (mTotalItemCount > mPreviousTotal) {
+                        mLoadingMore = false;
+                        mPreviousTotal = mTotalItemCount;
+                    }
+                } else if ((mTotalItemCount - mVisibleItemCount) <= (mFirstVisibleItem + mVisibleThreshold)) {
+                    // End has been reached
+
+                    SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR);
+                    mLoadingMore = true;
+                }
             }
         });
 
-        Toolbar myToolbar = (Toolbar) v.findViewById(R.id.toolbar);
-        ((AppCompatActivity) getActivity()).setSupportActionBar(myToolbar);
-        myToolbar.setNavigationIcon(R.drawable.ic_action_trombone_white);
+        /* Set up the swipe refresh layout */
+        mSwipeRefreshLayout = ( SwipeRefreshLayout) v.findViewById(R.id.swiperefresh);
+        mSwipeRefreshLayout.setOnRefreshListener(
+                new SwipeRefreshLayout.OnRefreshListener() {
+                    @Override
+                    public void onRefresh() {
+                        Answers.getInstance().logCustom(new CustomEvent("Swiped to refresh"));
+                        syncNewItems();
+                    }
+                }
+        );
 
-        // 2. Set up the image cache
+        mSwipeRefreshLayout.setColorSchemeResources(
+                R.color.wompwompblue,
+                R.color.spinner_complementarycolor1,
+                R.color.spinner_complementarycolor2,
+                R.color.spinner_complementarycolor3);
+
+        Toolbar myToolbar = (Toolbar) v.findViewById(R.id.toolbar);
+        AppCompatActivity myActivity = (AppCompatActivity) getActivity();
+        myActivity.setSupportActionBar(myToolbar);
+        android.support.v7.app.ActionBar actionBar = myActivity.getSupportActionBar();
+        if(actionBar != null) {
+            actionBar.setDisplayShowTitleEnabled(false); // disable default title
+        }
+        myToolbar.setNavigationIcon(R.drawable.ic_action_trombone_white);
+        TextView toolbarTitle = (TextView) myToolbar.findViewById(R.id.toolbar_title);
+        Typeface titlefont = Typeface.createFromAsset(myActivity.getAssets(), "fonts/Comfortaa_Bold.ttf");
+        toolbarTitle.setTypeface(titlefont);
+        toolbarTitle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                smoothScrollToTop();
+            }
+        });
+        myToolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                smoothScrollToTop();
+            }
+        });
+
+        // Set up the image cache
         ImageCache.ImageCacheParams cacheParams =
                 new ImageCache.ImageCacheParams(getActivity(), IMAGE_CACHE_DIR);
         cacheParams.setMemCacheSizePercent(0.25f); // Set memory cache to 25% of app memory
@@ -118,24 +165,6 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
         mImageFetcher = new ImageFetcher(getActivity());
         mImageFetcher.setLoadingImage(R.drawable.geometry2);
         mImageFetcher.addImageCache(getActivity().getSupportFragmentManager(), cacheParams);
-
-        // 3. Set up the swipe refresh layout
-        mSwipeRefreshLayout = ( SwipeRefreshLayout) v.findViewById(R.id.swiperefresh);
-        mSwipeRefreshLayout.setOnRefreshListener(
-                new SwipeRefreshLayout.OnRefreshListener() {
-                    @Override
-                    public void onRefresh() {
-                        Answers.getInstance().logCustom(new CustomEvent("Swiped to refresh"));
-                        SyncUtils.TriggerRefresh();
-                    }
-                }
-        );
-        // Configure the refreshing colors
-        mSwipeRefreshLayout.setColorSchemeResources(
-                android.R.color.holo_blue_bright,
-                android.R.color.holo_green_light,
-                android.R.color.holo_orange_light,
-                android.R.color.holo_red_light);
 
         return v;
     }
@@ -155,7 +184,6 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
     @Override
     public void onPause() {
         super.onPause();
-
 
         mImageFetcher.setPauseWork(false);
         mImageFetcher.setExitTasksEarly(true);
@@ -180,11 +208,11 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
      * {@link SyncService} with it, and establish a sync schedule.
      */
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
+    public void onAttach(Context context) {
+        super.onAttach(context);
 
         // Create account, if needed
-        SyncUtils.CreateSyncAccount(activity);
+        SyncUtils.CreateSyncAccount(context);
     }
 
     @Override
@@ -194,7 +222,7 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
         mAdapter = new MyCursorAdapter(getActivity(), null,mImageFetcher);
         mRecyclerView.setAdapter(mAdapter);
         getLoaderManager().initLoader(0, null, this);
-    }
+    }/* Add recycler view scrolling behavior */
 
     /**
      * Query the content provider for data.
@@ -252,13 +280,6 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
                     // SyncService.CreateSyncAccount(). This will be used to query the system to
                     // see how the sync status has changed.
                     Account account = GenericAccountService.GetAccount(SyncUtils.ACCOUNT_TYPE);
-                    if (account == null) {
-                        // GetAccount() returned an invalid value. This shouldn't happen, but
-                        // we'll set the status to "not refreshing".
-                        //setRefreshActionButtonState(false);
-                        mSwipeRefreshLayout.setRefreshing(false);
-                        return;
-                    }
 
                     // Test the ContentResolver to see if the sync adapter is active or pending.
                     // Set the state of the refresh button accordingly.
@@ -272,8 +293,14 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
         }
     };
 
-    public void update() {
-        SyncUtils.TriggerRefresh();
+    public void syncNewItems() {
+        SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR);
+    }
+
+    public void smoothScrollToTop() {
+        if(mRecyclerView != null) {
+            mRecyclerView.smoothScrollToPosition(0);
+        }
     }
 
 }

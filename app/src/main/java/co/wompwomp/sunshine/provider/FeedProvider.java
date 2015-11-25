@@ -241,7 +241,6 @@ public class FeedProvider extends ContentProvider {
 
         public FeedDatabase(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
-            Log.i(TAG, SQL_CREATE_ENTRIES);
         }
 
         @Override

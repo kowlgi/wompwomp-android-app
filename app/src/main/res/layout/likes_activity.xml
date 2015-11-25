@@ -15,8 +15,9 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:theme="@style/WompWompActionBarTheme"
             android:elevation="4dp"
+            android:theme="@style/WompwompActionBarStyle"
+            android:popupTheme="@style/WompwompActionBarStyle"
             app:layout_scrollFlags="scroll|enterAlways"/>
 
     </android.support.design.widget.AppBarLayout>

@@ -9,4 +9,6 @@
         android:orderInCategory="51" app:showAsAction="never" />
     <item android:id="@+id/action_rate_us" android:title="@string/action_rate"
         android:orderInCategory="52" app:showAsAction="never" />
+    <item android:id="@+id/action_about" android:title="@string/action_about"
+        android:orderInCategory="53" app:showAsAction="never" />
 </menu>
