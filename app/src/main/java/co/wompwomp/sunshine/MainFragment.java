@@ -44,7 +44,7 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
     private static final String IMAGE_CACHE_DIR = "thumbs";
     private SwipeRefreshLayout mSwipeRefreshLayout = null;
     private int mPreviousTotal = 0;
-    private boolean mLoadingMore = true;
+    private boolean mLoadingBottom = false, mLoadingTop = false;
     private int mVisibleThreshold = 1;
     private int mFirstVisibleItem, mVisibleItemCount, mTotalItemCount;
     private View mProgressBarLayout;
@@ -102,17 +102,24 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
                 mTotalItemCount = mLayoutManager.getItemCount();
                 mFirstVisibleItem = mLayoutManager.findFirstVisibleItemPosition();
 
-                if (mLoadingMore) {
+                if(mLayoutManager.findFirstCompletelyVisibleItemPosition() == 0)
+                {
+                    mLoadingTop = true;
+                } else {
+                    mLoadingTop = false;
+                }
+
+                if (mLoadingBottom) {
                     // Avoid syncing from server to load older items as there aren't any older items
                     if (mTotalItemCount > mPreviousTotal) {
-                        mLoadingMore = false;
+                        mLoadingBottom = false;
                         mPreviousTotal = mTotalItemCount;
                     }
                 } else if ((mTotalItemCount - mVisibleItemCount) <= (mFirstVisibleItem + mVisibleThreshold)) {
                     // End has been reached
 
                     SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR);
-                    mLoadingMore = true;
+                    mLoadingBottom = true;
                 }
             }
         });
@@ -298,7 +305,7 @@ public class MainFragment extends Fragment implements LoaderManager.LoaderCallba
                             account, FeedContract.CONTENT_AUTHORITY);
                     boolean syncPending = ContentResolver.isSyncPending(
                             account, FeedContract.CONTENT_AUTHORITY);
-                    mSwipeRefreshLayout.setRefreshing(syncActive || syncPending);
+                    mSwipeRefreshLayout.setRefreshing((syncActive || syncPending) && mLoadingTop);
                 }
             });
         }

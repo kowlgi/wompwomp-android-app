@@ -154,22 +154,27 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             }
 
             if(syncMethod == WompWompConstants.SyncMethod.SUBSET_OF_LATEST_ITEMS_NO_CURSOR) {
+                /* insert and update db happens on first app load as
+                   well or after clearing internal data. db is always empty in this scenario. */
                 limit = WompWompConstants.SYNC_NUM_SUBSET_ITEMS;
-                updateAndDeleteStaleItems =  false;
+                updateAndDeleteStaleItems =  true;
             }
             else if (syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR) {
+                /* insert only into db in in-app refresh scenario */
                 limit = WompWompConstants.SYNC_NUM_ALL_ITEMS;
                 c.moveToFirst();
                 cursor = c.getString(0);
                 updateAndDeleteStaleItems = false;
             }
             else if(syncMethod == WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR) {
-                limit = WompWompConstants.SYNC_NUM_SUBSET_ITEMS * -1; // get items below cursor
+                /* insert only into db in in-app scroll down to bottom scenario */
+                limit = WompWompConstants.SYNC_NUM_SUBSET_ITEMS * -1; /* negative limit implies items below cursor */
                 c.moveToLast();
                 cursor = c.getString(0);
                 updateAndDeleteStaleItems = false;
             }
             else if(syncMethod == WompWompConstants.SyncMethod.EXISTING_AND_NEW_ABOVE_LOW_CURSOR) {
+                /* insert and update db in automatic background sync scenario */
                 limit = WompWompConstants.SYNC_NUM_ALL_ITEMS;
                 c.moveToLast();
                 cursor = c.getString(0);

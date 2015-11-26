@@ -38,7 +38,8 @@ public class WompWompConstants {
     public enum SyncMethod {
         EXISTING_AND_NEW_ABOVE_LOW_CURSOR, /* insert and update db in automatic background sync scenario */
         ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR, /* insert only into db in in-app refresh scenario */
-        SUBSET_OF_LATEST_ITEMS_NO_CURSOR, /* insert only into db in first sync when db is empty scenario */
+        SUBSET_OF_LATEST_ITEMS_NO_CURSOR, /* insert and update db happens on first app load as
+        well or after clearing internal data. db is always empty in this scenario. */
         SUBSET_OF_ITEMS_BELOW_LOW_CURSOR /* insert only into db in in-app scroll down to bottom scenario */
     }
 }
