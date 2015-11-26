@@ -23,6 +23,7 @@ import android.content.ContentProviderClient;
 import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.OperationApplicationException;
 import android.content.SyncResult;
 import android.database.Cursor;
@@ -30,6 +31,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.RemoteException;
+import android.support.v4.content.LocalBroadcastManager;
 
 import co.wompwomp.sunshine.provider.FeedContract;
 
@@ -126,9 +128,9 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority,
                               ContentProviderClient provider, SyncResult syncResult) {
+        WompWompConstants.SyncMethod syncMethod = WompWompConstants.SyncMethod.SYNC_METHOD_NONE;
         try {
             String syncMethodStr = extras.getString(WompWompConstants.SYNC_METHOD);
-            WompWompConstants.SyncMethod syncMethod;
             if(syncMethodStr == null) {
                 // this happens during periodic auto sync
                 syncMethod = WompWompConstants.SyncMethod.EXISTING_AND_NEW_ABOVE_LOW_CURSOR;
@@ -203,6 +205,9 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 if (stream != null) {
                     stream.close();
                 }
+                Intent intent = new Intent(MainActivity.ACTION_FINISHED_SYNC);
+                intent.putExtra(WompWompConstants.SYNC_METHOD, syncMethod.name());
+                LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);
             }
         } catch (MalformedURLException e) {
             syncResult.stats.numParseExceptions++;
@@ -243,7 +248,6 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
         final FeedParser feedParser = new FeedParser();
         final ContentResolver contentResolver = getContext().getContentResolver();
         final List<FeedParser.Entry> entries = feedParser.parse(stream);
-
 
         ArrayList<ContentProviderOperation> batch;
         batch = new ArrayList<>();
@@ -305,8 +309,8 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                     }
                 }
             }
-            c.close();
         }
+        c.close();
 
         // Add new items
         for (FeedParser.Entry e : entryMap.values()) {

@@ -1,9 +1,9 @@
 package co.wompwomp.sunshine;
 
-import android.accounts.Account;
-import android.content.ContentResolver;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
-import android.content.SyncStatusObserver;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Typeface;
@@ -13,11 +13,13 @@ import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,7 +34,6 @@ import com.google.android.gms.common.GoogleApiAvailability;
 
 import java.util.Random;
 
-import co.wompwomp.sunshine.accounts.GenericAccountService;
 import co.wompwomp.sunshine.provider.FeedContract;
 import co.wompwomp.sunshine.util.ImageCache;
 import co.wompwomp.sunshine.util.ImageFetcher;
@@ -49,15 +50,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private final int mVisibleThreshold = 1;
     private int mFirstVisibleItem, mVisibleItemCount, mTotalItemCount;
     private View mProgressBarLayout;
-
-    /**
-     * Handle to a SyncObserver. The ProgressBar element is visible until the SyncObserver reports
-     * that the sync is complete.
-     *
-     * <p>This allows us to delete our SyncObserver once the application is no longer in the
-     * foreground.
-     */
-    private Object mSyncObserverHandle;
+    public static final String ACTION_FINISHED_SYNC = "co.wompwomp.sunshine.ACTION_FINISHED_SYNC";
+    private static IntentFilter syncIntentFilter = new IntentFilter(ACTION_FINISHED_SYNC);
+    private boolean mLoadingBottom, mLoadingTop;
 
     /**
      * Projection for querying the content provider.
@@ -104,17 +99,20 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         // use a linear layout manager
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
+        mLoadingBottom = false;
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
                 // check for scroll down
-                if (dy > 0) {
+                if (dy > 0 && !mLoadingBottom) {
                     mVisibleItemCount = mRecyclerView.getChildCount();
                     mTotalItemCount = mLayoutManager.getItemCount();
                     mFirstVisibleItem = mLayoutManager.findFirstVisibleItemPosition();
 
                     if ((mTotalItemCount - mVisibleItemCount) <= (mFirstVisibleItem + mVisibleThreshold)) {
+                        mSwipeRefreshLayout.setRefreshing(true);
+                        mLoadingBottom = true;
                         SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR);
                     }
                 }
@@ -135,6 +133,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                     @Override
                     public void onRefresh() {
                         Answers.getInstance().logCustom(new CustomEvent("Swiped to refresh"));
+                        mLoadingTop = true;
                         syncNewItems();
                     }
                 }
@@ -187,26 +186,19 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @Override
     protected void onResume() {
         super.onResume();
+        mLoadingBottom = false;
+        mLoadingTop = false;
         mImageFetcher.setExitTasksEarly(false);
-
-        mSyncStatusObserver.onStatusChanged(0);
-        // Watch for sync state changes
-        final int mask = ContentResolver.SYNC_OBSERVER_TYPE_PENDING |
-                ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE;
-        mSyncObserverHandle = ContentResolver.addStatusChangeListener(mask, mSyncStatusObserver);
+        LocalBroadcastManager.getInstance(this).registerReceiver(mSyncBroadcastReceiver, syncIntentFilter);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mSyncBroadcastReceiver);
         mImageFetcher.setPauseWork(false);
         mImageFetcher.setExitTasksEarly(true);
         mImageFetcher.flushCache();
-
-        if (mSyncObserverHandle != null) {
-            ContentResolver.removeStatusChangeListener(mSyncObserverHandle);
-            mSyncObserverHandle = null;
-        }
     }
 
     @Override
@@ -247,6 +239,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_refresh) {
             Answers.getInstance().logCustom(new CustomEvent("Options menu: Refresh"));
+            mSwipeRefreshLayout.setRefreshing(true);
             syncNewItems();
             return true;
         }
@@ -340,36 +333,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mAdapter.changeCursor(null);
     }
 
-    private SyncStatusObserver mSyncStatusObserver = new SyncStatusObserver() {
-        /** Callback invoked with the sync adapter status changes. */
-        @Override
-        public void onStatusChanged(int which) {
-            runOnUiThread(new Runnable() {
-                /**
-                 * The SyncAdapter runs on a background thread. To update the UI, onStatusChanged()
-                 * runs on the UI thread.
-                 */
-                @Override
-                public void run() {
-                    // Create a handle to the account that was created by
-                    // SyncService.CreateSyncAccount(). This will be used to query the system to
-                    // see how the sync status has changed.
-                    Account account = GenericAccountService.GetAccount(SyncUtils.ACCOUNT_TYPE);
-
-                    // Test the ContentResolver to see if the sync adapter is active or pending.
-                    // Set the state of the refresh button accordingly.
-                    boolean syncActive = ContentResolver.isSyncActive(
-                            account, FeedContract.CONTENT_AUTHORITY);
-                    boolean syncPending = ContentResolver.isSyncPending(
-                            account, FeedContract.CONTENT_AUTHORITY);
-                    if (mSwipeRefreshLayout != null) {
-                        mSwipeRefreshLayout.setRefreshing(syncActive || syncPending);
-                    }
-                }
-            });
-        }
-    };
-
     private void syncNewItems() {
         SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR);
     }
@@ -379,4 +342,24 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             mRecyclerView.smoothScrollToPosition(0);
         }
     }
+
+    private BroadcastReceiver mSyncBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // update your views
+            Bundle intentExtras = intent.getExtras();
+            if(intentExtras != null) {
+                String syncMethod = intentExtras.getString(WompWompConstants.SYNC_METHOD);
+                if(syncMethod == null) return;
+
+                if(syncMethod.equals(WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR.name())) {
+                    mLoadingBottom = false;
+                }
+                else if(syncMethod.equals(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR.name())) {
+                    mLoadingTop = false;
+                }
+                mSwipeRefreshLayout.setRefreshing(mLoadingBottom || mLoadingTop);
+            }
+        }
+    };
 }

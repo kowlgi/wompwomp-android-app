@@ -14,22 +14,4 @@
     android:toDegrees="360"
     android:drawable="@drawable/ic_trombone_blue">
 
-<!--    <shape
-        android:innerRadiusRatio="3"
-        android:shape="ring"
-        android:thicknessRatio="8"
-        android:useLevel="false" >
-        <size
-            android:height="48dip"
-            android:width="48dip" />
-
-        <gradient
-            android:centerColor="@color/progresscentercolor"
-            android:centerY="0.50"
-            android:endColor="@color/wompwompblue"
-            android:startColor="@color/progressstartcolor"
-            android:type="sweep"
-            android:useLevel="false" />
-    </shape>-->
-
 </rotate>
