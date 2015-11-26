@@ -1,14 +1,27 @@
 package co.wompwomp.sunshine;
 
+import android.accounts.Account;
+import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.SyncStatusObserver;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.app.FragmentTransaction;
+
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
@@ -17,12 +30,49 @@ import com.crashlytics.android.answers.CustomEvent;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
+import java.util.Random;
+
+import co.wompwomp.sunshine.accounts.GenericAccountService;
 import co.wompwomp.sunshine.provider.FeedContract;
+import co.wompwomp.sunshine.util.ImageCache;
+import co.wompwomp.sunshine.util.ImageFetcher;
 
-public class MainActivity extends AppCompatActivity{
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
-    private static final String TAG = "MainActivity";
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
+    private RecyclerView mRecyclerView = null;
+    private MyCursorAdapter mAdapter = null;
+    private LinearLayoutManager mLayoutManager;
+    private ImageFetcher mImageFetcher = null;
+    private static final String IMAGE_CACHE_DIR = "thumbs";
+    private SwipeRefreshLayout mSwipeRefreshLayout = null;
+    private final int mVisibleThreshold = 1;
+    private int mFirstVisibleItem, mVisibleItemCount, mTotalItemCount;
+    private View mProgressBarLayout;
+
+    /**
+     * Handle to a SyncObserver. The ProgressBar element is visible until the SyncObserver reports
+     * that the sync is complete.
+     *
+     * <p>This allows us to delete our SyncObserver once the application is no longer in the
+     * foreground.
+     */
+    private Object mSyncObserverHandle;
+
+    /**
+     * Projection for querying the content provider.
+     */
+    private static final String[] PROJECTION = new String[]{
+            FeedContract.Entry._ID,
+            FeedContract.Entry.COLUMN_NAME_ENTRY_ID,
+            FeedContract.Entry.COLUMN_NAME_IMAGE_SOURCE_URI,
+            FeedContract.Entry.COLUMN_NAME_QUOTE_TEXT,
+            FeedContract.Entry.COLUMN_NAME_FAVORITE,
+            FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES,
+            FeedContract.Entry.COLUMN_NAME_NUM_SHARES,
+            FeedContract.Entry.COLUMN_NAME_CREATED_ON,
+            FeedContract.Entry.COLUMN_NAME_CARD_TYPE
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,13 +93,126 @@ public class MainActivity extends AppCompatActivity{
             requestPermissions(permissions, permissionRequestCode);
         }
 
-        if (getSupportFragmentManager().findFragmentByTag(TAG) == null) {
-            final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-            ft.add(android.R.id.content, new MainFragment(), TAG);
-            ft.commit();
-        }
+        Crashlytics.setUserIdentifier(Installation.id(this));
 
-        logUser();
+        /* Set up the recycler view */
+        setContentView(R.layout.main_activity);
+        mRecyclerView = (RecyclerView) findViewById(R.id.quotesRecyclerView);
+        // use this setting to improve performance if you know that changes
+        // in content do not change the layout size of the RecyclerView
+        mRecyclerView.setHasFixedSize(true);
+        // use a linear layout manager
+        mLayoutManager = new LinearLayoutManager(this);
+        mRecyclerView.setLayoutManager(mLayoutManager);
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                // check for scroll down
+                if (dy > 0) {
+                    mVisibleItemCount = mRecyclerView.getChildCount();
+                    mTotalItemCount = mLayoutManager.getItemCount();
+                    mFirstVisibleItem = mLayoutManager.findFirstVisibleItemPosition();
+
+                    if ((mTotalItemCount - mVisibleItemCount) <= (mFirstVisibleItem + mVisibleThreshold)) {
+                        SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR);
+                    }
+                }
+            }
+        });
+
+        mProgressBarLayout = findViewById(R.id.progressBarLayout);
+        String[] contentLoadingMessages = getResources().getStringArray(R.array.loading_messages);
+        TextView progressBarText = (TextView) mProgressBarLayout.findViewById(R.id.progressBarText);
+        int randomIndex = new Random().nextInt(contentLoadingMessages.length);
+        progressBarText.setText(contentLoadingMessages[randomIndex]);
+        mProgressBarLayout.setVisibility(View.VISIBLE);
+
+        /* Set up the swipe refresh layout */
+        mSwipeRefreshLayout = ( SwipeRefreshLayout) findViewById(R.id.swiperefresh);
+        mSwipeRefreshLayout.setOnRefreshListener(
+                new SwipeRefreshLayout.OnRefreshListener() {
+                    @Override
+                    public void onRefresh() {
+                        Answers.getInstance().logCustom(new CustomEvent("Swiped to refresh"));
+                        syncNewItems();
+                    }
+                }
+        );
+
+        mSwipeRefreshLayout.setColorSchemeResources(
+                R.color.wompwompblue,
+                R.color.spinner_complementarycolor1,
+                R.color.spinner_complementarycolor2,
+                R.color.spinner_complementarycolor3);
+
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(myToolbar);
+        android.support.v7.app.ActionBar actionBar = getSupportActionBar();
+        if(actionBar != null) {
+            actionBar.setDisplayShowTitleEnabled(false); // disable default title
+        }
+        myToolbar.setNavigationIcon(R.drawable.ic_action_trombone_white);
+        TextView toolbarTitle = (TextView) myToolbar.findViewById(R.id.toolbar_title);
+        Typeface titlefont = Typeface.createFromAsset(getAssets(), "fonts/Comfortaa_Bold.ttf");
+        toolbarTitle.setTypeface(titlefont);
+        toolbarTitle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                smoothScrollToTop();
+            }
+        });
+        myToolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                smoothScrollToTop();
+            }
+        });
+
+        // Set up the image cache
+        ImageCache.ImageCacheParams cacheParams =
+                new ImageCache.ImageCacheParams(this, IMAGE_CACHE_DIR);
+        cacheParams.setMemCacheSizePercent(0.25f); // Set memory cache to 25% of app memory
+
+        // The ImageFetcher takes care of loading images into our ImageView children asynchronously
+        mImageFetcher = new ImageFetcher(this);
+        mImageFetcher.setLoadingImage(R.drawable.geometry2);
+        mImageFetcher.addImageCache(getSupportFragmentManager(), cacheParams);
+
+        mAdapter = new MyCursorAdapter(this, null,mImageFetcher);
+        mRecyclerView.setAdapter(mAdapter);
+        getSupportLoaderManager().initLoader(0, null, this);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mImageFetcher.setExitTasksEarly(false);
+
+        mSyncStatusObserver.onStatusChanged(0);
+        // Watch for sync state changes
+        final int mask = ContentResolver.SYNC_OBSERVER_TYPE_PENDING |
+                ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE;
+        mSyncObserverHandle = ContentResolver.addStatusChangeListener(mask, mSyncStatusObserver);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mImageFetcher.setPauseWork(false);
+        mImageFetcher.setExitTasksEarly(true);
+        mImageFetcher.flushCache();
+
+        if (mSyncObserverHandle != null) {
+            ContentResolver.removeStatusChangeListener(mSyncObserverHandle);
+            mSyncObserverHandle = null;
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mImageFetcher.closeCache();
     }
 
     @Override
@@ -62,11 +225,7 @@ public class MainActivity extends AppCompatActivity{
             if(itemId != null) {
                 Answers.getInstance().logCustom(new CustomEvent("Push notification clicked")
                         .putCustomAttribute("itemlink", itemId));
-                // smooth
-                MainFragment f = (MainFragment) getSupportFragmentManager().findFragmentByTag(TAG);
-                if(f != null) {
-                    f.smoothScrollToTop();
-                }
+                smoothScrollToTop();
             }
         }
     }
@@ -88,8 +247,7 @@ public class MainActivity extends AppCompatActivity{
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_refresh) {
             Answers.getInstance().logCustom(new CustomEvent("Options menu: Refresh"));
-            MainFragment f = (MainFragment) getSupportFragmentManager().findFragmentByTag(TAG);
-            f.syncNewItems();
+            syncNewItems();
             return true;
         }
         else if (id == R.id.action_likes) {
@@ -133,7 +291,6 @@ public class MainActivity extends AppCompatActivity{
                 apiAvailability.getErrorDialog(this, resultCode, PLAY_SERVICES_RESOLUTION_REQUEST)
                         .show();
             } else {
-                Log.i(TAG, "This device is not supported.");
                 finish();
             }
             return false;
@@ -141,7 +298,85 @@ public class MainActivity extends AppCompatActivity{
         return true;
     }
 
-    private void logUser() {
-        Crashlytics.setUserIdentifier(Installation.id(this));
+    /**
+     * Query the content provider for data.
+     *
+     * <p>Loaders do queries in a background thread. They also provide a ContentObserver that is
+     * triggered when data in the content provider changes. When the sync adapter updates the
+     * content provider, the ContentObserver responds by resetting the loader and then reloading
+     * it.
+     */
+    @Override
+    public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+
+        // We only have one loader, so we can ignore the value of i.
+        // (It'll be '0', as set in onCreate().)
+        return new CursorLoader(this,  // Context
+                FeedContract.Entry.CONTENT_URI, // URI
+                PROJECTION,                // Projection
+                null,                           // Selection
+                null,                           // Selection args
+                FeedContract.Entry.COLUMN_NAME_CREATED_ON + " desc"); // Sort
+    }
+
+    /**
+     * Move the Cursor returned by the query into the ListView adapter. This refreshes the existing
+     * UI with the data in the Cursor.
+     */
+    @Override
+    public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+        mProgressBarLayout.setVisibility(View.GONE);
+        mAdapter.changeCursor(cursor);
+    }
+
+    /**
+     * Called when the ContentObserver defined for the content provider detects that data has
+     * changed. The ContentObserver resets the loader, and then re-runs the loader. In the adapter,
+     * set the Cursor value to null. This removes the reference to the Cursor, allowing it to be
+     * garbage-collected.
+     */
+    @Override
+    public void onLoaderReset(Loader<Cursor> cursorLoader) {
+        mAdapter.changeCursor(null);
+    }
+
+    private SyncStatusObserver mSyncStatusObserver = new SyncStatusObserver() {
+        /** Callback invoked with the sync adapter status changes. */
+        @Override
+        public void onStatusChanged(int which) {
+            runOnUiThread(new Runnable() {
+                /**
+                 * The SyncAdapter runs on a background thread. To update the UI, onStatusChanged()
+                 * runs on the UI thread.
+                 */
+                @Override
+                public void run() {
+                    // Create a handle to the account that was created by
+                    // SyncService.CreateSyncAccount(). This will be used to query the system to
+                    // see how the sync status has changed.
+                    Account account = GenericAccountService.GetAccount(SyncUtils.ACCOUNT_TYPE);
+
+                    // Test the ContentResolver to see if the sync adapter is active or pending.
+                    // Set the state of the refresh button accordingly.
+                    boolean syncActive = ContentResolver.isSyncActive(
+                            account, FeedContract.CONTENT_AUTHORITY);
+                    boolean syncPending = ContentResolver.isSyncPending(
+                            account, FeedContract.CONTENT_AUTHORITY);
+                    if (mSwipeRefreshLayout != null) {
+                        mSwipeRefreshLayout.setRefreshing(syncActive || syncPending);
+                    }
+                }
+            });
+        }
+    };
+
+    private void syncNewItems() {
+        SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR);
+    }
+
+    private void smoothScrollToTop() {
+        if(mRecyclerView != null) {
+            mRecyclerView.smoothScrollToPosition(0);
+        }
     }
 }
