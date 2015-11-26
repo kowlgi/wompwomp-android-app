@@ -174,7 +174,9 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                             shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
                             shareIntent.setType("image/*");
                         }
-                        mContext.startActivity(Intent.createChooser(shareIntent, "Share"));
+
+                        mContext.startActivity(Intent.createChooser(shareIntent,
+                                mContext.getResources().getString(R.string.app_chooser_title)));
                     }
                 });
 

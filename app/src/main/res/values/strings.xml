@@ -6,9 +6,8 @@
     <string name="action_likes">Likes</string>
     <string name="action_about">About</string>
 
-<!-- TODO: Remove or change this placeholder text -->
     <string name="title_activity_main">MainActivity</string>
-    <string name="send_to">Share Image</string>
+    <string name="app_chooser_title">Share via</string>
     <string name="share">SHARE</string>
     <string name="rate">RATE</string>
 
@@ -18,9 +17,12 @@
     <string name="share_app">Install the wompwomp app for amazing content to share with others</string>
     <string name="share_us_if_you_like">If you like our app share it with others</string>
     <string name="rate_us_on_play_store">We want your feedback. Rate us on the Play store</string>
-    <string name="title_activity_about">AboutActivity</string>
     <string name="whatsapp_share_button">whatsapp share button</string>
     <string name="favorite_button">favorite button</string>
+    <string name="version_title">Version</string>
+    <string name="email_id">wompwompapp@gmail.com</string>
+    <string name="our_contact">Contact Us</string>
+    <string name="snappy_byline">Made with love in the USA</string>
     <string-array name="loading_messages">
         <item>Bringing you funny content from Antarctica in a bit</item>
         <item>Loading best content from the Voyager mission</item>

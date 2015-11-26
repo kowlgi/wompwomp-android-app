@@ -29,6 +29,7 @@ android {
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
+        resValue "string", "app_version", versionName + "." + versionCode
         resValue "string", "authorities", applicationId
         resValue "string", "account_type", applicationId + ".SyncAdapter"
         buildConfigField "String", "ACCOUNT_TYPE", "\" co.wompwomp.sunshine.SyncAdapter \" "
@@ -43,6 +44,7 @@ android {
             ext.enableCrashlytics = false
             applicationIdSuffix ".debug"
             versionNameSuffix "-debug"
+            resValue "string", "app_version",defaultConfig.versionName + "." + defaultConfig.versionCode + ".debug"
             resValue "string", "authorities", defaultConfig.applicationId + '.debug'
             resValue "string", "account_type", defaultConfig.applicationId + ".SyncAdapter.debug"
             buildConfigField "String", "ACCOUNT_TYPE", "\"co.wompwomp.sunshine.SyncAdapter.debug\" "

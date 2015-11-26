@@ -6,10 +6,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
 
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -72,6 +72,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        SyncUtils.CreateSyncAccount(this);
 
         if (checkPlayServices()) {
             // Start IntentService to register this application with GCM.
@@ -153,8 +155,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         }
         myToolbar.setNavigationIcon(R.drawable.ic_action_trombone_white);
         TextView toolbarTitle = (TextView) myToolbar.findViewById(R.id.toolbar_title);
-        Typeface titlefont = Typeface.createFromAsset(getAssets(), "fonts/Comfortaa_Bold.ttf");
-        toolbarTitle.setTypeface(titlefont);
         toolbarTitle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -265,6 +265,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             return true;
         }
         else if(id == R.id.action_about) {
+            FragmentManager fm = getSupportFragmentManager();
+            AboutDialogFragment aboutDialogFragment = AboutDialogFragment.newInstance();
+            aboutDialogFragment.show(fm, "about_dialog");
             return true;
         }
 
@@ -318,7 +321,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
      */
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
-        mProgressBarLayout.setVisibility(View.GONE);
+        if(cursor.getCount() >= 1) {
+            mProgressBarLayout.setVisibility(View.GONE);
+        }
         mAdapter.changeCursor(cursor);
     }
 
@@ -358,8 +363,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 else if(syncMethod.equals(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR.name())) {
                     mLoadingTop = false;
                 }
-                mSwipeRefreshLayout.setRefreshing(mLoadingBottom || mLoadingTop);
             }
+
+            mSwipeRefreshLayout.setRefreshing(mLoadingBottom || mLoadingTop);
         }
     };
 }

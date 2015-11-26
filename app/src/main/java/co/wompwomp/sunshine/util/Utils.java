@@ -23,7 +23,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.drawable.PictureDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Build.VERSION_CODES;
@@ -33,9 +32,8 @@ import android.util.Log;
 import android.view.View;
 
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
 
 import co.wompwomp.sunshine.R;
 
@@ -86,22 +84,19 @@ public class Utils {
         return Build.VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB_MR1;
     }
 
-    public static boolean hasJellyBean() {
-        return Build.VERSION.SDK_INT >= VERSION_CODES.JELLY_BEAN;
-    }
-
     public static boolean hasKitKat() {
         return Build.VERSION.SDK_INT >= VERSION_CODES.KITKAT;
     }
 
     public static Uri getLocalViewBitmapUri(String filename, View aView, Context context){
-        String TAG = "WompWompUtils";
         Uri bmpUri = null;
         File file =  new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_DOWNLOADS), filename + ".jpg");
+        Log.i("wompwomp", "filepath: " + file.getAbsolutePath());
 
         if(file.exists()) {
             bmpUri = Uri.fromFile(file);
+            Log.i("wompwomp", "existing file: " + bmpUri.getPath());
             return bmpUri;
         }
 
@@ -118,8 +113,6 @@ public class Utils {
         aView.draw(myCanvas);
 
         final double SHRINK_FACTOR = 0.25;
-        final double LEFT_MARGIN_FACTOR = 1-SHRINK_FACTOR;
-
         Bitmap watermark = BitmapFactory.decodeResource(context.getResources(), R.drawable.watermark_wompwomp_stylized);
         double new_width = (int) (aView.getWidth() * SHRINK_FACTOR);
         double new_height = (new_width/watermark.getWidth()) * watermark.getHeight(); /* scale proportionally */
@@ -136,35 +129,19 @@ public class Utils {
 
         // Store image to default external storage directory
         try {
-            if(Build.VERSION.SDK_INT> Build.VERSION_CODES.LOLLIPOP_MR1 &&
+            if (Build.VERSION.SDK_INT > VERSION_CODES.LOLLIPOP_MR1 &&
                     context.checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") == PackageManager.PERMISSION_DENIED) {
-                return  null;
+                return null;
             }
 
             file.getParentFile().mkdirs();
             FileOutputStream out = new FileOutputStream(file);
             image.compress(Bitmap.CompressFormat.JPEG, 90, out); //Output
             bmpUri = Uri.fromFile(file);
-        } catch (Exception e) {
+        } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+        Log.i("wompwomp","new file: " + bmpUri.getPath());
         return bmpUri;
-    }
-
-    public static boolean fileExists(Context context, String filename) {
-        File file = context.getFileStreamPath(filename);
-        if(file == null || !file.exists()) {
-            return false;
-        }
-        return true;
-    }
-
-    public static Object getObjectFromFile (String filePath, Context context) throws Exception {
-        FileInputStream fis = context.openFileInput(filePath);
-        ObjectInputStream ois = new ObjectInputStream(fis);
-        Object obj = ois.readObject();
-        //Make sure you close all streams.
-        ois.close();
-        return obj;
     }
 }

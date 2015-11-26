@@ -136,15 +136,6 @@
             android:name="io.fabric.ApiKey"
             android:value="927db89b92d122f76adb5b2ede34e798bd6caa60" />
 
-        <activity
-            android:name=".AboutActivity"
-            android:label="@string/title_activity_about"
-            android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="MainActivity" />
-        </activity>
     </application>
 
 </manifest>
