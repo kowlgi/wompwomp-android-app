@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_name">wompwomp</string>
     <string name="action_share_app">Share the app</string>
     <string name="action_rate">Rate us</string>
     <string name="action_refresh">Refresh</string>
