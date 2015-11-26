@@ -28,7 +28,6 @@ import android.os.Build;
 import android.os.Build.VERSION_CODES;
 import android.os.Environment;
 import android.os.StrictMode;
-import android.util.Log;
 import android.view.View;
 
 import java.io.File;
@@ -92,11 +91,9 @@ public class Utils {
         Uri bmpUri = null;
         File file =  new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_DOWNLOADS), filename + ".jpg");
-        Log.i("wompwomp", "filepath: " + file.getAbsolutePath());
 
         if(file.exists()) {
             bmpUri = Uri.fromFile(file);
-            Log.i("wompwomp", "existing file: " + bmpUri.getPath());
             return bmpUri;
         }
 
@@ -141,7 +138,6 @@ public class Utils {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        Log.i("wompwomp","new file: " + bmpUri.getPath());
         return bmpUri;
     }
 }
