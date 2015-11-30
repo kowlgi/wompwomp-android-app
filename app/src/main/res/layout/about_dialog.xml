@@ -13,7 +13,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/ic_trombone_blue"/>
-        <co.wompwomp.sunshine.CustomFontTextView
+        <TextView
             android:text="@string/app_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -21,7 +21,7 @@
             style="@style/TextAppearance.AppCompat.Headline"/>
     </LinearLayout>
 
-    <co.wompwomp.sunshine.CustomFontTextView
+    <TextView
         android:text="@string/snappy_byline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

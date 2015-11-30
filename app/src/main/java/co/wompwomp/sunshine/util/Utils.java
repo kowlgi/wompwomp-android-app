@@ -18,6 +18,7 @@ package co.wompwomp.sunshine.util;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -29,12 +30,15 @@ import android.os.Build.VERSION_CODES;
 import android.os.Environment;
 import android.os.StrictMode;
 import android.view.View;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 
+import co.wompwomp.sunshine.BuildConfig;
 import co.wompwomp.sunshine.R;
+import co.wompwomp.sunshine.provider.FeedContract;
 
 /**
  * Class containing some static utility methods.
@@ -139,5 +143,33 @@ public class Utils {
             e.printStackTrace();
         }
         return bmpUri;
+    }
+
+    public static void showShareToast(Context context) {
+        Toast toast = Toast.makeText(context,
+                context.getResources().getString(R.string.getting_ready_to_share),
+                Toast.LENGTH_SHORT);
+        toast.show();
+    }
+
+    public static void showAppPageLaunchToast(Context context) {
+        Toast toast = Toast.makeText(context,
+                context.getResources().getString(R.string.launching_app_page),
+                Toast.LENGTH_SHORT);
+        toast.show();
+    }
+
+    public static Intent getShareAppIntent(Context context) {
+        Intent shareIntent = new Intent();
+        shareIntent.setAction(Intent.ACTION_SEND);
+        shareIntent.putExtra(Intent.EXTRA_TEXT, context.getResources().getString(R.string.share_app) );
+        shareIntent.setType("text/plain");
+        return shareIntent;
+    }
+
+    public static Intent getRateAppIntent(Context context) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(Uri.parse("market://details?id=" + BuildConfig.APPLICATION_ID));
+        return intent;
     }
 }

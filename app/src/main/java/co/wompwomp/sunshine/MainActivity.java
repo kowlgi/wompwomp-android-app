@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -37,6 +38,7 @@ import java.util.Random;
 import co.wompwomp.sunshine.provider.FeedContract;
 import co.wompwomp.sunshine.util.ImageCache;
 import co.wompwomp.sunshine.util.ImageFetcher;
+import co.wompwomp.sunshine.util.Utils;
 
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
@@ -251,17 +253,15 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         }
         else if( id == R.id.action_rate_us) {
             Answers.getInstance().logCustom(new CustomEvent("Options menu: Rate"));
-            Toast toast = Toast.makeText(this, getResources().getString(R.string.rate_us_placeholder), Toast.LENGTH_SHORT);
-            toast.show();
+            Utils.showAppPageLaunchToast(this);
+            startActivity(Utils.getRateAppIntent(this));
             return true;
         }
         else if(id == R.id.action_share_app) {
             Answers.getInstance().logCustom(new CustomEvent("Options menu: Share_app"));
-            Intent shareIntent = new Intent();
-            shareIntent.setAction(Intent.ACTION_SEND);
-            shareIntent.putExtra(Intent.EXTRA_TEXT, getResources().getString(R.string.share_app) + ": " + FeedContract.BASE_URL);
-            shareIntent.setType("text/plain");
-            startActivity(Intent.createChooser(shareIntent, "Share the app"));
+            Utils.showShareToast(this);
+            startActivity(Intent.createChooser(Utils.getShareAppIntent(this),
+                    getResources().getString(R.string.app_chooser_title)));
             return true;
         }
         else if(id == R.id.action_about) {

@@ -107,11 +107,12 @@ public class MyGcmListenerService extends GcmListenerService {
         intent.putExtra("itemid", itemId);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
+        String appName = getResources().getString(R.string.app_name);
 
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.ic_stat_trombone)
-                .setContentTitle("WompWomp")
+                .setContentTitle(appName)
                 .setContentText(message)
                 .setAutoCancel(true)
                 .setSound(defaultSoundUri)
@@ -121,7 +122,7 @@ public class MyGcmListenerService extends GcmListenerService {
         if(aBigBitmap != null) {
             NotificationCompat.BigPictureStyle bigStyle = new
                     NotificationCompat.BigPictureStyle();
-            bigStyle.setBigContentTitle("WompWomp");
+            bigStyle.setBigContentTitle(appName);
             bigStyle.setSummaryText(message);
             bigStyle.bigPicture(aBigBitmap);
             notificationBuilder.setStyle(bigStyle);

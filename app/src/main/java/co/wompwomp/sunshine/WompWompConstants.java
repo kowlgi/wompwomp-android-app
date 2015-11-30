@@ -43,4 +43,6 @@ public class WompWompConstants {
         SUBSET_OF_ITEMS_BELOW_LOW_CURSOR, /* insert only into db in in-app scroll down to bottom scenario */
         SYNC_METHOD_NONE
     }
+
+    public static final String PLAY_STORE_APP_PAGE_URL = "market://details?id=" + BuildConfig.APPLICATION_ID;
 }

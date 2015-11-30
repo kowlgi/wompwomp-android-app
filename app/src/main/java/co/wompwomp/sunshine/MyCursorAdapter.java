@@ -175,6 +175,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                             shareIntent.setType("image/*");
                         }
 
+                        Utils.showShareToast(mContext);
                         mContext.startActivity(Intent.createChooser(shareIntent,
                                 mContext.getResources().getString(R.string.app_chooser_title)));
                     }
@@ -264,6 +265,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                             shareIntent.setType("image/*");
                         }
                         shareIntent.setPackage("com.whatsapp");
+                        Utils.showShareToast(mContext);
                         mContext.startActivity(shareIntent);
                     }
                 });
@@ -275,12 +277,9 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                     @Override
                     public void onClick(View v) {
                         Answers.getInstance().logCustom(new CustomEvent("Share card clicked"));
-                        Intent shareIntent = new Intent();
-                        shareIntent.setAction(Intent.ACTION_SEND);
-                        shareIntent.putExtra(Intent.EXTRA_TEXT,
-                                mContext.getResources().getString(R.string.share_app) + ": " + FeedContract.BASE_URL);
-                        shareIntent.setType("text/plain");
-                        mContext.startActivity(Intent.createChooser(shareIntent, "Share the app"));
+                        Utils.showShareToast(mContext);
+                        mContext.startActivity(Intent.createChooser(Utils.getShareAppIntent(mContext),
+                                mContext.getResources().getString(R.string.app_chooser_title)));
                     }
                 });
                 break;
@@ -291,10 +290,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                     @Override
                     public void onClick(View v) {
                         Answers.getInstance().logCustom(new CustomEvent("Rate card clicked"));
-                        Toast toast = Toast.makeText(mContext,
-                                mContext.getResources().getString(R.string.rate_us_placeholder),
-                                Toast.LENGTH_SHORT);
-                        toast.show();
+                        Utils.showAppPageLaunchToast(mContext);
+                        mContext.startActivity(Utils.getRateAppIntent(mContext));
                     }
                 });
                 break;
