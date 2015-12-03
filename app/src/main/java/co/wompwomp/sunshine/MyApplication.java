@@ -6,8 +6,10 @@ import android.content.Context;
 import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.core.CrashlyticsCore;
+import com.squareup.leakcanary.LeakCanary;
 
 import io.fabric.sdk.android.Fabric;
+import timber.log.Timber;
 
 public class MyApplication extends Application {
     private static MyApplication mInstance;
@@ -38,7 +40,17 @@ public class MyApplication extends Application {
                     .kits(crashlytics, answers)
                     .build();
         }
+        // Crash and usage analytics
         Fabric.with(fabric);
+
+        // Detect memory leaks
+        LeakCanary.install(this);
+
+        // Logging
+        if (BuildConfig.DEBUG) {
+            Timber.plant(new Timber.DebugTree());
+        }
+
         mInstance = this;
         this.setAppContext(getApplicationContext());
     }

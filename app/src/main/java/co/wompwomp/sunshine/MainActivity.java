@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -39,6 +38,7 @@ import co.wompwomp.sunshine.provider.FeedContract;
 import co.wompwomp.sunshine.util.ImageCache;
 import co.wompwomp.sunshine.util.ImageFetcher;
 import co.wompwomp.sunshine.util.Utils;
+import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
@@ -55,6 +55,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     public static final String ACTION_FINISHED_SYNC = "co.wompwomp.sunshine.ACTION_FINISHED_SYNC";
     private static IntentFilter syncIntentFilter = new IntentFilter(ACTION_FINISHED_SYNC);
     private boolean mLoadingBottom, mLoadingTop;
+    private Toast mNoNetworkToast = null;
 
     /**
      * Projection for querying the content provider.
@@ -74,6 +75,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mNoNetworkToast = Toast.makeText(this,
+                R.string.no_network_connection_toast,
+                Toast.LENGTH_SHORT);
 
         SyncUtils.CreateSyncAccount(this);
 
@@ -115,9 +119,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                     mFirstVisibleItem = mLayoutManager.findFirstVisibleItemPosition();
 
                     if ((mTotalItemCount - mVisibleItemCount) <= (mFirstVisibleItem + mVisibleThreshold)) {
-                        mSwipeRefreshLayout.setRefreshing(true);
-                        mLoadingBottom = true;
-                        SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR);
+                        Answers.getInstance().logCustom(new CustomEvent("Scrolled down for older items"));
+                        syncItems(WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR);
                     }
                 }
             }
@@ -137,8 +140,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                     @Override
                     public void onRefresh() {
                         Answers.getInstance().logCustom(new CustomEvent("Swiped to refresh"));
-                        mLoadingTop = true;
-                        syncNewItems();
+                        syncItems(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR);
                     }
                 }
         );
@@ -242,7 +244,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         if (id == R.id.action_refresh) {
             Answers.getInstance().logCustom(new CustomEvent("Options menu: Refresh"));
             mSwipeRefreshLayout.setRefreshing(true);
-            syncNewItems();
+            syncItems(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR);
             return true;
         }
         else if (id == R.id.action_likes) {
@@ -254,7 +256,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         else if( id == R.id.action_rate_us) {
             Answers.getInstance().logCustom(new CustomEvent("Options menu: Rate"));
             Utils.showAppPageLaunchToast(this);
-            startActivity(Utils.getRateAppIntent(this));
+            startActivity(Utils.getRateAppIntent());
             return true;
         }
         else if(id == R.id.action_share_app) {
@@ -338,8 +340,21 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mAdapter.changeCursor(null);
     }
 
-    private void syncNewItems() {
-        SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR);
+    private void syncItems(WompWompConstants.SyncMethod syncMethod) {
+        if(!Utils.hasConnectivity(this)) {
+            mNoNetworkToast.show();
+            mSwipeRefreshLayout.setRefreshing(false);
+            return;
+        }
+
+        if(syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR) {
+            mLoadingTop = true;
+        } else if (syncMethod == WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR) {
+            mLoadingBottom = true;
+        }
+
+        SyncUtils.TriggerRefresh(syncMethod);
+        mSwipeRefreshLayout.setRefreshing(true);
     }
 
     private void smoothScrollToTop() {
@@ -357,6 +372,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 String syncMethod = intentExtras.getString(WompWompConstants.SYNC_METHOD);
                 if(syncMethod == null) return;
 
+                Timber.i("Received sync intent: " + syncMethod);
                 if(syncMethod.equals(WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR.name())) {
                     mLoadingBottom = false;
                 }

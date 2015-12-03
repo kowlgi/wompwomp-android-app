@@ -34,6 +34,7 @@ import android.os.RemoteException;
 import android.support.v4.content.LocalBroadcastManager;
 
 import co.wompwomp.sunshine.provider.FeedContract;
+import timber.log.Timber;
 
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -129,6 +130,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
     public void onPerformSync(Account account, Bundle extras, String authority,
                               ContentProviderClient provider, SyncResult syncResult) {
         WompWompConstants.SyncMethod syncMethod = WompWompConstants.SyncMethod.SYNC_METHOD_NONE;
+        InputStream stream = null;
         try {
             String syncMethodStr = extras.getString(WompWompConstants.SYNC_METHOD);
             if(syncMethodStr == null) {
@@ -195,28 +197,30 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 params+= "&cursorInclusive=" + cursorInclusive;
             }
             final URL location = new URL(FeedContract.FEED_URL + params);
-            InputStream stream = null;
-            try {
-                stream = downloadUrl(location);
-                updateLocalFeedData(stream, syncResult, updateAndDeleteStaleItems);
-                // Makes sure that the InputStream is closed after the app is
-                // finished using it.
-            } finally {
-                if (stream != null) {
-                    stream.close();
-                }
-                Intent intent = new Intent(MainActivity.ACTION_FINISHED_SYNC);
-                intent.putExtra(WompWompConstants.SYNC_METHOD, syncMethod.name());
-                LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);
+            stream = downloadUrl(location);
+            updateLocalFeedData(stream, syncResult, updateAndDeleteStaleItems);
+            if(stream != null) {
+                stream.close();
+                stream = null;
             }
-        } catch (MalformedURLException e) {
+        } catch (MalformedURLException | XmlPullParserException | ParseException e) {
             syncResult.stats.numParseExceptions++;
         } catch (IOException e) {
             syncResult.stats.numIoExceptions++;
-        } catch (XmlPullParserException | ParseException e) {
-            syncResult.stats.numParseExceptions++;
         } catch (RemoteException | OperationApplicationException e) {
             syncResult.databaseError = true;
+        } finally {
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (IOException ex) {
+                    // ignore
+                }
+            }
+            Timber.i("Sending sync intent: " + syncMethod.name());
+            Intent intent = new Intent(MainActivity.ACTION_FINISHED_SYNC);
+            intent.putExtra(WompWompConstants.SYNC_METHOD, syncMethod.name());
+            LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);
         }
     }
 

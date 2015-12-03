@@ -22,11 +22,11 @@ import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
-import android.util.Log;
 import android.widget.Toast;
 
 import co.wompwomp.sunshine.BuildConfig;
 import co.wompwomp.sunshine.R;
+import timber.log.Timber;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -42,7 +42,6 @@ import java.net.URL;
  * A simple subclass of {@link ImageWorker} that fetches images from a URL.
  */
 public class ImageFetcher extends ImageWorker {
-    private static final String TAG = "ImageFetcher";
     private static final int HTTP_CACHE_SIZE = 5 * 1024 * 1024; // 5MB
     private static final String HTTP_CACHE_DIR = "http";
     private static final int IO_BUFFER_SIZE = 8 * 1024;
@@ -83,7 +82,7 @@ public class ImageFetcher extends ImageWorker {
                 try {
                     mHttpDiskCache = DiskLruCache.open(mHttpCacheDir, 1, 1, HTTP_CACHE_SIZE);
                     if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "HTTP cache initialized");
+                        Timber.d("HTTP cache initialized");
                     }
                 } catch (IOException e) {
                     mHttpDiskCache = null;
@@ -102,10 +101,10 @@ public class ImageFetcher extends ImageWorker {
                 try {
                     mHttpDiskCache.delete();
                     if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "HTTP cache cleared");
+                        Timber.d( "HTTP cache cleared");
                     }
                 } catch (IOException e) {
-                    Log.e(TAG, "clearCacheInternal - " + e);
+                    Timber.e( "clearCacheInternal - " + e);
                 }
                 mHttpDiskCache = null;
                 mHttpDiskCacheStarting = true;
@@ -122,10 +121,10 @@ public class ImageFetcher extends ImageWorker {
                 try {
                     mHttpDiskCache.flush();
                     if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "HTTP cache flushed");
+                        Timber.d( "HTTP cache flushed");
                     }
                 } catch (IOException e) {
-                    Log.e(TAG, "flush - " + e);
+                    Timber.e( "flush - " + e);
                 }
             }
         }
@@ -141,11 +140,11 @@ public class ImageFetcher extends ImageWorker {
                         mHttpDiskCache.close();
                         mHttpDiskCache = null;
                         if (BuildConfig.DEBUG) {
-                            Log.d(TAG, "HTTP cache closed");
+                            Timber.d( "HTTP cache closed");
                         }
                     }
                 } catch (IOException e) {
-                    Log.e(TAG, "closeCacheInternal - " + e);
+                    Timber.e( "closeCacheInternal - " + e);
                 }
             }
         }
@@ -162,7 +161,7 @@ public class ImageFetcher extends ImageWorker {
         final NetworkInfo networkInfo = cm.getActiveNetworkInfo();
         if (networkInfo == null || !networkInfo.isConnectedOrConnecting()) {
             Toast.makeText(context, R.string.no_network_connection_toast, Toast.LENGTH_LONG).show();
-            Log.e(TAG, "checkConnection - no connection found");
+            Timber.e( "checkConnection - no connection found");
         }
     }
 
@@ -175,7 +174,7 @@ public class ImageFetcher extends ImageWorker {
      */
     private Bitmap processBitmap(String data) {
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "processBitmap - " + data);
+            Timber.d( "processBitmap - " + data);
         }
 
         final String key = ImageCache.hashKeyForDisk(data);
@@ -195,7 +194,7 @@ public class ImageFetcher extends ImageWorker {
                     snapshot = mHttpDiskCache.get(key);
                     if (snapshot == null) {
                         if (BuildConfig.DEBUG) {
-                            Log.d(TAG, "processBitmap, not found in http cache, downloading...");
+                            Timber.d( "processBitmap, not found in http cache, downloading...");
                         }
                         DiskLruCache.Editor editor = mHttpDiskCache.edit(key);
                         if (editor != null) {
@@ -214,9 +213,9 @@ public class ImageFetcher extends ImageWorker {
                         fileDescriptor = fileInputStream.getFD();
                     }
                 } catch (IOException e) {
-                    Log.e(TAG, "processBitmap - " + e);
+                    Timber.e( "processBitmap - " + e);
                 } catch (IllegalStateException e) {
-                    Log.e(TAG, "processBitmap - " + e);
+                    Timber.e( "processBitmap - " + e);
                 } finally {
                     if (fileDescriptor == null && fileInputStream != null) {
                         try {
@@ -268,7 +267,7 @@ public class ImageFetcher extends ImageWorker {
             }
             return true;
         } catch (final IOException e) {
-            Log.e(TAG, "Error in downloadBitmap - " + e);
+            Timber.e( "Error in downloadBitmap - " + e);
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();

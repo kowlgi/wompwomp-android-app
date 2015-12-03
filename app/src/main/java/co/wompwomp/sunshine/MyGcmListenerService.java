@@ -27,21 +27,18 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
 
 import co.wompwomp.sunshine.provider.FeedContract;
+import timber.log.Timber;
+
 import com.google.android.gms.gcm.GcmListenerService;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class MyGcmListenerService extends GcmListenerService {
-
-    private static final String TAG = "MyGcmListenerService";
-
     /**
      * Called when message is received.
      *
@@ -62,26 +59,31 @@ public class MyGcmListenerService extends GcmListenerService {
              * that a message was received.
              */
             pushNotification(message, imageUri, itemId);
+            Timber.i("Pushed notification to user. Text: %s, ImageUri: %s, ItemId: %s", message, imageUri, itemId);
         } else if (from.startsWith("/topics/sync")){
-            SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR);
+            SyncUtils.TriggerSync(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR);
+            Timber.i("Initiated sync latest items");
         } else if(from.startsWith("/topics/cta_share")) {
             String timestamp = data.getString("message");
+            Timber.i("Pushed Share CTA to feed");
             // push 'share now' card to feed
             getContentResolver().insert(FeedContract.Entry.CONTENT_URI, populateContentValues(WompWompConstants.TYPE_SHARE_CARD, timestamp));
         } else if(from.startsWith("/topics/cta_rate")) {
             String timestamp = data.getString("message");
             // push 'rate now' card to feed
             getContentResolver().insert(FeedContract.Entry.CONTENT_URI, populateContentValues(WompWompConstants.TYPE_RATE_CARD, timestamp));
+            Timber.i("Pushed Rate CTA to feed");
         } else if(from.startsWith("/topics/remove_all_ctas")) {
             Uri uri = FeedContract.Entry.CONTENT_URI; // Get all entries
             String[] share_args = new String[] { WompWompConstants.WOMPWOMP_CTA_SHARE};
             String[] rate_args = new String[] { WompWompConstants.WOMPWOMP_CTA_RATE};
             getContentResolver().delete(uri, FeedContract.Entry.COLUMN_NAME_ENTRY_ID+"=?", share_args);
             getContentResolver().delete(uri, FeedContract.Entry.COLUMN_NAME_ENTRY_ID+"=?", rate_args);
+            Timber.i("Removed all CTAs from feed");
         }
         else {
             // normal downstream message.
-            Log.i(TAG, "GOT NOTIFIED BOUT NOTHIN'");
+            Timber.i("GOT NOTIFIED BOUT NOTHIN'");
         }
 
         // [START_EXCLUDE]
@@ -157,7 +159,7 @@ public class MyGcmListenerService extends GcmListenerService {
             aBitmap = BitmapFactory.decodeStream(inputStream);
 
         }catch (IOException e) {
-            Log.e(TAG, "Error ", e);
+            Timber.e("Error ", e);
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();

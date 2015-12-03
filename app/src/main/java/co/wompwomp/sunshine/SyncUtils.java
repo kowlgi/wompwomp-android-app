@@ -98,4 +98,14 @@ public class SyncUtils {
                 FeedContract.CONTENT_AUTHORITY,                 // Content authority
                 b);                                             // Extras
     }
+
+    public static void TriggerSync(WompWompConstants.SyncMethod syncMethod) {
+        Bundle b = new Bundle();
+        b.putString(WompWompConstants.SYNC_METHOD, syncMethod.name());
+
+        ContentResolver.requestSync(
+                GenericAccountService.GetAccount(ACCOUNT_TYPE), // Sync account
+                FeedContract.CONTENT_AUTHORITY,                 // Content authority
+                b);                                             // Extras
+    }
 }

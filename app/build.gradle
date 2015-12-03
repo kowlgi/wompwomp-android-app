@@ -12,6 +12,7 @@ apply plugin: 'io.fabric'
 
 repositories {
     maven { url 'https://maven.fabric.io/public' }
+    mavenCentral()
 }
 
 //apply plugin: 'com.android.databinding'
@@ -24,36 +25,42 @@ android {
         applicationId 'co.wompwomp.sunshine'
         minSdkVersion 11
         targetSdkVersion 23
-        versionCode 4
-        versionName "1.1"
-
+        versionCode 6
+        versionName "1.1" + "." + versionCode
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-
-        resValue "string", "app_version", versionName + "." + versionCode
+        resValue "string", "app_name", "wompwomp"
+        resValue "string", "app_version", versionName
         resValue "string", "authorities", applicationId
         resValue "string", "account_type", applicationId + ".SyncAdapter"
-        buildConfigField "String", "ACCOUNT_TYPE", "\" co.wompwomp.sunshine.SyncAdapter \" "
+        buildConfigField "String", "ACCOUNT_TYPE", "\"co.wompwomp.sunshine.SyncAdapter\""
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            versionNameSuffix "-release"
+            versionNameSuffix ".release"
+            resValue "string", "app_version", defaultConfig.versionName + ".release"
         }
         debug {
             ext.enableCrashlytics = false
             applicationIdSuffix ".debug"
-            versionNameSuffix "-debug"
-            resValue "string", "app_version",defaultConfig.versionName + "." + defaultConfig.versionCode + ".debug"
+            versionNameSuffix ".debug"
+            resValue "string", "app_name", "wompwomp-sssh"
+            resValue "string", "app_version", defaultConfig.versionName + ".debug"
             resValue "string", "authorities", defaultConfig.applicationId + '.debug'
             resValue "string", "account_type", defaultConfig.applicationId + ".SyncAdapter.debug"
-            buildConfigField "String", "ACCOUNT_TYPE", "\"co.wompwomp.sunshine.SyncAdapter.debug\" "
+            buildConfigField "String", "ACCOUNT_TYPE", "\"co.wompwomp.sunshine.SyncAdapter.debug\""
         }
     }
     packagingOptions {
         exclude 'LICENSE.txt'
     }
-    productFlavors {
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            output.outputFile = new File(
+                    output.outputFile.parent,
+                    output.outputFile.name.replace(".apk", "-${variant.versionName}.apk"))
+        }
     }
 }
 
@@ -75,4 +82,7 @@ dependencies {
     compile 'com.google.android.gms:play-services-gcm:8.1.0'
     compile 'com.ocpsoft:ocpsoft-pretty-time:1.0.6'
     compile 'joda-time:joda-time:2.8.2'
+    debugCompile 'com.squareup.leakcanary:leakcanary-android:1.3.1'
+    releaseCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.3'
+    compile 'com.jakewharton.timber:timber:4.1.0'
 }

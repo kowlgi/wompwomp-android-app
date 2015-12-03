@@ -19,9 +19,9 @@ package co.wompwomp.sunshine.util;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
-import android.util.Log;
 
 import co.wompwomp.sunshine.BuildConfig;
+import timber.log.Timber;
 
 
 /**
@@ -70,7 +70,7 @@ public class RecyclingBitmapDrawable extends BitmapDrawable {
         if (mCacheRefCount <= 0 && mDisplayRefCount <= 0 && mHasBeenDisplayed
                 && hasValidBitmap()) {
             if (BuildConfig.DEBUG) {
-                Log.d(TAG, "No longer being used or cached so recycling. "
+                Timber.d("No longer being used or cached so recycling. "
                         + toString());
             }
 

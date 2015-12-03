@@ -84,19 +84,19 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
         ViewHolder vh = null;
         switch(viewType) {
             case WompWompConstants.TYPE_CONTENT_CARD: {
-                View itemView = LayoutInflater.from(parent.getContext())
+                View itemView = LayoutInflater.from(mContext)
                         .inflate(R.layout.content_card, parent, false);
                 vh = new ContentCardViewHolder(itemView);
                 break;
             }
             case WompWompConstants.TYPE_SHARE_CARD: {
-                View itemView = LayoutInflater.from(parent.getContext())
+                View itemView = LayoutInflater.from(mContext)
                         .inflate(R.layout.share_card, parent, false);
                 vh = new ViewHolder(itemView);
                 break;
             }
             case WompWompConstants.TYPE_RATE_CARD: {
-                View itemView = LayoutInflater.from(parent.getContext())
+                View itemView = LayoutInflater.from(mContext)
                         .inflate(R.layout.rate_card, parent, false);
                 vh = new ViewHolder(itemView);
                 break;
@@ -291,7 +291,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                     public void onClick(View v) {
                         Answers.getInstance().logCustom(new CustomEvent("Rate card clicked"));
                         Utils.showAppPageLaunchToast(mContext);
-                        mContext.startActivity(Utils.getRateAppIntent(mContext));
+                        mContext.startActivity(Utils.getRateAppIntent());
                     }
                 });
                 break;
