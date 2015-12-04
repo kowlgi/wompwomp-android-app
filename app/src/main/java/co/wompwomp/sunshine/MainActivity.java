@@ -1,5 +1,6 @@
 package co.wompwomp.sunshine;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -72,6 +73,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             FeedContract.Entry.COLUMN_NAME_CARD_TYPE
     };
 
+    @SuppressLint("ShowToast")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -87,14 +89,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             startService(intent);
         }
 
-        if(Build.VERSION.SDK_INT> Build.VERSION_CODES.LOLLIPOP_MR1 &&
-                checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") != PackageManager.PERMISSION_GRANTED) {
-            //Any app that declares the WRITE_EXTERNAL_STORAGE permission is implicitly granted the
-            // READ_EXTERNAL_STORAGE permission.
-            String[] permissions = {"android.permission.WRITE_EXTERNAL_STORAGE"};
-            int permissionRequestCode = 200;
-            requestPermissions(permissions, permissionRequestCode);
-        }
+        Utils.launchPermissionsDialogIfNecessary(this);
 
         Crashlytics.setUserIdentifier(Installation.id(this));
 
@@ -182,7 +177,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mImageFetcher.setLoadingImage(R.drawable.geometry2);
         mImageFetcher.addImageCache(getSupportFragmentManager(), cacheParams);
 
-        mAdapter = new MyCursorAdapter(this, null,mImageFetcher);
+        mAdapter = new MyCursorAdapter(this, null, mImageFetcher);
         mRecyclerView.setAdapter(mAdapter);
         getSupportLoaderManager().initLoader(0, null, this);
     }

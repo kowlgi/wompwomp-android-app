@@ -11,6 +11,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -66,6 +68,9 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
             createdOnView = (TextView) itemView.findViewById(R.id.createdon);
             numfavoritesView = (TextView) itemView.findViewById(R.id.favoriteCount);
             numsharesView = (TextView) itemView.findViewById(R.id.shareCount);
+
+            int whatsappButtonVisibility = Utils.isPackageInstalled("com.whatsapp", mContext) ? View.VISIBLE : View.GONE;
+            whatsappshareButton.setVisibility(whatsappButtonVisibility);
         }
     }
 
@@ -182,51 +187,6 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                     }
                 });
 
-                holder.favoriteButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        String URL;
-                        Uri updateUri = FeedContract.Entry.CONTENT_URI.buildUpon()
-                                .appendPath(myListItem._id.toString()).build();
-                        ContentValues values = new ContentValues();
-                        if (myListItem.favorite) {
-                            // she likes me not :(
-                            if (myListItem.numFavorites > 0) {
-                                values.put(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, myListItem.numFavorites - 1);
-                            }
-
-                            values.put(FeedContract.Entry.COLUMN_NAME_FAVORITE, 0);
-                            URL = FeedContract.ITEM_UNFAVORITE_URL;
-                            Answers.getInstance().logCustom(new CustomEvent("Unlike button clicked")
-                                    .putCustomAttribute("itemid", myListItem.id));
-                        } else {
-                            // she likes me :)
-                            values.put(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, myListItem.numFavorites + 1);
-                            values.put(FeedContract.Entry.COLUMN_NAME_FAVORITE, 1);
-                            URL = FeedContract.ITEM_FAVORITE_URL;
-                            Answers.getInstance().logCustom(new CustomEvent("Like button clicked")
-                                    .putCustomAttribute("itemid", myListItem.id));
-                        }
-
-                        mContext.getContentResolver().update(updateUri, values, null, null);
-                        URL += myListItem.id;
-
-                        AsyncHttpClient client = new AsyncHttpClient();
-                        RequestParams params = new RequestParams();
-                        client.post(URL, params, new TextHttpResponseHandler() {
-                            @Override
-                            public void onSuccess(int statusCode, Header[] headers, String res) {
-                                // called when response HTTP status is "200 OK"
-                            }
-
-                            @Override
-                            public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
-                                //do nothing
-                            }
-                        });
-                    }
-                });
-
                 holder.whatsappshareButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -269,6 +229,51 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         shareIntent.setPackage("com.whatsapp");
                         Utils.showShareToast(mContext);
                         mContext.startActivity(shareIntent);
+                    }
+                });
+
+                holder.favoriteButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        String URL;
+                        Uri updateUri = FeedContract.Entry.CONTENT_URI.buildUpon()
+                                .appendPath(myListItem._id.toString()).build();
+                        ContentValues values = new ContentValues();
+                        if (myListItem.favorite) {
+                            // she likes me not :(
+                            if (myListItem.numFavorites > 0) {
+                                values.put(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, myListItem.numFavorites - 1);
+                            }
+
+                            values.put(FeedContract.Entry.COLUMN_NAME_FAVORITE, 0);
+                            URL = FeedContract.ITEM_UNFAVORITE_URL;
+                            Answers.getInstance().logCustom(new CustomEvent("Unlike button clicked")
+                                    .putCustomAttribute("itemid", myListItem.id));
+                        } else {
+                            // she likes me :)
+                            values.put(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, myListItem.numFavorites + 1);
+                            values.put(FeedContract.Entry.COLUMN_NAME_FAVORITE, 1);
+                            URL = FeedContract.ITEM_FAVORITE_URL;
+                            Answers.getInstance().logCustom(new CustomEvent("Like button clicked")
+                                    .putCustomAttribute("itemid", myListItem.id));
+                        }
+
+                        mContext.getContentResolver().update(updateUri, values, null, null);
+                        URL += myListItem.id;
+
+                        AsyncHttpClient client = new AsyncHttpClient();
+                        RequestParams params = new RequestParams();
+                        client.post(URL, params, new TextHttpResponseHandler() {
+                            @Override
+                            public void onSuccess(int statusCode, Header[] headers, String res) {
+                                // called when response HTTP status is "200 OK"
+                            }
+
+                            @Override
+                            public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
+                                //do nothing
+                            }
+                        });
                     }
                 });
                 break;

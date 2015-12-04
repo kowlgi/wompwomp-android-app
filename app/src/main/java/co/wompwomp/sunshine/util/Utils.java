@@ -31,6 +31,8 @@ import android.os.Build;
 import android.os.Build.VERSION_CODES;
 import android.os.Environment;
 import android.os.StrictMode;
+import android.support.v4.app.FragmentManager;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Toast;
 
@@ -39,6 +41,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 
 import co.wompwomp.sunshine.BuildConfig;
+import co.wompwomp.sunshine.PermissionsDialogFragment;
 import co.wompwomp.sunshine.R;
 import co.wompwomp.sunshine.provider.FeedContract;
 
@@ -193,5 +196,29 @@ public class Utils {
         }
 
         return result + "...";
+    }
+
+    // http://stackoverflow.com/questions/18752202/check-if-application-is-installed-android
+    public static boolean isPackageInstalled(String packagename, Context context) {
+        PackageManager pm = context.getPackageManager();
+        try {
+            pm.getPackageInfo(packagename, PackageManager.GET_ACTIVITIES);
+            return true;
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
+    }
+
+    public static void launchPermissionsDialogIfNecessary(Context context) {
+        if(Build.VERSION.SDK_INT> Build.VERSION_CODES.LOLLIPOP_MR1 &&
+                context.checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") != PackageManager.PERMISSION_GRANTED) {
+            /*
+            Any app that declares the WRITE_EXTERNAL_STORAGE permission is implicitly granted the
+            READ_EXTERNAL_STORAGE permission.
+            */
+            FragmentManager fm = ((AppCompatActivity)context).getSupportFragmentManager();
+            PermissionsDialogFragment permissionsDialogFragment = PermissionsDialogFragment.newInstance();
+            permissionsDialogFragment.show(fm, "permissions_dialog");
+        }
     }
 }
