@@ -164,7 +164,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 
                         Intent shareIntent = new Intent();
                         shareIntent.setAction(Intent.ACTION_SEND);
-                        shareIntent.putExtra(Intent.EXTRA_TEXT, FeedContract.ITEM_VIEW_URL + myListItem.id);
+                        shareIntent.putExtra(Intent.EXTRA_TEXT,
+                                Utils.truncateAndAppendEllipsis(myListItem.quoteText, 80) + " - via " + FeedContract.ITEM_VIEW_URL + myListItem.id);
                         shareIntent.setType("text/plain");
 
                         View parentView = (View) holder.imageView.getParent();
@@ -254,7 +255,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 
                         Intent shareIntent = new Intent();
                         shareIntent.setAction(Intent.ACTION_SEND);
-                        shareIntent.putExtra(Intent.EXTRA_TEXT, FeedContract.ITEM_VIEW_URL + myListItem.id);
+                        shareIntent.putExtra(Intent.EXTRA_TEXT,
+                                Utils.truncateAndAppendEllipsis(myListItem.quoteText, 80) + " - via " + FeedContract.ITEM_VIEW_URL + myListItem.id);
                         shareIntent.setType("text/plain");
 
                         View parentView = (View) holder.imageView.getParent();

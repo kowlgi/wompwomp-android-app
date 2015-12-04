@@ -181,4 +181,17 @@ public class Utils {
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
         return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
     }
+
+    public static String truncateAndAppendEllipsis(final String content, final int lastIndex) {
+        if(content.length() <= lastIndex) {
+            return content;
+        }
+
+        String result = content.substring(0, lastIndex);
+        if (content.charAt(lastIndex) != ' ') {
+            result = result.substring(0, result.lastIndexOf(" "));
+        }
+
+        return result + "...";
+    }
 }
