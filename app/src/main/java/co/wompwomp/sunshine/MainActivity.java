@@ -76,6 +76,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @SuppressLint("ShowToast")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Timber.i("Create MainActivity");
         super.onCreate(savedInstanceState);
         mNoNetworkToast = Toast.makeText(this,
                 R.string.no_network_connection_toast,
@@ -103,6 +104,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
         mLoadingBottom = false;
+        mRecyclerView.clearOnScrollListeners();
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
@@ -167,12 +169,11 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             }
         });
 
+        // The ImageFetcher takes care of loading images into our ImageView children asynchronously
         // Set up the image cache
         ImageCache.ImageCacheParams cacheParams =
                 new ImageCache.ImageCacheParams(this, IMAGE_CACHE_DIR);
         cacheParams.setMemCacheSizePercent(0.25f); // Set memory cache to 25% of app memory
-
-        // The ImageFetcher takes care of loading images into our ImageView children asynchronously
         mImageFetcher = new ImageFetcher(this);
         mImageFetcher.setLoadingImage(R.drawable.geometry2);
         mImageFetcher.addImageCache(getSupportFragmentManager(), cacheParams);
@@ -202,7 +203,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     @Override
     protected void onDestroy() {
+        Timber.i("Destroy MainActivity");
         super.onDestroy();
+        mAdapter.close();
         mImageFetcher.closeCache();
     }
 
@@ -301,6 +304,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
      */
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+        Timber.d("onCreateLoader()");
 
         // We only have one loader, so we can ignore the value of i.
         // (It'll be '0', as set in onCreate().)
@@ -318,6 +322,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
      */
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+        Timber.d("onLoadFinished()");
         if(cursor.getCount() >= 1) {
             mProgressBarLayout.setVisibility(View.GONE);
         }
@@ -332,6 +337,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
      */
     @Override
     public void onLoaderReset(Loader<Cursor> cursorLoader) {
+        Timber.d("onLoadReset()");
         mAdapter.changeCursor(null);
     }
 

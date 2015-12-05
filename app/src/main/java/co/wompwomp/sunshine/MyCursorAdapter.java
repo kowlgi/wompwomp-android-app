@@ -11,10 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import co.wompwomp.sunshine.provider.FeedContract;
 import co.wompwomp.sunshine.util.ImageFetcher;
@@ -36,9 +33,11 @@ import cz.msebera.android.httpclient.Header;
 public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolder>{
 
     private ImageFetcher mImageFetcher = null;
+    private Context mContext = null;
 
     public MyCursorAdapter(Context context, Cursor cursor, ImageFetcher imageFetcher){
-        super(context,cursor);
+        super(cursor);
+        mContext = context;
         mImageFetcher = imageFetcher;
     }
 
