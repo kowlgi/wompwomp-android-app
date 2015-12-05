@@ -25,7 +25,7 @@ android {
         applicationId 'co.wompwomp.sunshine'
         minSdkVersion 11
         targetSdkVersion 23
-        versionCode 6
+        versionCode 7
         versionName "1.1" + "." + versionCode
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         resValue "string", "app_name", "wompwomp"
