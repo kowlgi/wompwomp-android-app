@@ -297,7 +297,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                     public void onClick(View v) {
                         Answers.getInstance().logCustom(new CustomEvent("Rate card clicked"));
                         Utils.showAppPageLaunchToast(mContext);
-                        mContext.startActivity(Utils.getRateAppIntent());
+                        mContext.startActivity(Utils.getRateAppIntent(mContext));
                     }
                 });
                 break;

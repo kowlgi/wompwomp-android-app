@@ -36,6 +36,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -172,9 +175,14 @@ public class Utils {
         return shareIntent;
     }
 
-    public static Intent getRateAppIntent() {
+    public static Intent getRateAppIntent(Context context) {
         Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setData(Uri.parse("market://details?id=" + BuildConfig.APPLICATION_ID));
+        if( GooglePlayServicesUtil.isGooglePlayServicesAvailable(context) == ConnectionResult.SUCCESS) {
+            intent.setData(Uri.parse("market://details?id=" + BuildConfig.APPLICATION_ID));
+        }
+        else {
+            intent.setData(Uri.parse("http://play.google.com/store/apps/details?id=" + BuildConfig.APPLICATION_ID));
+        }
         return intent;
     }
 

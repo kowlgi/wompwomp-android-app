@@ -254,7 +254,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         else if( id == R.id.action_rate_us) {
             Answers.getInstance().logCustom(new CustomEvent("Options menu: Rate"));
             Utils.showAppPageLaunchToast(this);
-            startActivity(Utils.getRateAppIntent());
+            startActivity(Utils.getRateAppIntent(this));
             return true;
         }
         else if(id == R.id.action_share_app) {
