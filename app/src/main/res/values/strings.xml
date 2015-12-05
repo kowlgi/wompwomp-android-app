@@ -24,8 +24,8 @@
     <string name="snappy_byline">Made with love in the USA</string>
     <string name="getting_ready_to_share">Getting ready to share…</string>
     <string name="launching_app_page">Launching wompwomp product page…</string>
-    <string name="permissions_title">Better sharing experience</string>
-    <string name="permissions_description">wompwomp would like file access for sharing pictures with other apps.</string>
+    <string name="permissions_title">Allow wompwomp to write files</string>
+    <string name="permissions_description">To share pictures to other apps wompwomp needs permission to write pictures to your device.</string>
     <string name="next">NEXT</string>
     <string-array name="loading_messages">
         <item>Bringing you funny content from Antarctica in a bit</item>
