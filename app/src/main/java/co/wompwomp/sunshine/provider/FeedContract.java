@@ -30,19 +30,13 @@ public class FeedContract {
     private FeedContract() {
     }
 
-    /**
-     * URL to fetch content from during a sync.
-     *
-     * <p>This points to the Android Developers Blog. (Side note: We highly recommend reading the
-     * Android Developer Blog to stay up to date on the latest Android platform developments!)
-     */
-
     public static final String BASE_URL = "http://wompwomp.co";
     public static final String FEED_URL = BASE_URL + "/i";
     public static final String ITEM_VIEW_URL = BASE_URL + "/v/";
     public static final String ITEM_FAVORITE_URL = BASE_URL + "/f/";
     public static final String ITEM_UNFAVORITE_URL = BASE_URL + "/uf/";
     public static final String ITEM_SHARE_URL = BASE_URL + "/s/";
+    public static final String ITEM_DISMISS_URL = BASE_URL + "/d/";
 
     /**
      * Content provider authority.
@@ -114,9 +108,13 @@ public class FeedContract {
          */
         public static final String COLUMN_NAME_CREATED_ON = "created_on";
         /**
-         * Timestamp when the entry was added to the backend
+         * Type of card: content/rate/share card
          */
         public static final String COLUMN_NAME_CARD_TYPE = "card_type";
+        /**
+         * Whether to hide item or not: 0: show, 1: hide
+         */
+        public static final String COLUMN_NAME_DISMISS_ITEM = "dismiss_item";
 
     }
 }

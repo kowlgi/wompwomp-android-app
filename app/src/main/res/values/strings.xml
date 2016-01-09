@@ -23,6 +23,7 @@
     <string name="our_contact">Contact Us</string>
     <string name="snappy_byline">Made with love in the USA</string>
     <string name="getting_ready_to_share">Getting ready to share…</string>
+    <string name="cannot_share">We tried but were not able to share the image for some reason</string>
     <string name="launching_app_page">Launching wompwomp product page…</string>
     <string name="permissions_title">Allow wompwomp to write files</string>
     <string name="permissions_description">To share pictures to other apps wompwomp needs permission to write pictures to your device.</string>
@@ -38,5 +39,6 @@
         <item>Waiting a few epochs before we take stuff out of the oven…</item>
         <item>Waiting on kittens to approve today\'s content…</item>
     </string-array>
+    <string name="facebook_app_id">570524353097440</string>
 
 </resources>

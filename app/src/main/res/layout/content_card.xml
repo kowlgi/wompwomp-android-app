@@ -39,6 +39,15 @@
 
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/createdon"
+            style="@android:style/TextAppearance.Small"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:layout_gravity="start"
+            android:background="@android:color/white"
+            android:textAlignment="textStart" />
 
         <RelativeLayout
             xmlns:android="http://schemas.android.com/apk/res/android"
@@ -47,14 +56,6 @@
             android:layout_height="fill_parent"
             android:background="@android:color/white"
             android:padding="10dp">
-
-            <TextView
-                android:id="@+id/createdon"
-                style="@android:style/TextAppearance.Small"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:padding="10dp"/>
 
             <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:orientation="horizontal"
@@ -107,6 +108,28 @@
             <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:orientation="horizontal" android:layout_width="wrap_content"
                 android:layout_toLeftOf="@id/sharelayout" android:layout_height="wrap_content"
+                android:id="@+id/facebooksharelayout" android:layout_margin="7dp">
+                <ImageButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/facebook_share_button"
+                    android:padding="3dp"
+                    android:clickable="true"
+                    android:background="@android:color/white"
+                    android:src="@drawable/ic_1452302519_facebook"/>
+
+                <TextView
+                    android:id="@+id/facebook_share_count"
+                    android:gravity="start"
+                    style="@android:style/TextAppearance.Small"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="3dp"/>
+            </LinearLayout>
+
+            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:orientation="horizontal" android:layout_width="wrap_content"
+                android:layout_toLeftOf="@id/facebooksharelayout" android:layout_height="wrap_content"
                 android:id="@+id/whatsappsharelayout" android:layout_margin="7dp">
                 <ImageButton
                     android:layout_width="wrap_content"

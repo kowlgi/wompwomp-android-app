@@ -4,7 +4,11 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
@@ -13,32 +17,33 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import co.wompwomp.sunshine.helper.ItemTouchHelperAdapter;
 import co.wompwomp.sunshine.provider.FeedContract;
 import co.wompwomp.sunshine.util.ImageFetcher;
 import co.wompwomp.sunshine.util.Utils;
 import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
 import com.crashlytics.android.answers.ShareEvent;
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.RequestParams;
-import com.loopj.android.http.TextHttpResponseHandler;
+import com.facebook.share.model.SharePhoto;
+import com.facebook.share.model.SharePhotoContent;
+import com.facebook.share.widget.ShareDialog;
 import com.ocpsoft.pretty.time.PrettyTime;
 
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 import org.joda.time.format.ISODateTimeFormat;
 
-import cz.msebera.android.httpclient.Header;
-
-public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolder>{
+public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolder> implements ItemTouchHelperAdapter {
 
     private ImageFetcher mImageFetcher = null;
     private Context mContext = null;
+    private ShareDialog mShareDialog = null;
 
-    public MyCursorAdapter(Context context, Cursor cursor, ImageFetcher imageFetcher){
+    public MyCursorAdapter(Context context, Cursor cursor, ImageFetcher imageFetcher, ShareDialog shareDialog){
         super(cursor);
         mContext = context;
         mImageFetcher = imageFetcher;
+        mShareDialog = shareDialog;
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -53,6 +58,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
         public ImageButton shareButton;
         public ImageButton favoriteButton;
         public ImageButton whatsappshareButton;
+        public ImageButton facebookshareButton;
         public TextView createdOnView;
         public TextView numfavoritesView;
         public TextView numsharesView;
@@ -70,17 +76,16 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 
             int whatsappButtonVisibility = Utils.isPackageInstalled("com.whatsapp", mContext) ? View.VISIBLE : View.GONE;
             whatsappshareButton.setVisibility(whatsappButtonVisibility);
+
+            facebookshareButton = (ImageButton) itemView.findViewById(R.id.facebook_share_button);
         }
     }
 
     @Override
     public int getItemViewType(int position) {
         // here your custom logic to choose the view type
-        int initialPosition = getCursor().getPosition();
-        getCursor().moveToPosition(position);
-        int viewType = getCursor().getInt(WompWompConstants.COLUMN_CARD_TYPE);
-        getCursor().moveToPosition(initialPosition); // restore cursor
-        return viewType;
+        MyListItem item = getListItem(position);
+        return item.cardType;
     }
 
     @Override
@@ -123,8 +128,12 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 
                 mImageFetcher.loadImage(myListItem.imageSourceUri, holder.imageView);
 
-                holder.textView.setMinHeight((int) Math.round(dpHeight * 0.20)); //min 20% of height
-                holder.textView.setText(myListItem.quoteText);
+                if(myListItem.quoteText.isEmpty()) {
+                    holder.textView.setVisibility(View.GONE);
+                } else {
+                    holder.textView.setMinHeight((int) Math.round(dpHeight * 0.20)); //min 20% of height
+                    holder.textView.setText(myListItem.quoteText);
+                }
 
                 if (myListItem.favorite) {
                     holder.favoriteButton.setImageResource(R.drawable.ic_favorite_red_24dp);
@@ -152,19 +161,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         values.put(FeedContract.Entry.COLUMN_NAME_NUM_SHARES, myListItem.numShares + 1);
                         mContext.getContentResolver().update(updateUri, values, null, null);
 
-                        AsyncHttpClient client = new AsyncHttpClient();
-                        RequestParams params = new RequestParams();
-                        client.post(FeedContract.ITEM_SHARE_URL + myListItem.id, params, new TextHttpResponseHandler() {
-                            @Override
-                            public void onSuccess(int statusCode, Header[] headers, String res) {
-                                // we received status 200 OK..wohoo!
-                            }
-
-                            @Override
-                            public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
-                                //do nothing
-                            }
-                        });
+                        WompWompHTTPParams params = new WompWompHTTPParams(mContext);
+                        Utils.postToWompwomp(FeedContract.ITEM_SHARE_URL + myListItem.id, params);
 
                         Intent shareIntent = new Intent();
                         shareIntent.setAction(Intent.ACTION_SEND);
@@ -173,9 +171,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         shareIntent.setType("text/plain");
 
                         View parentView = (View) holder.imageView.getParent();
-                        Uri bmpUri = Utils.getLocalViewBitmapUri(myListItem.id, parentView, mContext);
+                        Uri bmpUri = Utils.getLocalViewBitmapUri(myListItem.id, parentView, mContext, false);
                         if (bmpUri != null) {
-                            // Construct a ShareIntent with link to image
                             shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
                             shareIntent.setType("image/*");
                         }
@@ -183,6 +180,39 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         Utils.showShareToast(mContext);
                         mContext.startActivity(Intent.createChooser(shareIntent,
                                 mContext.getResources().getString(R.string.app_chooser_title)));
+                    }
+                });
+
+                holder.facebookshareButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (!ShareDialog.canShow(SharePhotoContent.class)) {
+                            Utils.showCannotShareToast(mContext);
+                            return;
+                        }
+
+                        Answers.getInstance().logShare(new ShareEvent().putMethod("Destination: facebook")
+                                .putContentId(myListItem.id));
+                        Uri updateUri = FeedContract.Entry.CONTENT_URI.buildUpon()
+                                .appendPath(myListItem._id.toString()).build();
+                        ContentValues values = new ContentValues();
+                        values.put(FeedContract.Entry.COLUMN_NAME_NUM_SHARES, myListItem.numShares + 1);
+                        mContext.getContentResolver().update(updateUri, values, null, null);
+
+                        WompWompHTTPParams params = new WompWompHTTPParams(mContext);
+                        Utils.postToWompwomp(FeedContract.ITEM_SHARE_URL + myListItem.id, params);
+
+                        View parentView = (View) holder.imageView.getParent();
+                        // facebook will screw with the image if it's not PNG
+                        Uri bmpUri = Utils.getLocalViewBitmapUri(myListItem.id, parentView, mContext, true /*usesPNG_Format*/);
+                        SharePhoto photo = new SharePhoto.Builder()
+                                .setImageUrl(bmpUri)
+                                .build();
+                        SharePhotoContent content = new SharePhotoContent.Builder()
+                                .addPhoto(photo)
+                                .build();
+                        mShareDialog.show(content);
+                        Utils.showShareToast(mContext);
                     }
                 });
 
@@ -198,19 +228,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         values.put(FeedContract.Entry.COLUMN_NAME_NUM_SHARES, myListItem.numShares + 1);
                         mContext.getContentResolver().update(updateUri, values, null, null);
 
-                        AsyncHttpClient client = new AsyncHttpClient();
-                        RequestParams params = new RequestParams();
-                        client.post(FeedContract.ITEM_SHARE_URL + myListItem.id, params, new TextHttpResponseHandler() {
-                            @Override
-                            public void onSuccess(int statusCode, Header[] headers, String res) {
-                                // we received status 200 OK..wohoo!
-                            }
-
-                            @Override
-                            public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
-                                //do nothing
-                            }
-                        });
+                        WompWompHTTPParams params = new WompWompHTTPParams(mContext);
+                        Utils.postToWompwomp(FeedContract.ITEM_SHARE_URL + myListItem.id, params);
 
                         Intent shareIntent = new Intent();
                         shareIntent.setAction(Intent.ACTION_SEND);
@@ -219,9 +238,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         shareIntent.setType("text/plain");
 
                         View parentView = (View) holder.imageView.getParent();
-                        Uri bmpUri = Utils.getLocalViewBitmapUri(myListItem.id, parentView, mContext);
+                        Uri bmpUri = Utils.getLocalViewBitmapUri(myListItem.id, parentView, mContext, false);
                         if (bmpUri != null) {
-                            // Construct a ShareIntent with link to image
                             shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
                             shareIntent.setType("image/*");
                         }
@@ -260,19 +278,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         mContext.getContentResolver().update(updateUri, values, null, null);
                         URL += myListItem.id;
 
-                        AsyncHttpClient client = new AsyncHttpClient();
-                        RequestParams params = new RequestParams();
-                        client.post(URL, params, new TextHttpResponseHandler() {
-                            @Override
-                            public void onSuccess(int statusCode, Header[] headers, String res) {
-                                // called when response HTTP status is "200 OK"
-                            }
-
-                            @Override
-                            public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
-                                //do nothing
-                            }
-                        });
+                        WompWompHTTPParams params = new WompWompHTTPParams(mContext);
+                        Utils.postToWompwomp(URL, params);
                     }
                 });
                 break;
@@ -303,5 +310,32 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 break;
             }
         }
+    }
+
+    @Override
+    public void onItemDismiss(int position) {
+        MyListItem item = getListItem(position);
+        Uri updateUri = FeedContract.Entry.CONTENT_URI.buildUpon()
+                .appendPath(item._id.toString()).build();
+        ContentValues values = new ContentValues();
+        values.put(FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM, 1);
+        mContext.getContentResolver().update(updateUri, values, null, null);
+
+        WompWompHTTPParams params = new WompWompHTTPParams(mContext);
+        Utils.postToWompwomp(FeedContract.ITEM_DISMISS_URL + item.id, params);
+    }
+
+    @Override
+    public boolean onItemMove(int fromPosition, int toPosition) {
+        //Don't implement this one
+        return true;
+    }
+
+    private MyListItem getListItem(int cursorPosition){
+        int initialPosition = getCursor().getPosition();
+        getCursor().moveToPosition(cursorPosition);
+        MyListItem myListItem = MyListItem.fromCursor(getCursor());
+        getCursor().moveToPosition(initialPosition); // restore cursor
+        return myListItem;
     }
 }

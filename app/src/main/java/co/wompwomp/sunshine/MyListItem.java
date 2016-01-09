@@ -15,6 +15,8 @@ public class MyListItem {
     public Integer numFavorites;
     public Integer numShares;
     public String createdOn;
+    public Integer cardType;
+    public Integer dismissItem;
 
     public static MyListItem fromCursor(Cursor c) {
         MyListItem myItem = new MyListItem();
@@ -26,6 +28,8 @@ public class MyListItem {
         myItem.numFavorites = c.getInt(WompWompConstants.COLUMN_NUM_FAVORITES);
         myItem.numShares = c.getInt(WompWompConstants.COLUMN_NUM_SHARES);
         myItem.createdOn = c.getString(WompWompConstants.COLUMN_CREATED_ON);
+        myItem.cardType = c.getInt(WompWompConstants.COLUMN_CARD_TYPE);
+        myItem.dismissItem = c.getInt(WompWompConstants.COLUMN_DISMISS_ITEM);
         return myItem;
     }
 

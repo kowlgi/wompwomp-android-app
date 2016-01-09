@@ -21,6 +21,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -30,11 +31,17 @@ import android.widget.Toast;
 import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.share.Sharer;
+import com.facebook.share.widget.ShareDialog;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
 import java.util.Random;
 
+import co.wompwomp.sunshine.helper.SimpleItemTouchHelperCallback;
 import co.wompwomp.sunshine.provider.FeedContract;
 import co.wompwomp.sunshine.util.ImageCache;
 import co.wompwomp.sunshine.util.ImageFetcher;
@@ -44,7 +51,7 @@ import timber.log.Timber;
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
-    private RecyclerView mRecyclerView = null;
+    private WompwompRecyclerView mRecyclerView = null;
     private MyCursorAdapter mAdapter = null;
     private LinearLayoutManager mLayoutManager;
     private ImageFetcher mImageFetcher = null;
@@ -57,6 +64,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private static IntentFilter syncIntentFilter = new IntentFilter(ACTION_FINISHED_SYNC);
     private boolean mLoadingBottom, mLoadingTop;
     private Toast mNoNetworkToast = null;
+    private ItemTouchHelper mItemTouchHelper;
+    private ShareDialog mShareDialog;
+    private CallbackManager mCallbackManager;
 
     /**
      * Projection for querying the content provider.
@@ -70,8 +80,11 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES,
             FeedContract.Entry.COLUMN_NAME_NUM_SHARES,
             FeedContract.Entry.COLUMN_NAME_CREATED_ON,
-            FeedContract.Entry.COLUMN_NAME_CARD_TYPE
+            FeedContract.Entry.COLUMN_NAME_CARD_TYPE,
+            FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM
     };
+
+    private static final String SELECTION = "(" + FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM + " IS 0)";
 
     @SuppressLint("ShowToast")
     @Override
@@ -96,7 +109,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
         /* Set up the recycler view */
         setContentView(R.layout.main_activity);
-        mRecyclerView = (RecyclerView) findViewById(R.id.quotesRecyclerView);
+        mRecyclerView = (WompwompRecyclerView) findViewById(R.id.quotesRecyclerView);
         // use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
         mRecyclerView.setHasFixedSize(true);
@@ -178,8 +191,34 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mImageFetcher.setLoadingImage(R.drawable.geometry2);
         mImageFetcher.addImageCache(getSupportFragmentManager(), cacheParams);
 
-        mAdapter = new MyCursorAdapter(this, null, mImageFetcher);
+        mCallbackManager = CallbackManager.Factory.create();
+        mShareDialog = new ShareDialog(this);
+        // this part is optional
+        mShareDialog.registerCallback(mCallbackManager, new FacebookCallback<Sharer.Result>() {
+            @Override
+            public void onCancel() {
+                //do nothing;
+            }
+
+            @Override
+            public void onError(FacebookException e) {
+                Timber.e(e.getMessage());
+                Timber.e(e.getStackTrace().toString());
+            }
+
+            @Override
+            public void onSuccess(Sharer.Result result){
+                //do nothing;
+            }
+        });
+
+        mAdapter = new MyCursorAdapter(this, null, mImageFetcher, mShareDialog);
         mRecyclerView.setAdapter(mAdapter);
+
+        ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(mAdapter);
+        mItemTouchHelper = new ItemTouchHelper(callback);
+        mItemTouchHelper.attachToRecyclerView(mRecyclerView);
+
         getSupportLoaderManager().initLoader(0, null, this);
     }
 
@@ -311,8 +350,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         return new CursorLoader(this,  // Context
                 FeedContract.Entry.CONTENT_URI, // URI
                 PROJECTION,                // Projection
-                null,                           // Selection
-                null,                           // Selection args
+                SELECTION,                 // Selection
+                null,                      // Selection args
                 FeedContract.Entry.COLUMN_NAME_CREATED_ON + " desc"); // Sort
     }
 
@@ -339,6 +378,13 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     public void onLoaderReset(Loader<Cursor> cursorLoader) {
         Timber.d("onLoadReset()");
         mAdapter.changeCursor(null);
+    }
+
+    @Override
+    protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        mCallbackManager.onActivityResult(requestCode, resultCode, data);
+        Timber.d(Integer.valueOf(resultCode).toString());
     }
 
     private void syncItems(WompWompConstants.SyncMethod syncMethod) {

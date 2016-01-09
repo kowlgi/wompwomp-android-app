@@ -38,6 +38,9 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.RequestParams;
+import com.loopj.android.http.TextHttpResponseHandler;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -47,6 +50,7 @@ import co.wompwomp.sunshine.BuildConfig;
 import co.wompwomp.sunshine.PermissionsDialogFragment;
 import co.wompwomp.sunshine.R;
 import co.wompwomp.sunshine.provider.FeedContract;
+import cz.msebera.android.httpclient.Header;
 
 /**
  * Class containing some static utility methods.
@@ -99,10 +103,20 @@ public class Utils {
         return Build.VERSION.SDK_INT >= VERSION_CODES.KITKAT;
     }
 
-    public static Uri getLocalViewBitmapUri(String filename, View aView, Context context){
+    public static Uri getLocalViewBitmapUri(String filename, View aView, Context context, boolean usePNG_Format){
         Uri bmpUri = null;
+        Bitmap.CompressFormat compressFormat;
+        if(usePNG_Format) {
+            filename += ".png";
+            compressFormat = Bitmap.CompressFormat.PNG;
+        }
+        else {
+            filename += ".jpg";
+            compressFormat = Bitmap.CompressFormat.JPEG;
+        }
+
         File file =  new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_DOWNLOADS), filename + ".jpg");
+                Environment.DIRECTORY_DOWNLOADS), filename);
 
         if(file.exists()) {
             bmpUri = Uri.fromFile(file);
@@ -145,7 +159,7 @@ public class Utils {
 
             file.getParentFile().mkdirs();
             FileOutputStream out = new FileOutputStream(file);
-            image.compress(Bitmap.CompressFormat.JPEG, 90, out); //Output
+            image.compress(compressFormat, 90, out); //Output
             bmpUri = Uri.fromFile(file);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -156,6 +170,13 @@ public class Utils {
     public static void showShareToast(Context context) {
         Toast toast = Toast.makeText(context,
                 context.getResources().getString(R.string.getting_ready_to_share),
+                Toast.LENGTH_SHORT);
+        toast.show();
+    }
+
+    public static void showCannotShareToast(Context context) {
+        Toast toast = Toast.makeText(context,
+                context.getResources().getString(R.string.cannot_share),
                 Toast.LENGTH_SHORT);
         toast.show();
     }
@@ -228,5 +249,22 @@ public class Utils {
             PermissionsDialogFragment permissionsDialogFragment = PermissionsDialogFragment.newInstance();
             permissionsDialogFragment.show(fm, "permissions_dialog");
         }
+    }
+
+    public static void postToWompwomp(String url, RequestParams params) {
+        if(BuildConfig.DEBUG) return;
+
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.post(url, params, new TextHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, String res) {
+                // we received status 200 OK..wohoo!
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
+                //do nothing
+            }
+        });
     }
 }

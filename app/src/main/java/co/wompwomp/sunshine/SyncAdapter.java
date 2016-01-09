@@ -327,6 +327,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                     .withValue(FeedContract.Entry.COLUMN_NAME_NUM_SHARES, e.numShares)
                     .withValue(FeedContract.Entry.COLUMN_NAME_CREATED_ON, e.createdOn)
                     .withValue(FeedContract.Entry.COLUMN_NAME_CARD_TYPE, WompWompConstants.TYPE_CONTENT_CARD)
+                    .withValue(FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM, 0)
                     .build());
             syncResult.stats.numInserts++;
         }

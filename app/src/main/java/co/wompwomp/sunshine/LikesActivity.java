@@ -1,6 +1,7 @@
 package co.wompwomp.sunshine;
 
 import android.content.ContentResolver;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
@@ -10,6 +11,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.share.Sharer;
+import com.facebook.share.widget.ShareDialog;
 
 import co.wompwomp.sunshine.provider.FeedContract;
 import co.wompwomp.sunshine.util.ImageCache;
@@ -21,6 +28,8 @@ public class LikesActivity extends AppCompatActivity implements LoaderManager.Lo
     protected LinearLayoutManager mLayoutManager;
     private ImageFetcher mImageFetcher = null;
     private static final String IMAGE_CACHE_DIR = "thumbs";
+    private ShareDialog mShareDialog;
+    private CallbackManager mCallbackManager;
 
     /**
      * Projection for querying the content provider.
@@ -34,8 +43,12 @@ public class LikesActivity extends AppCompatActivity implements LoaderManager.Lo
             FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES,
             FeedContract.Entry.COLUMN_NAME_NUM_SHARES,
             FeedContract.Entry.COLUMN_NAME_CREATED_ON,
-            FeedContract.Entry.COLUMN_NAME_CARD_TYPE
+            FeedContract.Entry.COLUMN_NAME_CARD_TYPE,
+            FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM
     };
+
+    private static final String SELECTION = "(" + FeedContract.Entry.COLUMN_NAME_FAVORITE +
+                                            " > 0 AND " + FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM + " IS 0)";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,7 +87,28 @@ public class LikesActivity extends AppCompatActivity implements LoaderManager.Lo
         super.onResume();
         mImageFetcher.setExitTasksEarly(false);
 
-        mAdapter = new MyCursorAdapter(this, null,mImageFetcher);
+        mCallbackManager = CallbackManager.Factory.create();
+        mShareDialog = new ShareDialog(this);
+        // this part is optional
+        mShareDialog.registerCallback(mCallbackManager, new FacebookCallback<Sharer.Result>() {
+            @Override
+            public void onCancel() {
+                //do nothing;
+            }
+
+            @Override
+            public void onError(FacebookException e) {
+                //do nothing;
+            }
+
+            @Override
+            public void onSuccess(Sharer.Result result) {
+                //do nothing;
+            }
+        });
+
+
+        mAdapter = new MyCursorAdapter(this, null,mImageFetcher, mShareDialog);
         mRecyclerView.setAdapter(mAdapter);
         getSupportLoaderManager().initLoader(0, null, this);
     }
@@ -108,7 +142,7 @@ public class LikesActivity extends AppCompatActivity implements LoaderManager.Lo
         return new CursorLoader(this,  // Context
                 FeedContract.Entry.CONTENT_URI, // URI
                 PROJECTION,                // Projection
-                "(" + FeedContract.Entry.COLUMN_NAME_FAVORITE + "> 0)", // Selection
+                SELECTION, // Selection
                 null,                           // Selection args
                 FeedContract.Entry.COLUMN_NAME_CREATED_ON + " desc"); // Sort
     }
@@ -132,4 +166,11 @@ public class LikesActivity extends AppCompatActivity implements LoaderManager.Lo
     public void onLoaderReset(Loader<Cursor> cursorLoader) {
         mAdapter.changeCursor(null);
     }
+
+    @Override
+    protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        mCallbackManager.onActivityResult(requestCode, resultCode, data);
+    }
+
 }

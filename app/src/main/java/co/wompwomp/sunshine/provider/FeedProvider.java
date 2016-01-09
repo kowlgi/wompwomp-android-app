@@ -215,7 +215,7 @@ public class FeedProvider extends ContentProvider {
 
         private static final String TAG = "FeedDatabase";
         /** Schema version. */
-        public static final int DATABASE_VERSION = 2;
+        public static final int DATABASE_VERSION = 3;
         /** Filename for SQLite file. */
         public static final String DATABASE_NAME = "feed.db";
 
@@ -233,11 +233,13 @@ public class FeedProvider extends ContentProvider {
                         FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES    + TYPE_INTEGER + COMMA_SEP +
                         FeedContract.Entry.COLUMN_NAME_NUM_SHARES + TYPE_INTEGER + COMMA_SEP +
                         FeedContract.Entry.COLUMN_NAME_CREATED_ON + TYPE_TEXT + COMMA_SEP +
-                        FeedContract.Entry.COLUMN_NAME_CARD_TYPE + TYPE_INTEGER + ")";
+                        FeedContract.Entry.COLUMN_NAME_CARD_TYPE + TYPE_INTEGER + COMMA_SEP +
+                        FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM + TYPE_INTEGER + ")";
 
-        /** SQL statement to drop "entry" table. */
-        private static final String SQL_DELETE_ENTRIES =
-                "DROP TABLE IF EXISTS " + FeedContract.Entry.TABLE_NAME;
+
+        private static final String SQL_V3_NEW_ENTRIES =
+                "ALTER TABLE " + FeedContract.Entry.TABLE_NAME + " ADD COLUMN " +
+                        FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM + TYPE_INTEGER + " DEFAULT 0";
 
         public FeedDatabase(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -250,10 +252,9 @@ public class FeedProvider extends ContentProvider {
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            // This database is only a cache for online data, so its upgrade policy is
-            // to simply to discard the data and start over
-            db.execSQL(SQL_DELETE_ENTRIES);
-            onCreate(db);
+            if(oldVersion < 3 && newVersion >= 3) {
+                db.execSQL(SQL_V3_NEW_ENTRIES);
+            }
         }
     }
 }

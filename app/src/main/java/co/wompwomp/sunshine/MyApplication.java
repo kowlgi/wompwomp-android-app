@@ -6,6 +6,7 @@ import android.content.Context;
 import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.core.CrashlyticsCore;
+import com.facebook.FacebookSdk;
 import com.squareup.leakcanary.LeakCanary;
 
 import io.fabric.sdk.android.Fabric;
@@ -50,6 +51,8 @@ public class MyApplication extends Application {
         if (BuildConfig.DEBUG) {
             Timber.plant(new Timber.DebugTree());
         }
+
+        FacebookSdk.sdkInitialize(getApplicationContext());
 
         mInstance = this;
         this.setAppContext(getApplicationContext());
