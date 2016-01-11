@@ -26,8 +26,7 @@ import timber.log.Timber;
 import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
 import com.crashlytics.android.answers.ShareEvent;
-import com.facebook.share.model.SharePhoto;
-import com.facebook.share.model.SharePhotoContent;
+import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.widget.ShareDialog;
 import com.ocpsoft.pretty.time.PrettyTime;
 
@@ -176,7 +175,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         shareIntent.setType("text/plain");
 
                         View parentView = (View) holder.imageView.getParent();
-                        Uri bmpUri = Utils.getLocalViewBitmapUri(myListItem.id, parentView, mContext, false);
+                        Uri bmpUri = Utils.getLocalViewBitmapUri(myListItem.id, parentView, mContext);
                         if (bmpUri != null) {
                             shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
                             shareIntent.setType("image/*");
@@ -191,7 +190,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 holder.facebookshareButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        if (!ShareDialog.canShow(SharePhotoContent.class)) {
+                        if (!ShareDialog.canShow(ShareLinkContent.class)) {
                             Utils.showCannotShareToast(mContext);
                             return;
                         }
@@ -207,14 +206,11 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         WompWompHTTPParams params = new WompWompHTTPParams(mContext);
                         Utils.postToWompwomp(FeedContract.ITEM_SHARE_URL + myListItem.id, params);
 
-                        View parentView = (View) holder.imageView.getParent();
-                        // facebook will screw with the image if it's not PNG
-                        Uri bmpUri = Utils.getLocalViewBitmapUri(myListItem.id, parentView, mContext, true /*usesPNG_Format*/);
-                        SharePhoto photo = new SharePhoto.Builder()
-                                .setImageUrl(bmpUri)
-                                .build();
-                        SharePhotoContent content = new SharePhotoContent.Builder()
-                                .addPhoto(photo)
+                        ShareLinkContent content = new ShareLinkContent.Builder()
+                                .setContentTitle(myListItem.quoteText)
+                                .setContentUrl(Uri.parse(FeedContract.ITEM_VIEW_URL + myListItem.id))
+                                .setImageUrl(Uri.parse(myListItem.imageSourceUri))
+                                .setContentDescription("Your funniest minute every day")
                                 .build();
                         mShareDialog.show(content);
                         Utils.showShareToast(mContext);
@@ -243,7 +239,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         shareIntent.setType("text/plain");
 
                         View parentView = (View) holder.imageView.getParent();
-                        Uri bmpUri = Utils.getLocalViewBitmapUri(myListItem.id, parentView, mContext, false);
+                        Uri bmpUri = Utils.getLocalViewBitmapUri(myListItem.id, parentView, mContext);
                         if (bmpUri != null) {
                             shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
                             shareIntent.setType("image/*");

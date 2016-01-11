@@ -40,5 +40,6 @@
         <item>Waiting on kittens to approve today\'s content…</item>
     </string-array>
     <string name="facebook_app_id">570524353097440</string>
+    <string name="empty_likes_cta">You have not liked any items. Tap the heart button on an item to like it</string>
 
 </resources>

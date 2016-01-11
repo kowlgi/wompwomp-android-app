@@ -22,6 +22,34 @@
 
     </android.support.design.widget.AppBarLayout>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone"
+        android:id="@+id/empty_likes_layout">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:maxWidth="240dp"
+            android:id="@+id/empty_likes_cta"
+            android:text="@string/empty_likes_cta"/>
+
+        <ImageView
+            android:id="@+id/heartIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_favorite_red_24dp"
+            android:padding="10dp"
+            android:layout_gravity="center">
+        </ImageView>
+    </LinearLayout>
+
+
+
     <android.support.v7.widget.RecyclerView
         android:layout_width="match_parent"
         android:layout_height="match_parent"

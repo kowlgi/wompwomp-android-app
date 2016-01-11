@@ -103,17 +103,10 @@ public class Utils {
         return Build.VERSION.SDK_INT >= VERSION_CODES.KITKAT;
     }
 
-    public static Uri getLocalViewBitmapUri(String filename, View aView, Context context, boolean usePNG_Format){
+    public static Uri getLocalViewBitmapUri(String filename, View aView, Context context){
         Uri bmpUri = null;
-        Bitmap.CompressFormat compressFormat;
-        if(usePNG_Format) {
-            filename += ".png";
-            compressFormat = Bitmap.CompressFormat.PNG;
-        }
-        else {
-            filename += ".jpg";
-            compressFormat = Bitmap.CompressFormat.JPEG;
-        }
+        Bitmap.CompressFormat compressFormat = Bitmap.CompressFormat.JPEG;
+        filename += ".jpg";
 
         File file =  new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_DOWNLOADS), filename);

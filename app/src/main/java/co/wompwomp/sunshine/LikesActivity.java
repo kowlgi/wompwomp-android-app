@@ -11,12 +11,17 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.share.Sharer;
 import com.facebook.share.widget.ShareDialog;
+
+import java.util.Random;
 
 import co.wompwomp.sunshine.provider.FeedContract;
 import co.wompwomp.sunshine.util.ImageCache;
@@ -30,6 +35,7 @@ public class LikesActivity extends AppCompatActivity implements LoaderManager.Lo
     private static final String IMAGE_CACHE_DIR = "thumbs";
     private ShareDialog mShareDialog;
     private CallbackManager mCallbackManager;
+    private LinearLayout mEmptyLikesLayout;
 
     /**
      * Projection for querying the content provider.
@@ -75,6 +81,9 @@ public class LikesActivity extends AppCompatActivity implements LoaderManager.Lo
         ImageCache.ImageCacheParams cacheParams =
                 new ImageCache.ImageCacheParams(this, IMAGE_CACHE_DIR);
         cacheParams.setMemCacheSizePercent(0.25f); // Set memory cache to 25% of app memory
+
+        mEmptyLikesLayout = (LinearLayout) findViewById(R.id.empty_likes_layout);
+        mEmptyLikesLayout.setVisibility(View.VISIBLE);
 
         // The ImageFetcher takes care of loading images into our ImageView children asynchronously
         mImageFetcher = new ImageFetcher(this);
@@ -153,6 +162,9 @@ public class LikesActivity extends AppCompatActivity implements LoaderManager.Lo
      */
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+        if(cursor.getCount() >= 1) {
+            mEmptyLikesLayout.setVisibility(View.GONE);
+        }
         mAdapter.changeCursor(cursor);
     }
 
