@@ -31,7 +31,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.util.LruCache;
 
-import co.wompwomp.sunshine.BuildConfig;
 import timber.log.Timber;
 
 import java.io.File;
@@ -62,7 +61,7 @@ public class ImageCache {
     private static final int DEFAULT_MEM_CACHE_SIZE = 1024 * 2; // 2MB
 
     // Default disk cache size in bytes
-    private static final int DEFAULT_DISK_CACHE_SIZE = 1024 * 1024 * 5; // 5MB
+    private static final int DEFAULT_DISK_CACHE_SIZE = 1024 * 1024 * 9;
 
     // Compression settings when writing images to disk cache
     private static final CompressFormat DEFAULT_COMPRESS_FORMAT = CompressFormat.JPEG;
@@ -131,9 +130,7 @@ public class ImageCache {
         //BEGIN_INCLUDE(init_memory_cache)
         // Set up memory cache
         if (mCacheParams.memoryCacheEnabled) {
-            if (BuildConfig.DEBUG) {
-                Timber.d("Memory cache created (size = " + mCacheParams.memCacheSize + ")");
-            }
+            Timber.d("Memory cache created (size = " + mCacheParams.memCacheSize + ")");
 
             // If we're running on Honeycomb or newer, create a set of reusable bitmaps that can be
             // populated into the inBitmap field of BitmapFactory.Options. Note that the set is
@@ -212,9 +209,7 @@ public class ImageCache {
                         try {
                             mDiskLruCache = DiskLruCache.open(
                                     diskCacheDir, 1, 1, mCacheParams.diskCacheSize);
-                            if (BuildConfig.DEBUG) {
-                                Timber.d("Disk cache initialized");
-                            }
+                            Timber.d("Disk cache initialized");
                         } catch (final IOException e) {
                             mCacheParams.diskCacheDir = null;
                             Timber.e("initDiskCache - " + e);
@@ -295,7 +290,7 @@ public class ImageCache {
             memValue = mMemoryCache.get(data);
         }
 
-        if (BuildConfig.DEBUG && memValue != null) {
+        if (memValue != null) {
             Timber.d( "Memory cache hit");
         }
 
@@ -325,9 +320,7 @@ public class ImageCache {
                 try {
                     final DiskLruCache.Snapshot snapshot = mDiskLruCache.get(key);
                     if (snapshot != null) {
-                        if (BuildConfig.DEBUG) {
-                            Timber.d( "Disk cache hit");
-                        }
+                        Timber.d( "Disk cache hit");
                         inputStream = snapshot.getInputStream(DISK_CACHE_INDEX);
                         if (inputStream != null) {
                             FileDescriptor fd = ((FileInputStream) inputStream).getFD();
@@ -396,9 +389,7 @@ public class ImageCache {
     public void clearCache() {
         if (mMemoryCache != null) {
             mMemoryCache.evictAll();
-            if (BuildConfig.DEBUG) {
-                Timber.d( "Memory cache cleared");
-            }
+            Timber.d( "Memory cache cleared");
         }
 
         synchronized (mDiskCacheLock) {
@@ -406,9 +397,7 @@ public class ImageCache {
             if (mDiskLruCache != null && !mDiskLruCache.isClosed()) {
                 try {
                     mDiskLruCache.delete();
-                    if (BuildConfig.DEBUG) {
-                        Timber.d( "Disk cache cleared");
-                    }
+                    Timber.d( "Disk cache cleared");
                 } catch (IOException e) {
                     Timber.e( "clearCache - " + e);
                 }
@@ -427,9 +416,7 @@ public class ImageCache {
             if (mDiskLruCache != null) {
                 try {
                     mDiskLruCache.flush();
-                    if (BuildConfig.DEBUG) {
-                        Timber.d( "Disk cache flushed");
-                    }
+                    Timber.d( "Disk cache flushed");
                 } catch (IOException e) {
                     Timber.e( "flush - " + e);
                 }
@@ -448,9 +435,7 @@ public class ImageCache {
                     if (!mDiskLruCache.isClosed()) {
                         mDiskLruCache.close();
                         mDiskLruCache = null;
-                        if (BuildConfig.DEBUG) {
-                            Timber.d( "Disk cache closed");
-                        }
+                        Timber.d( "Disk cache closed");
                     }
                 } catch (IOException e) {
                     Timber.e( "close - " + e);

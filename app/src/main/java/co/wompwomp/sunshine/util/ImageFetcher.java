@@ -24,7 +24,6 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.widget.Toast;
 
-import co.wompwomp.sunshine.BuildConfig;
 import co.wompwomp.sunshine.R;
 import timber.log.Timber;
 
@@ -42,7 +41,7 @@ import java.net.URL;
  * A simple subclass of {@link ImageWorker} that fetches images from a URL.
  */
 public class ImageFetcher extends ImageWorker {
-    private static final int HTTP_CACHE_SIZE = 5 * 1024 * 1024; // 5MB
+    private static final int HTTP_CACHE_SIZE = 1 * 1024 * 1024;
     private static final String HTTP_CACHE_DIR = "http";
     private static final int IO_BUFFER_SIZE = 8 * 1024;
 
@@ -81,9 +80,7 @@ public class ImageFetcher extends ImageWorker {
             if (ImageCache.getUsableSpace(mHttpCacheDir) > HTTP_CACHE_SIZE) {
                 try {
                     mHttpDiskCache = DiskLruCache.open(mHttpCacheDir, 1, 1, HTTP_CACHE_SIZE);
-                    if (BuildConfig.DEBUG) {
-                        Timber.d("HTTP cache initialized");
-                    }
+                    Timber.d("HTTP cache initialized");
                 } catch (IOException e) {
                     mHttpDiskCache = null;
                 }
@@ -100,9 +97,7 @@ public class ImageFetcher extends ImageWorker {
             if (mHttpDiskCache != null && !mHttpDiskCache.isClosed()) {
                 try {
                     mHttpDiskCache.delete();
-                    if (BuildConfig.DEBUG) {
-                        Timber.d( "HTTP cache cleared");
-                    }
+                    Timber.d( "HTTP cache cleared");
                 } catch (IOException e) {
                     Timber.e( "clearCacheInternal - " + e);
                 }
@@ -120,9 +115,7 @@ public class ImageFetcher extends ImageWorker {
             if (mHttpDiskCache != null) {
                 try {
                     mHttpDiskCache.flush();
-                    if (BuildConfig.DEBUG) {
-                        Timber.d( "HTTP cache flushed");
-                    }
+                    Timber.d( "HTTP cache flushed");
                 } catch (IOException e) {
                     Timber.e( "flush - " + e);
                 }
@@ -139,9 +132,7 @@ public class ImageFetcher extends ImageWorker {
                     if (!mHttpDiskCache.isClosed()) {
                         mHttpDiskCache.close();
                         mHttpDiskCache = null;
-                        if (BuildConfig.DEBUG) {
-                            Timber.d( "HTTP cache closed");
-                        }
+                        Timber.d( "HTTP cache closed");
                     }
                 } catch (IOException e) {
                     Timber.e( "closeCacheInternal - " + e);
@@ -173,10 +164,6 @@ public class ImageFetcher extends ImageWorker {
      * @return The downloaded and resized bitmap
      */
     private Bitmap processBitmap(String data) {
-        if (BuildConfig.DEBUG) {
-            Timber.d( "processBitmap - " + data);
-        }
-
         final String key = ImageCache.hashKeyForDisk(data);
         FileDescriptor fileDescriptor = null;
         FileInputStream fileInputStream = null;
@@ -193,9 +180,7 @@ public class ImageFetcher extends ImageWorker {
                 try {
                     snapshot = mHttpDiskCache.get(key);
                     if (snapshot == null) {
-                        if (BuildConfig.DEBUG) {
-                            Timber.d( "processBitmap, not found in http cache, downloading...");
-                        }
+                        Timber.d( "4. Not in HTTP cache. Going to network: " + data);
                         DiskLruCache.Editor editor = mHttpDiskCache.edit(key);
                         if (editor != null) {
                             if (downloadUrlToStream(data,
@@ -206,6 +191,9 @@ public class ImageFetcher extends ImageWorker {
                             }
                         }
                         snapshot = mHttpDiskCache.get(key);
+                    }
+                    else {
+                        Timber.d( "4. Found in HTTP Cache: " + data);
                     }
                     if (snapshot != null) {
                         fileInputStream =

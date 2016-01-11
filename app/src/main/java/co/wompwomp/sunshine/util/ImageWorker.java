@@ -26,7 +26,6 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.widget.ImageView;
 
-import co.wompwomp.sunshine.BuildConfig;
 import timber.log.Timber;
 
 import java.lang.ref.WeakReference;
@@ -81,6 +80,7 @@ public abstract class ImageWorker {
             value = mImageCache.getBitmapFromMemCache(String.valueOf(data));
         }
 
+        Timber.d("1. Going to Memory cache: " + data);
         if (value != null) {
             // Bitmap found in memory cache
             imageView.setImageDrawable(value);
@@ -181,10 +181,8 @@ public abstract class ImageWorker {
         final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
         if (bitmapWorkerTask != null) {
             bitmapWorkerTask.cancel(true);
-            if (BuildConfig.DEBUG) {
-                final Object bitmapData = bitmapWorkerTask.mData;
-                Timber.d("cancelWork - cancelled work for " + bitmapData);
-            }
+            final Object bitmapData = bitmapWorkerTask.mData;
+            Timber.d("cancelWork - cancelled work for " + bitmapData);
         }
     }
 
@@ -202,9 +200,7 @@ public abstract class ImageWorker {
             final Object bitmapData = bitmapWorkerTask.mData;
             if (bitmapData == null || !bitmapData.equals(data)) {
                 bitmapWorkerTask.cancel(true);
-                if (BuildConfig.DEBUG) {
-                    Timber.d("cancelPotentialWork - cancelled work for " + data);
-                }
+                Timber.d("cancelPotentialWork - cancelled work for " + data);
             } else {
                 // The same work is already in progress.
                 return false;
@@ -248,8 +244,6 @@ public abstract class ImageWorker {
         @Override
         protected BitmapDrawable doInBackground(Void... params) {
             //BEGIN_INCLUDE(load_bitmap_in_background)
-            if (BuildConfig.DEBUG) Timber.d("doInBackground - starting work");
-
             final String dataString = String.valueOf(mData);
             Bitmap bitmap = null;
             BitmapDrawable drawable = null;
@@ -269,6 +263,7 @@ public abstract class ImageWorker {
             // the cache
             if (mImageCache != null && !isCancelled() && getAttachedImageView() != null
                     && !mExitTasksEarly) {
+                Timber.d("2. Not in memory cache. Going to disk cache: " + dataString);
                 bitmap = mImageCache.getBitmapFromDiskCache(dataString);
             }
 
@@ -278,6 +273,7 @@ public abstract class ImageWorker {
             // process method (as implemented by a subclass)
             if (bitmap == null && !isCancelled() && getAttachedImageView() != null
                     && !mExitTasksEarly) {
+                Timber.d("3. Not in disk cache. Going to HTTP Cache " + dataString);
                 bitmap = processBitmap(mData);
             }
 
@@ -300,10 +296,6 @@ public abstract class ImageWorker {
                 }
             }
 
-            if (BuildConfig.DEBUG) {
-                Timber.d("doInBackground - finished work");
-            }
-
             return drawable;
             //END_INCLUDE(load_bitmap_in_background)
         }
@@ -321,9 +313,6 @@ public abstract class ImageWorker {
 
             final ImageView imageView = getAttachedImageView();
             if (value != null && imageView != null) {
-                if (BuildConfig.DEBUG) {
-                    Timber.d("onPostExecute - setting bitmap");
-                }
                 setImageDrawable(imageView, value);
             }
             //END_INCLUDE(complete_background_work)

@@ -21,6 +21,8 @@ import co.wompwomp.sunshine.helper.ItemTouchHelperAdapter;
 import co.wompwomp.sunshine.provider.FeedContract;
 import co.wompwomp.sunshine.util.ImageFetcher;
 import co.wompwomp.sunshine.util.Utils;
+import timber.log.Timber;
+
 import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
 import com.crashlytics.android.answers.ShareEvent;
@@ -123,6 +125,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 final ContentCardViewHolder holder = (ContentCardViewHolder) VH;
                 final MyListItem myListItem = MyListItem.fromCursor(cursor);
 
+                Timber.d("Image ID:" + myListItem.id);
+
                 DisplayMetrics displayMetrics = mContext.getResources().getDisplayMetrics();
                 float dpHeight = displayMetrics.heightPixels / displayMetrics.density;
 
@@ -133,6 +137,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 } else {
                     holder.textView.setMinHeight((int) Math.round(dpHeight * 0.20)); //min 20% of height
                     holder.textView.setText(myListItem.quoteText);
+                    Timber.d("Quote: " + myListItem.quoteText);
                 }
 
                 if (myListItem.favorite) {

@@ -229,6 +229,12 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mLoadingTop = false;
         mImageFetcher.setExitTasksEarly(false);
         LocalBroadcastManager.getInstance(this).registerReceiver(mSyncBroadcastReceiver, syncIntentFilter);
+
+        /* Because we're loading images asynchronously, we might pause() this activity before
+        fetching the image from network. When this activity is resumed, recycler view doesn't call
+        adapter.onBindViewholder() automatically, which is needed to kickstart image loading again.
+        So, we call notifyDataSetChanged() so onBindViewHolder() gets invoked */
+        mAdapter.notifyDataSetChanged();
     }
 
     @Override
