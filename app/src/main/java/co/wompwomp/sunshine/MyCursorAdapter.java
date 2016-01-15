@@ -6,12 +6,16 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Build;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
@@ -29,10 +33,13 @@ import com.crashlytics.android.answers.ShareEvent;
 import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.widget.ShareDialog;
 import com.ocpsoft.pretty.time.PrettyTime;
+import com.plattysoft.leonids.ParticleSystem;
 
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 import org.joda.time.format.ISODateTimeFormat;
+
+import java.io.ByteArrayOutputStream;
 
 public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolder> implements ItemTouchHelperAdapter {
 
@@ -131,6 +138,21 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 
                 mImageFetcher.loadImage(myListItem.imageSourceUri, holder.imageView);
 
+                holder.imageView.setOnClickListener(new View.OnClickListener()
+                {
+                    @Override
+                    public void onClick(View v)
+                    {
+                        Intent zoomIntent = new Intent(mContext, ItemZoomActivity.class);
+                        final Bitmap bmp  = ((BitmapDrawable) holder.imageView.getDrawable()).getBitmap();
+                        ByteArrayOutputStream bs = new ByteArrayOutputStream();
+                        bmp.compress(Bitmap.CompressFormat.JPEG, 90, bs);
+                        zoomIntent.putExtra("byteArray", bs.toByteArray());
+                        zoomIntent.putExtra("quoteText", myListItem.quoteText);
+                        mContext.startActivity(zoomIntent);
+                    }
+                });
+
                 if(myListItem.quoteText.isEmpty()) {
                     holder.textView.setVisibility(View.GONE);
                 } else {
@@ -210,7 +232,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                                 .setContentTitle(myListItem.quoteText)
                                 .setContentUrl(Uri.parse(FeedContract.ITEM_VIEW_URL + myListItem.id))
                                 .setImageUrl(Uri.parse(myListItem.imageSourceUri))
-                                .setContentDescription("Your funniest minute every day")
+                                .setContentDescription("Install the app for your funniest minute every day")
                                 .build();
                         mShareDialog.show(content);
                         Utils.showShareToast(mContext);
@@ -274,6 +296,9 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                             URL = FeedContract.ITEM_FAVORITE_URL;
                             Answers.getInstance().logCustom(new CustomEvent("Like button clicked")
                                     .putCustomAttribute("itemid", myListItem.id));
+                            new ParticleSystem((AppCompatActivity)mContext, 5, R.drawable.ic_favorite_red_12dp, 500)
+                                    .setSpeedRange(0.2f, 0.5f)
+                                    .oneShot(holder.favoriteButton, 5);
                         }
 
                         mContext.getContentResolver().update(updateUri, values, null, null);
@@ -314,13 +339,29 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
     }
 
     @Override
-    public void onItemDismiss(int position) {
+    public void onItemDismiss(int position, final RecyclerView rv) {
         MyListItem item = getListItem(position);
-        Uri updateUri = FeedContract.Entry.CONTENT_URI.buildUpon()
+        final Uri updateUri = FeedContract.Entry.CONTENT_URI.buildUpon()
                 .appendPath(item._id.toString()).build();
         ContentValues values = new ContentValues();
+
         values.put(FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM, 1);
         mContext.getContentResolver().update(updateUri, values, null, null);
+
+        Snackbar snackbar = Snackbar
+                .make(rv, "Post removed from your stream", Snackbar.LENGTH_LONG)
+                .setAction("UNDO", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        ContentValues values = new ContentValues();
+                        values.put(FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM, 0);
+                        mContext.getContentResolver().update(updateUri, values, null, null);
+                        Snackbar snackbar1 = Snackbar.make(rv, "Restored post!", Snackbar.LENGTH_SHORT);
+                        snackbar1.show();
+                    }
+                });
+
+        snackbar.show();
 
         WompWompHTTPParams params = new WompWompHTTPParams(mContext);
         Utils.postToWompwomp(FeedContract.ITEM_DISMISS_URL + item.id, params);

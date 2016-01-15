@@ -247,7 +247,7 @@ public abstract class ImageWorker {
             final String dataString = String.valueOf(mData);
             Bitmap bitmap = null;
             BitmapDrawable drawable = null;
-
+            Timber.d("1.1. Before sync lock: doInBackground()");
             // Wait here if work is paused and the task is not cancelled
             synchronized (mPauseWorkLock) {
                 while (mPauseWork && !isCancelled()) {
@@ -256,7 +256,8 @@ public abstract class ImageWorker {
                     } catch (InterruptedException e) {}
                 }
             }
-
+            Timber.d("1.2. After sync lock: doInBackground()-- isCancelled(): " + isCancelled() +
+                     ", getAttachedImageView != null: " + (getAttachedImageView() != null));
             // If the image cache is available and this task has not been cancelled by another
             // thread and the ImageView that was originally bound to this task is still bound back
             // to this task and our "exit early" flag is not set then try and fetch the bitmap from

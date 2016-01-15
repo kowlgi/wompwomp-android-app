@@ -215,7 +215,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mAdapter = new MyCursorAdapter(this, null, mImageFetcher, mShareDialog);
         mRecyclerView.setAdapter(mAdapter);
 
-        ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(mAdapter);
+        ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(mAdapter, mRecyclerView);
         mItemTouchHelper = new ItemTouchHelper(callback);
         mItemTouchHelper.attachToRecyclerView(mRecyclerView);
 

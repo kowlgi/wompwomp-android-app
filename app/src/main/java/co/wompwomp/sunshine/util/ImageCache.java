@@ -291,7 +291,7 @@ public class ImageCache {
         }
 
         if (memValue != null) {
-            Timber.d( "Memory cache hit");
+            Timber.d( "Memory cache hit: " + data);
         }
 
         return memValue;
