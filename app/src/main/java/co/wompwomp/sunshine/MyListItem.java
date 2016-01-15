@@ -17,6 +17,7 @@ public class MyListItem {
     public String createdOn;
     public Integer cardType;
     public Integer dismissItem;
+    public String author;
 
     public static MyListItem fromCursor(Cursor c) {
         MyListItem myItem = new MyListItem();
@@ -30,6 +31,7 @@ public class MyListItem {
         myItem.createdOn = c.getString(WompWompConstants.COLUMN_CREATED_ON);
         myItem.cardType = c.getInt(WompWompConstants.COLUMN_CARD_TYPE);
         myItem.dismissItem = c.getInt(WompWompConstants.COLUMN_DISMISS_ITEM);
+        myItem.author = c.getString(WompWompConstants.COLUMN_AUTHOR);
         return myItem;
     }
 

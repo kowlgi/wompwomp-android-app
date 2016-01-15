@@ -115,6 +115,10 @@ public class FeedContract {
          * Whether to hide item or not: 0: show, 1: hide
          */
         public static final String COLUMN_NAME_DISMISS_ITEM = "dismiss_item";
+        /**
+         * Item author
+         */
+        public static final String COLUMN_NAME_AUTHOR = "author";
 
     }
 }

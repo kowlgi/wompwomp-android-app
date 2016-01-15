@@ -22,6 +22,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.widget.ImageView;
@@ -29,6 +30,7 @@ import android.widget.ImageView;
 import timber.log.Timber;
 
 import java.lang.ref.WeakReference;
+import java.util.concurrent.Executor;
 
 /**
  * This class wraps up completing some arbitrary long running work when loading a bitmap to an
@@ -80,22 +82,23 @@ public abstract class ImageWorker {
             value = mImageCache.getBitmapFromMemCache(String.valueOf(data));
         }
 
-        Timber.d("1. Going to Memory cache: " + data);
+        Timber.d("0. Going to Memory cache: " + data);
         if (value != null) {
             // Bitmap found in memory cache
             imageView.setImageDrawable(value);
         } else if (cancelPotentialWork(data, imageView)) {
             //BEGIN_INCLUDE(execute_background_task)
+            Timber.d("1.0 Creating bitmapworker task: " + data);
             final BitmapWorkerTask task = new BitmapWorkerTask(data, imageView);
             final AsyncDrawable asyncDrawable =
                     new AsyncDrawable(mResources, mLoadingBitmap, task);
             imageView.setImageDrawable(asyncDrawable);
-
-            // NOTE: This uses a custom version of AsyncTask that has been pulled from the
-            // framework and slightly modified. Refer to the docs at the top of the class
-            // for more info on what was changed.
-            task.executeOnExecutor(AsyncTask.DUAL_THREAD_EXECUTOR);
-            //END_INCLUDE(execute_background_task)
+            Timber.d("1.0.1. Bitmapworker task status: " + task.getStatus());
+            if(Utils.hasHoneycomb()) {
+                task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            } else {
+                task.execute();
+            }
         }
     }
 
@@ -238,6 +241,12 @@ public abstract class ImageWorker {
             imageViewReference = new WeakReference<ImageView>(imageView);
         }
 
+        @Override
+        protected void onPreExecute() {
+            final String dataString = String.valueOf(mData);
+            Timber.d("Pre-execute: " + dataString);
+        }
+
         /**
          * Background processing.
          */
@@ -257,7 +266,9 @@ public abstract class ImageWorker {
                 }
             }
             Timber.d("1.2. After sync lock: doInBackground()-- isCancelled(): " + isCancelled() +
-                     ", getAttachedImageView != null: " + (getAttachedImageView() != null));
+                     ", getAttachedImageView != null: " + (getAttachedImageView() != null) +
+                     ",mImageCache != null: " + (mImageCache != null) +
+                     ", mExitTasksEarly: " + mExitTasksEarly);
             // If the image cache is available and this task has not been cancelled by another
             // thread and the ImageView that was originally bound to this task is still bound back
             // to this task and our "exit early" flag is not set then try and fetch the bitmap from
@@ -312,6 +323,8 @@ public abstract class ImageWorker {
                 value = null;
             }
 
+            final String dataString = String.valueOf(mData);
+            Timber.d("Post-execute: " + dataString + ". isCancelled = " + isCancelled());
             final ImageView imageView = getAttachedImageView();
             if (value != null && imageView != null) {
                 setImageDrawable(imageView, value);
@@ -322,6 +335,8 @@ public abstract class ImageWorker {
         @Override
         protected void onCancelled(BitmapDrawable value) {
             super.onCancelled(value);
+            final String dataString = String.valueOf(mData);
+            Timber.d("onCancelled:  " + dataString);
             synchronized (mPauseWorkLock) {
                 mPauseWorkLock.notifyAll();
             }

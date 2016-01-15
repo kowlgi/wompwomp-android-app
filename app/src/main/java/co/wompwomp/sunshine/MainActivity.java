@@ -39,6 +39,7 @@ import com.facebook.share.widget.ShareDialog;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
+import java.util.Arrays;
 import java.util.Random;
 
 import co.wompwomp.sunshine.helper.SimpleItemTouchHelperCallback;
@@ -81,7 +82,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             FeedContract.Entry.COLUMN_NAME_NUM_SHARES,
             FeedContract.Entry.COLUMN_NAME_CREATED_ON,
             FeedContract.Entry.COLUMN_NAME_CARD_TYPE,
-            FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM
+            FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM,
+            FeedContract.Entry.COLUMN_NAME_AUTHOR
     };
 
     private static final String SELECTION = "(" + FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM + " IS 0)";
@@ -203,7 +205,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             @Override
             public void onError(FacebookException e) {
                 Timber.e(e.getMessage());
-                Timber.e(e.getStackTrace().toString());
+                Timber.e(Arrays.toString(e.getStackTrace()));
             }
 
             @Override

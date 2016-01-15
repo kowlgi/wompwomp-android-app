@@ -55,6 +55,7 @@ public class FeedParser {
         Integer numFavorites = 0;
         Integer numShares = null;
         String createdOn = null;
+        String author = null;
 
         reader.beginObject();
         while (reader.hasNext()) {
@@ -78,13 +79,16 @@ public class FeedParser {
                 case WompWompConstants.WOMPWOMP_CREATEDON:
                     createdOn = reader.nextString();
                     break;
+                case WompWompConstants.WOMPWOMP_AUTHOR:
+                    author = reader.nextString();
+                    break;
                 default:
                     reader.skipValue();
                     break;
             }
         }
         reader.endObject();
-        return new Entry(id, imageSourceUri, quoteText, numFavorites, numShares, createdOn);
+        return new Entry(id, imageSourceUri, quoteText, numFavorites, numShares, createdOn, author);
     }
 
     /**
@@ -97,14 +101,16 @@ public class FeedParser {
         public final Integer numFavorites;
         public final Integer numShares;
         public final String createdOn;
+        public final String author;
 
-        Entry(String id, String imageSourceUri, String quoteText, Integer numFavorites, Integer numShares, String createdOn) {
+        Entry(String id, String imageSourceUri, String quoteText, Integer numFavorites, Integer numShares, String createdOn, String author) {
             this.id = id;
             this.imageSourceUri = imageSourceUri;
             this.quoteText = quoteText;
             this.numFavorites = numFavorites;
             this.numShares = numShares;
             this.createdOn = createdOn;
+            this.author = author;
         }
     }
 }

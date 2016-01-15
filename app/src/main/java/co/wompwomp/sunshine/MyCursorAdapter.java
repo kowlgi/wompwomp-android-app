@@ -131,8 +131,6 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 final ContentCardViewHolder holder = (ContentCardViewHolder) VH;
                 final MyListItem myListItem = MyListItem.fromCursor(cursor);
 
-                Timber.d("Image ID:" + myListItem.id);
-
                 DisplayMetrics displayMetrics = mContext.getResources().getDisplayMetrics();
                 float dpHeight = displayMetrics.heightPixels / displayMetrics.density;
 
@@ -158,7 +156,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 } else {
                     holder.textView.setMinHeight((int) Math.round(dpHeight * 0.20)); //min 20% of height
                     holder.textView.setText(myListItem.quoteText);
-                    Timber.d("Quote: " + myListItem.quoteText);
+                    Timber.d("Quote: " + myListItem.quoteText + ", link: " + myListItem.imageSourceUri);
                 }
 
                 if (myListItem.favorite) {
@@ -169,8 +167,16 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 
                 PrettyTime prettyTime = new PrettyTime();
                 LocalDateTime createdOn = LocalDateTime.parse(myListItem.createdOn, ISODateTimeFormat.dateTime());
+                String author;
+                if(myListItem.author == null || myListItem.author.isEmpty()) {
+                    author = mContext.getResources().getString(R.string.defaultAuthor);
+                } else {
+                    author = myListItem.author;
+                }
                 //http://www.flowstopper.org/2012/11/prettytime-and-joda-playing-nice.html
-                holder.createdOnView.setText(prettyTime.format(createdOn.toDateTime(DateTimeZone.UTC).toDate()));
+                String timeAndAuthor = prettyTime.format(createdOn.toDateTime(DateTimeZone.UTC).toDate()) +
+                        " by @" + author;
+                holder.createdOnView.setText(timeAndAuthor);
 
                 holder.numfavoritesView.setText(MyListItem.format(myListItem.numFavorites));
                 holder.numsharesView.setText(MyListItem.format(myListItem.numShares));
@@ -348,15 +354,17 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
         values.put(FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM, 1);
         mContext.getContentResolver().update(updateUri, values, null, null);
 
+        final String undoMessage = mContext.getResources().getString(R.string.undoPostMessage);
+        final String restoreMessage = mContext.getResources().getString(R.string.restorePostMessage);
         Snackbar snackbar = Snackbar
-                .make(rv, "Post removed from your stream", Snackbar.LENGTH_LONG)
+                .make(rv, undoMessage, Snackbar.LENGTH_LONG)
                 .setAction("UNDO", new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         ContentValues values = new ContentValues();
                         values.put(FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM, 0);
                         mContext.getContentResolver().update(updateUri, values, null, null);
-                        Snackbar snackbar1 = Snackbar.make(rv, "Restored post!", Snackbar.LENGTH_SHORT);
+                        Snackbar snackbar1 = Snackbar.make(rv, restoreMessage, Snackbar.LENGTH_SHORT);
                         snackbar1.show();
                     }
                 });

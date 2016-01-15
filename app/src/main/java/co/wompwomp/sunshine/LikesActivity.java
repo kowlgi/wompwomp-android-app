@@ -50,7 +50,8 @@ public class LikesActivity extends AppCompatActivity implements LoaderManager.Lo
             FeedContract.Entry.COLUMN_NAME_NUM_SHARES,
             FeedContract.Entry.COLUMN_NAME_CREATED_ON,
             FeedContract.Entry.COLUMN_NAME_CARD_TYPE,
-            FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM
+            FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM,
+            FeedContract.Entry.COLUMN_NAME_AUTHOR
     };
 
     private static final String SELECTION = "(" + FeedContract.Entry.COLUMN_NAME_FAVORITE +

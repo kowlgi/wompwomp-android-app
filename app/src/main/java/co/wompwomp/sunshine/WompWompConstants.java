@@ -12,6 +12,7 @@ public class WompWompConstants {
     public static final int COLUMN_CREATED_ON = 7;
     public static final int COLUMN_CARD_TYPE = 8;
     public static final int COLUMN_DISMISS_ITEM = 9;
+    public static final int COLUMN_AUTHOR = 10;
 
     /* Card types */
     public static final int TYPE_CONTENT_CARD = 100;
@@ -25,6 +26,7 @@ public class WompWompConstants {
     public static final String WOMPWOMP_CREATEDON = "c";
     public static final String WOMPWOMP_NUMFAVORITES = "f";
     public static final String WOMPWOMP_NUMSHARES = "s";
+    public static final String WOMPWOMP_AUTHOR = "a";
 
     // Constants for entry id for prompt cards
     public static final String WOMPWOMP_CTA_SHARE = "CTA_SHARE";
