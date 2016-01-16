@@ -87,7 +87,10 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             FeedContract.Entry.COLUMN_NAME_FAVORITE,
             FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES,
             FeedContract.Entry.COLUMN_NAME_NUM_SHARES,
-            FeedContract.Entry.COLUMN_NAME_CREATED_ON};
+            FeedContract.Entry.COLUMN_NAME_CREATED_ON,
+            FeedContract.Entry.COLUMN_NAME_CARD_TYPE,
+            FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM,
+            FeedContract.Entry.COLUMN_NAME_AUTHOR};
 
     /* Projection used for obtaining high and low cursors for fetching feed data */
     final String[] CURSOR_PROJECTION = new String[]{
@@ -275,6 +278,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             String entryId;
             Integer numFavorites;
             Integer numShares;
+            String author;
 
             while (c.moveToNext()) {
                 syncResult.stats.numEntries++;
@@ -282,6 +286,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 entryId = c.getString(WompWompConstants.COLUMN_ENTRY_ID);
                 numFavorites = c.getInt(WompWompConstants.COLUMN_NUM_FAVORITES);
                 numShares = c.getInt(WompWompConstants.COLUMN_NUM_SHARES);
+                author = c.getString(WompWompConstants.COLUMN_AUTHOR);
 
                 FeedParser.Entry match = entryMap.get(entryId);
                 if (match != null) {
@@ -291,11 +296,13 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                     Uri existingUri = FeedContract.Entry.CONTENT_URI.buildUpon()
                             .appendPath(Integer.toString(id)).build();
                     if ((match.numFavorites != numFavorites) ||
-                            (match.numShares != numShares)) {
+                            (match.numShares != numShares) ||
+                            (match.author != author)){
                         // Update existing record
                         batch.add(ContentProviderOperation.newUpdate(existingUri)
                                 .withValue(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, match.numFavorites)
                                 .withValue(FeedContract.Entry.COLUMN_NAME_NUM_SHARES, match.numShares)
+                                .withValue(FeedContract.Entry.COLUMN_NAME_AUTHOR, match.author)
                                 .build());
                         syncResult.stats.numUpdates++;
                     } else {
