@@ -50,8 +50,6 @@ import co.wompwomp.sunshine.util.Utils;
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
-
-    private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     private WompwompRecyclerView mRecyclerView = null;
     private MyCursorAdapter mAdapter = null;
     private LinearLayoutManager mLayoutManager;
@@ -97,17 +95,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 R.string.no_network_connection_toast,
                 Toast.LENGTH_SHORT);
 
-        SyncUtils.CreateSyncAccount(this);
-
-        if (checkPlayServices()) {
-            // Start IntentService to register this application with GCM.
-            Intent intent = new Intent(this, RegistrationIntentService.class);
-            startService(intent);
-        }
-
         Utils.launchPermissionsDialogIfNecessary(this);
-
-        Crashlytics.setUserIdentifier(Installation.id(this));
 
         /* Set up the recycler view */
         setContentView(R.layout.main_activity);
@@ -231,6 +219,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mLoadingTop = false;
         mImageFetcher.setExitTasksEarly(false);
         LocalBroadcastManager.getInstance(this).registerReceiver(mSyncBroadcastReceiver, syncIntentFilter);
+        SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.EXISTING_AND_NEW_ABOVE_LOW_CURSOR);
 
         /* Because we're loading images asynchronously, we might pause() this activity before
         fetching the image from network. When this activity is resumed, recycler view doesn't call
@@ -246,6 +235,12 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mImageFetcher.setPauseWork(false);
         mImageFetcher.setExitTasksEarly(true);
         mImageFetcher.flushCache();
+    }
+
+    @Override
+    protected void onStop(){
+        super.onStop();
+        mAdapter.flush();
     }
 
     @Override
@@ -319,26 +314,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    /**
-     * Check the device to make sure it has the Google Play Services APK. If
-     * it doesn't, display a dialog that allows users to download the APK from
-     * the Google Play Store or enable it in the device's system settings.
-     */
-    private boolean checkPlayServices() {
-        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
-        int resultCode = apiAvailability.isGooglePlayServicesAvailable(this);
-        if (resultCode != ConnectionResult.SUCCESS) {
-            if (apiAvailability.isUserResolvableError(resultCode)) {
-                apiAvailability.getErrorDialog(this, resultCode, PLAY_SERVICES_RESOLUTION_REQUEST)
-                        .show();
-            } else {
-                finish();
-            }
-            return false;
-        }
-        return true;
     }
 
     /**

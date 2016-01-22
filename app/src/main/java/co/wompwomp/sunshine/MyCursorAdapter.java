@@ -5,17 +5,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
-import android.os.Build;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
@@ -40,18 +36,66 @@ import org.joda.time.LocalDateTime;
 import org.joda.time.format.ISODateTimeFormat;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.HashSet;
 
 public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolder> implements ItemTouchHelperAdapter {
 
     private ImageFetcher mImageFetcher = null;
     private Context mContext = null;
     private ShareDialog mShareDialog = null;
+    private HashSet<String> mLikes = null;
 
-    public MyCursorAdapter(Context context, Cursor cursor, ImageFetcher imageFetcher, ShareDialog shareDialog){
+    public MyCursorAdapter(Context context, Cursor cursor, ImageFetcher imageFetcher, ShareDialog shareDialog) {
         super(cursor);
         mContext = context;
         mImageFetcher = imageFetcher;
         mShareDialog = shareDialog;
+        if (fileExists((AppCompatActivity) mContext, WompWompConstants.LIKES_FILENAME)) {
+            try {
+                mLikes =  getLikesFromFile(WompWompConstants.LIKES_FILENAME);
+            } catch (java.lang.Exception e) {
+                Timber.e("Error from file read operation ", e);
+                e.printStackTrace();
+            }
+        } else {
+            mLikes = new HashSet<String>();
+        }
+        Timber.d("Populated likes in-memory hashmap: " + mLikes.toString());
+    }
+
+    private boolean fileExists(Context context, String filename) {
+        File file = context.getFileStreamPath(filename);
+        return file != null && file.exists();
+    }
+
+    private HashSet<String> getLikesFromFile (String filePath) throws Exception {
+        FileInputStream fis = ((AppCompatActivity)mContext).openFileInput(filePath);
+        ObjectInputStream ois = new ObjectInputStream(fis);
+        HashSet<String> obj = (HashSet<String>) ois.readObject();
+        //Make sure you close all streams.
+        ois.close();
+        return obj;
+    }
+
+    public void flush(){
+        try {
+            FileOutputStream fos = ((AppCompatActivity)mContext).openFileOutput(WompWompConstants.LIKES_FILENAME, Context.MODE_PRIVATE);
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            oos.writeObject(mLikes);
+            oos.close();
+            Timber.d("Wrote likes in-memory hashmap to file: " + mLikes.toString());
+        } catch (java.io.FileNotFoundException fnf) {
+            Timber.e("Error from file stream open operation ", fnf);
+            fnf.printStackTrace();
+        } catch (java.io.IOException ioe) {
+            Timber.e("Error from file write operation ", ioe);
+            ioe.printStackTrace();
+        }
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -123,7 +167,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder VH, Cursor cursor) {
+    public void onBindViewHolder(final ViewHolder VH, Cursor cursor) {
 
         switch(getItemViewType(cursor.getPosition())){
 
@@ -158,6 +202,9 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                     holder.textView.setText(myListItem.quoteText);
                     Timber.d("Quote: " + myListItem.quoteText + ", link: " + myListItem.imageSourceUri);
                 }
+
+                // In v1.1.6 we stored the likes info in the DB, starting v1.1.7 we're storing it in a file
+                myListItem.favorite = mLikes.contains(myListItem.id);
 
                 if (myListItem.favorite) {
                     holder.favoriteButton.setImageResource(R.drawable.ic_favorite_red_24dp);
@@ -290,15 +337,16 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                             if (myListItem.numFavorites > 0) {
                                 values.put(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, myListItem.numFavorites - 1);
                             }
-
-                            values.put(FeedContract.Entry.COLUMN_NAME_FAVORITE, 0);
+                            mLikes.remove(myListItem.id);
+                            Timber.d("Removed item from likes hashmap: " + mLikes.toString());
                             URL = FeedContract.ITEM_UNFAVORITE_URL;
                             Answers.getInstance().logCustom(new CustomEvent("Unlike button clicked")
                                     .putCustomAttribute("itemid", myListItem.id));
                         } else {
                             // she likes me :)
                             values.put(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, myListItem.numFavorites + 1);
-                            values.put(FeedContract.Entry.COLUMN_NAME_FAVORITE, 1);
+                            mLikes.add(myListItem.id);
+                            Timber.d("Added item to likes hashmap: " + mLikes.toString());
                             URL = FeedContract.ITEM_FAVORITE_URL;
                             Answers.getInstance().logCustom(new CustomEvent("Like button clicked")
                                     .putCustomAttribute("itemid", myListItem.id));
@@ -307,11 +355,12 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                                     .oneShot(holder.favoriteButton, 5);
                         }
 
-                        mContext.getContentResolver().update(updateUri, values, null, null);
+                        if(values.size() > 0) mContext.getContentResolver().update(updateUri, values, null, null);
                         URL += myListItem.id;
 
                         WompWompHTTPParams params = new WompWompHTTPParams(mContext);
                         Utils.postToWompwomp(URL, params);
+                        notifyDataSetChanged();
                     }
                 });
                 break;

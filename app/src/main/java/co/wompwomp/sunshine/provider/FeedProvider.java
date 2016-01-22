@@ -24,9 +24,16 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
+import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
+import java.util.HashSet;
+
+import co.wompwomp.sunshine.WompWompConstants;
 import co.wompwomp.sunshine.db.SelectionBuilder;
+import timber.log.Timber;
 
 public class FeedProvider extends ContentProvider {
     FeedDatabase mDatabaseHelper;
@@ -215,7 +222,7 @@ public class FeedProvider extends ContentProvider {
 
         private static final String TAG = "FeedDatabase";
         /** Schema version. */
-        public static final int DATABASE_VERSION = 4;
+        public static final int DATABASE_VERSION = 3;
         /** Filename for SQLite file. */
         public static final String DATABASE_NAME = "feed.db";
 
@@ -238,11 +245,11 @@ public class FeedProvider extends ContentProvider {
                         FeedContract.Entry.COLUMN_NAME_AUTHOR + TYPE_TEXT + ")";
 
 
-        private static final String SQL_V3_NEW_ENTRIES =
+        private static final String SQL_V3_1_NEW_ENTRIES =
                 "ALTER TABLE " + FeedContract.Entry.TABLE_NAME + " ADD COLUMN " +
                         FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM + TYPE_INTEGER + " DEFAULT 0";
 
-        private static final String SQL_V4_NEW_ENTRIES =
+        private static final String SQL_V3_2_NEW_ENTRIES =
                 "ALTER TABLE " + FeedContract.Entry.TABLE_NAME + " ADD COLUMN " +
                         FeedContract.Entry.COLUMN_NAME_AUTHOR + TYPE_TEXT;
 
@@ -258,11 +265,8 @@ public class FeedProvider extends ContentProvider {
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             if(oldVersion < 3 && newVersion >= 3) {
-                db.execSQL(SQL_V3_NEW_ENTRIES);
-            }
-
-            if(oldVersion < 4 && newVersion >= 4) {
-                db.execSQL(SQL_V4_NEW_ENTRIES);
+                db.execSQL(SQL_V3_1_NEW_ENTRIES);
+                db.execSQL(SQL_V3_2_NEW_ENTRIES);
             }
         }
     }

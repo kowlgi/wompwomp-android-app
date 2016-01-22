@@ -137,7 +137,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
         try {
             String syncMethodStr = extras.getString(WompWompConstants.SYNC_METHOD);
             if(syncMethodStr == null) {
-                // this happens during periodic auto sync
+                // this happens when user enables 'sync' now from Settings>Accounts
                 syncMethod = WompWompConstants.SyncMethod.EXISTING_AND_NEW_ABOVE_LOW_CURSOR;
             }
             else {
@@ -155,14 +155,9 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                     null,
                     FeedContract.Entry.COLUMN_NAME_CREATED_ON + " DESC");
 
-            if((c == null) || (c.getCount() < 1)) {
-                // this happens when the db is empty
-                syncMethod = WompWompConstants.SyncMethod.SUBSET_OF_LATEST_ITEMS_NO_CURSOR;
-            }
-
-            if(syncMethod == WompWompConstants.SyncMethod.SUBSET_OF_LATEST_ITEMS_NO_CURSOR) {
-                /* insert and update db happens on first app load as
-                   well or after clearing internal data. db is always empty in this scenario. */
+            if((c == null) || (c.getCount() < 1) ||
+                    syncMethod == WompWompConstants.SyncMethod.SUBSET_OF_LATEST_ITEMS_NO_CURSOR) {
+                /* insert and update db happens on app open */
                 limit = WompWompConstants.SYNC_NUM_SUBSET_ITEMS;
                 updateAndDeleteStaleItems =  true;
             }
@@ -181,7 +176,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 updateAndDeleteStaleItems = false;
             }
             else if(syncMethod == WompWompConstants.SyncMethod.EXISTING_AND_NEW_ABOVE_LOW_CURSOR) {
-                /* insert and update db in automatic background sync scenario */
+                /* insert and update db happens on app resume */
                 limit = WompWompConstants.SYNC_NUM_ALL_ITEMS;
                 c.moveToLast();
                 cursor = c.getString(0);
@@ -279,6 +274,8 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             Integer numFavorites;
             Integer numShares;
             String author;
+            String imageSourceUri;
+            String quoteText;
 
             while (c.moveToNext()) {
                 syncResult.stats.numEntries++;
@@ -287,6 +284,8 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 numFavorites = c.getInt(WompWompConstants.COLUMN_NUM_FAVORITES);
                 numShares = c.getInt(WompWompConstants.COLUMN_NUM_SHARES);
                 author = c.getString(WompWompConstants.COLUMN_AUTHOR);
+                imageSourceUri = c.getString(WompWompConstants.COLUMN_IMAGE_SOURCE_URI);
+                quoteText = c.getString(WompWompConstants.COLUMN_QUOTE_TEXT);
 
                 FeedParser.Entry match = entryMap.get(entryId);
                 if (match != null) {
@@ -297,12 +296,16 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                             .appendPath(Integer.toString(id)).build();
                     if ((match.numFavorites != numFavorites) ||
                             (match.numShares != numShares) ||
-                            (match.author != author)){
+                            (match.author != author) ||
+                            (match.imageSourceUri != imageSourceUri) ||
+                            (match.quoteText != quoteText)){
                         // Update existing record
                         batch.add(ContentProviderOperation.newUpdate(existingUri)
                                 .withValue(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, match.numFavorites)
                                 .withValue(FeedContract.Entry.COLUMN_NAME_NUM_SHARES, match.numShares)
                                 .withValue(FeedContract.Entry.COLUMN_NAME_AUTHOR, match.author)
+                                .withValue(FeedContract.Entry.COLUMN_NAME_IMAGE_SOURCE_URI, match.imageSourceUri)
+                                .withValue(FeedContract.Entry.COLUMN_NAME_QUOTE_TEXT, match.quoteText)
                                 .build());
                         syncResult.stats.numUpdates++;
                     } else {
