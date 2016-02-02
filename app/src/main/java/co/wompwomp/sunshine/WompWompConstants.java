@@ -11,8 +11,7 @@ public class WompWompConstants {
     public static final int COLUMN_NUM_SHARES = 6;
     public static final int COLUMN_CREATED_ON = 7;
     public static final int COLUMN_CARD_TYPE = 8;
-    public static final int COLUMN_DISMISS_ITEM = 9;
-    public static final int COLUMN_AUTHOR = 10;
+    public static final int COLUMN_AUTHOR = 9;
 
     /* Card types */
     public static final int TYPE_CONTENT_CARD = 100;
@@ -45,6 +44,8 @@ public class WompWompConstants {
         SUBSET_OF_ITEMS_BELOW_LOW_CURSOR, /* insert only into db in in-app scroll down to bottom scenario */
         SYNC_METHOD_NONE
     }
+
+    public static final String PREF_RESYNC_FEED = "resync_feed";
 
     public static final String LIKES_FILENAME = "wwlikes.ser";
 }

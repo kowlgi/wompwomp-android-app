@@ -17,7 +17,6 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-import co.wompwomp.sunshine.helper.ItemTouchHelperAdapter;
 import co.wompwomp.sunshine.provider.FeedContract;
 import co.wompwomp.sunshine.util.ImageFetcher;
 import co.wompwomp.sunshine.util.Utils;
@@ -43,7 +42,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashSet;
 
-public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolder> implements ItemTouchHelperAdapter {
+public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolder> {
 
     private ImageFetcher mImageFetcher = null;
     private Context mContext = null;
@@ -55,7 +54,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
         mContext = context;
         mImageFetcher = imageFetcher;
         mShareDialog = shareDialog;
-        if (fileExists((AppCompatActivity) mContext, WompWompConstants.LIKES_FILENAME)) {
+        if (fileExists(mContext, WompWompConstants.LIKES_FILENAME)) {
             try {
                 mLikes =  getLikesFromFile(WompWompConstants.LIKES_FILENAME);
             } catch (java.lang.Exception e) {
@@ -74,17 +73,16 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
     }
 
     private HashSet<String> getLikesFromFile (String filePath) throws Exception {
-        FileInputStream fis = ((AppCompatActivity)mContext).openFileInput(filePath);
+        FileInputStream fis = mContext.openFileInput(filePath);
         ObjectInputStream ois = new ObjectInputStream(fis);
         HashSet<String> obj = (HashSet<String>) ois.readObject();
-        //Make sure you close all streams.
         ois.close();
         return obj;
     }
 
     public void flush(){
         try {
-            FileOutputStream fos = ((AppCompatActivity)mContext).openFileOutput(WompWompConstants.LIKES_FILENAME, Context.MODE_PRIVATE);
+            FileOutputStream fos = mContext.openFileOutput(WompWompConstants.LIKES_FILENAME, Context.MODE_PRIVATE);
             ObjectOutputStream oos = new ObjectOutputStream(fos);
             oos.writeObject(mLikes);
             oos.close();
@@ -391,43 +389,6 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 break;
             }
         }
-    }
-
-    @Override
-    public void onItemDismiss(int position, final RecyclerView rv) {
-        MyListItem item = getListItem(position);
-        final Uri updateUri = FeedContract.Entry.CONTENT_URI.buildUpon()
-                .appendPath(item._id.toString()).build();
-        ContentValues values = new ContentValues();
-
-        values.put(FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM, 1);
-        mContext.getContentResolver().update(updateUri, values, null, null);
-
-        final String undoMessage = mContext.getResources().getString(R.string.undoPostMessage);
-        final String restoreMessage = mContext.getResources().getString(R.string.restorePostMessage);
-        Snackbar snackbar = Snackbar
-                .make(rv, undoMessage, Snackbar.LENGTH_LONG)
-                .setAction("UNDO", new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        ContentValues values = new ContentValues();
-                        values.put(FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM, 0);
-                        mContext.getContentResolver().update(updateUri, values, null, null);
-                        Snackbar snackbar1 = Snackbar.make(rv, restoreMessage, Snackbar.LENGTH_SHORT);
-                        snackbar1.show();
-                    }
-                });
-
-        snackbar.show();
-
-        WompWompHTTPParams params = new WompWompHTTPParams(mContext);
-        Utils.postToWompwomp(FeedContract.ITEM_DISMISS_URL + item.id, params);
-    }
-
-    @Override
-    public boolean onItemMove(int fromPosition, int toPosition) {
-        //Don't implement this one
-        return true;
     }
 
     private MyListItem getListItem(int cursorPosition){

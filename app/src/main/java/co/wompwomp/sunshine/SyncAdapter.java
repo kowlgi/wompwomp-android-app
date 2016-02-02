@@ -89,7 +89,6 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             FeedContract.Entry.COLUMN_NAME_NUM_SHARES,
             FeedContract.Entry.COLUMN_NAME_CREATED_ON,
             FeedContract.Entry.COLUMN_NAME_CARD_TYPE,
-            FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM,
             FeedContract.Entry.COLUMN_NAME_AUTHOR};
 
     /* Projection used for obtaining high and low cursors for fetching feed data */
@@ -337,7 +336,6 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                     .withValue(FeedContract.Entry.COLUMN_NAME_NUM_SHARES, e.numShares)
                     .withValue(FeedContract.Entry.COLUMN_NAME_CREATED_ON, e.createdOn)
                     .withValue(FeedContract.Entry.COLUMN_NAME_CARD_TYPE, WompWompConstants.TYPE_CONTENT_CARD)
-                    .withValue(FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM, 0)
                     .withValue(FeedContract.Entry.COLUMN_NAME_AUTHOR, e.author)
                     .build());
             syncResult.stats.numInserts++;

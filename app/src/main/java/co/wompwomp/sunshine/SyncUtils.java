@@ -60,14 +60,6 @@ public class SyncUtils {
         }
         // disable auto sync: it was enabled in apk v1.1.6 and we're disabling it starting v1.1.7
         ContentResolver.setSyncAutomatically(account, CONTENT_AUTHORITY, false);
-
-        // Schedule an initial sync if we detect problems with either our account or our local
-        // data has been deleted. (Note that it's possible to clear app data WITHOUT affecting
-        // the account list, so wee need to check both.)
-        if (newAccount || !setupComplete) {
-            PreferenceManager.getDefaultSharedPreferences(context).edit()
-                    .putBoolean(PREF_SETUP_COMPLETE, true).commit();
-        }
     }
 
     /**

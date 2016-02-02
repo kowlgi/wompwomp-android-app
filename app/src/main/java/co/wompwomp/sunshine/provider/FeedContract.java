@@ -36,7 +36,6 @@ public class FeedContract {
     public static final String ITEM_FAVORITE_URL = BASE_URL + "/f/";
     public static final String ITEM_UNFAVORITE_URL = BASE_URL + "/uf/";
     public static final String ITEM_SHARE_URL = BASE_URL + "/s/";
-    public static final String ITEM_DISMISS_URL = BASE_URL + "/d/";
 
     /**
      * Content provider authority.
@@ -111,10 +110,6 @@ public class FeedContract {
          * Type of card: content/rate/share card
          */
         public static final String COLUMN_NAME_CARD_TYPE = "card_type";
-        /**
-         * Whether to hide item or not: 0: show, 1: hide
-         */
-        public static final String COLUMN_NAME_DISMISS_ITEM = "dismiss_item";
         /**
          * Item author
          */

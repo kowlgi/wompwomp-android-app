@@ -1,9 +1,9 @@
 package co.wompwomp.sunshine;
 
 import android.annotation.SuppressLint;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -11,13 +11,10 @@ import android.os.Handler;
 import android.support.v7.widget.Toolbar;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.Window;
 import android.widget.TextView;
 
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
-
-import co.wompwomp.sunshine.R;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -88,6 +85,9 @@ public class ItemZoomActivity extends AppCompatActivity {
         if(actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
+
+        PreferenceManager.getDefaultSharedPreferences(this).edit()
+                .putBoolean(WompWompConstants.PREF_RESYNC_FEED, false).commit();
     }
 
     @Override

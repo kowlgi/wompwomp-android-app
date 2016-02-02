@@ -241,15 +241,9 @@ public class FeedProvider extends ContentProvider {
                         FeedContract.Entry.COLUMN_NAME_NUM_SHARES + TYPE_INTEGER + COMMA_SEP +
                         FeedContract.Entry.COLUMN_NAME_CREATED_ON + TYPE_TEXT + COMMA_SEP +
                         FeedContract.Entry.COLUMN_NAME_CARD_TYPE + TYPE_INTEGER + COMMA_SEP +
-                        FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM + TYPE_INTEGER + COMMA_SEP +
                         FeedContract.Entry.COLUMN_NAME_AUTHOR + TYPE_TEXT + ")";
 
-
         private static final String SQL_V3_1_NEW_ENTRIES =
-                "ALTER TABLE " + FeedContract.Entry.TABLE_NAME + " ADD COLUMN " +
-                        FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM + TYPE_INTEGER + " DEFAULT 0";
-
-        private static final String SQL_V3_2_NEW_ENTRIES =
                 "ALTER TABLE " + FeedContract.Entry.TABLE_NAME + " ADD COLUMN " +
                         FeedContract.Entry.COLUMN_NAME_AUTHOR + TYPE_TEXT;
 
@@ -266,7 +260,6 @@ public class FeedProvider extends ContentProvider {
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             if(oldVersion < 3 && newVersion >= 3) {
                 db.execSQL(SQL_V3_1_NEW_ENTRIES);
-                db.execSQL(SQL_V3_2_NEW_ENTRIES);
             }
         }
     }

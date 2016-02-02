@@ -5,11 +5,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.os.Build;
 import android.os.Bundle;
 
+import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -21,14 +20,12 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 
-import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
 import com.facebook.CallbackManager;
@@ -36,13 +33,10 @@ import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.share.Sharer;
 import com.facebook.share.widget.ShareDialog;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
 
 import java.util.Arrays;
 import java.util.Random;
 
-import co.wompwomp.sunshine.helper.SimpleItemTouchHelperCallback;
 import co.wompwomp.sunshine.provider.FeedContract;
 import co.wompwomp.sunshine.util.ImageCache;
 import co.wompwomp.sunshine.util.ImageFetcher;
@@ -63,7 +57,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private static IntentFilter syncIntentFilter = new IntentFilter(ACTION_FINISHED_SYNC);
     private boolean mLoadingBottom, mLoadingTop;
     private Toast mNoNetworkToast = null;
-    private ItemTouchHelper mItemTouchHelper;
     private ShareDialog mShareDialog;
     private CallbackManager mCallbackManager;
 
@@ -80,11 +73,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             FeedContract.Entry.COLUMN_NAME_NUM_SHARES,
             FeedContract.Entry.COLUMN_NAME_CREATED_ON,
             FeedContract.Entry.COLUMN_NAME_CARD_TYPE,
-            FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM,
             FeedContract.Entry.COLUMN_NAME_AUTHOR
     };
-
-    private static final String SELECTION = "(" + FeedContract.Entry.COLUMN_NAME_DISMISS_ITEM + " IS 0)";
 
     @SuppressLint("ShowToast")
     @Override
@@ -197,17 +187,13 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             }
 
             @Override
-            public void onSuccess(Sharer.Result result){
+            public void onSuccess(Sharer.Result result) {
                 //do nothing;
             }
         });
 
         mAdapter = new MyCursorAdapter(this, null, mImageFetcher, mShareDialog);
         mRecyclerView.setAdapter(mAdapter);
-
-        ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(mAdapter, mRecyclerView);
-        mItemTouchHelper = new ItemTouchHelper(callback);
-        mItemTouchHelper.attachToRecyclerView(mRecyclerView);
 
         getSupportLoaderManager().initLoader(0, null, this);
     }
@@ -219,7 +205,18 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mLoadingTop = false;
         mImageFetcher.setExitTasksEarly(false);
         LocalBroadcastManager.getInstance(this).registerReceiver(mSyncBroadcastReceiver, syncIntentFilter);
-        SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.EXISTING_AND_NEW_ABOVE_LOW_CURSOR);
+        /* Crude check to opportunistically resync only if we're resuming after putting the app in background */
+        if(PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .getBoolean(WompWompConstants.PREF_RESYNC_FEED, true)) {
+            Timber.d("Yes, we need to resync");
+            SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.EXISTING_AND_NEW_ABOVE_LOW_CURSOR);
+        } else {
+            Timber.d("No need to resync");
+            PreferenceManager
+                    .getDefaultSharedPreferences(this).edit()
+                    .putBoolean(WompWompConstants.PREF_RESYNC_FEED, true).commit();
+        }
 
         /* Because we're loading images asynchronously, we might pause() this activity before
         fetching the image from network. When this activity is resumed, recycler view doesn't call
@@ -287,12 +284,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             syncItems(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR);
             return true;
         }
-        else if (id == R.id.action_likes) {
-            Answers.getInstance().logCustom(new CustomEvent("Options menu: Likes"));
-            Intent favoritesIntent = new Intent(this, LikesActivity.class);
-            startActivity(favoritesIntent);
-            return true;
-        }
         else if( id == R.id.action_rate_us) {
             Answers.getInstance().logCustom(new CustomEvent("Options menu: Rate"));
             Utils.showAppPageLaunchToast(this);
@@ -333,7 +324,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         return new CursorLoader(this,  // Context
                 FeedContract.Entry.CONTENT_URI, // URI
                 PROJECTION,                // Projection
-                SELECTION,                 // Selection
+                null,                 // Selection
                 null,                      // Selection args
                 FeedContract.Entry.COLUMN_NAME_CREATED_ON + " desc"); // Sort
     }
