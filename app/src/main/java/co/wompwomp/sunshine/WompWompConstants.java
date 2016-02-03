@@ -17,6 +17,7 @@ public class WompWompConstants {
     public static final int TYPE_CONTENT_CARD = 100;
     public static final int TYPE_SHARE_CARD = 101;
     public static final int TYPE_RATE_CARD = 102;
+    public static final int TYPE_UPGRADE_CARD = 103;
 
     // Constants indicting XML element names that we're interested in
     public static final String WOMPWOMP_ID = "i";
@@ -30,7 +31,8 @@ public class WompWompConstants {
     // Constants for entry id for prompt cards
     public static final String WOMPWOMP_CTA_SHARE = "CTA_SHARE";
     public static final String WOMPWOMP_CTA_RATE = "CTA_RATE";
-    public static final String[] WOMPWOMP_CTA_LIST = {WOMPWOMP_CTA_SHARE, WOMPWOMP_CTA_RATE};
+    public static final String WOMPWOMP_CTA_UPGRADE = "CTA_UPGRADE";
+    public static final String[] WOMPWOMP_CTA_LIST = {WOMPWOMP_CTA_SHARE, WOMPWOMP_CTA_RATE, WOMPWOMP_CTA_UPGRADE};
 
     // item fetch limit/cursor
     public static final String SYNC_METHOD = "sync_method";
@@ -46,6 +48,19 @@ public class WompWompConstants {
     }
 
     public static final String PREF_RESYNC_FEED = "resync_feed";
-
     public static final String LIKES_FILENAME = "wwlikes.ser";
+    public static final String CONTENT_NOTIFICATION = "/topics/content";
+    public static final String CTA_SHARE_NOTIFICATION = "/topics/cta_share";
+    public static final String SYNC_NOTIFICATION = "/topics/sync";
+    public static final String CTA_RATE_NOTIFICATION = "/topics/cta_rate";
+    public static final String CTA_UPGRADE_NOTIFICATION = "/topics/cta_upgrade";
+    public static final String REMOVE_ALL_CTAS_NOTIFICATION = "/topics/remove_all_ctas";
+    public static final String[] NOTIFICATION_TOPICS = {
+            CONTENT_NOTIFICATION,
+            SYNC_NOTIFICATION,
+            CTA_SHARE_NOTIFICATION,
+            CTA_RATE_NOTIFICATION,
+            REMOVE_ALL_CTAS_NOTIFICATION,
+            CTA_UPGRADE_NOTIFICATION
+    };
 }

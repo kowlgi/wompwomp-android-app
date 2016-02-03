@@ -7,10 +7,8 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
-import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -160,6 +158,12 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 vh = new ViewHolder(itemView);
                 break;
             }
+            case WompWompConstants.TYPE_UPGRADE_CARD: {
+                View itemView = LayoutInflater.from(mContext)
+                        .inflate(R.layout.upgrade_card, parent, false);
+                vh = new ViewHolder(itemView);
+                break;
+            }
         }
         return vh;
     }
@@ -173,18 +177,13 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 final ContentCardViewHolder holder = (ContentCardViewHolder) VH;
                 final MyListItem myListItem = MyListItem.fromCursor(cursor);
 
-                DisplayMetrics displayMetrics = mContext.getResources().getDisplayMetrics();
-                float dpHeight = displayMetrics.heightPixels / displayMetrics.density;
-
                 mImageFetcher.loadImage(myListItem.imageSourceUri, holder.imageView);
 
-                holder.imageView.setOnClickListener(new View.OnClickListener()
-                {
+                holder.imageView.setOnClickListener(new View.OnClickListener() {
                     @Override
-                    public void onClick(View v)
-                    {
+                    public void onClick(View v) {
                         Intent zoomIntent = new Intent(mContext, ItemZoomActivity.class);
-                        final Bitmap bmp  = ((BitmapDrawable) holder.imageView.getDrawable()).getBitmap();
+                        final Bitmap bmp = ((BitmapDrawable) holder.imageView.getDrawable()).getBitmap();
                         ByteArrayOutputStream bs = new ByteArrayOutputStream();
                         bmp.compress(Bitmap.CompressFormat.JPEG, 90, bs);
                         zoomIntent.putExtra("byteArray", bs.toByteArray());
@@ -193,15 +192,15 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                     }
                 });
 
+                Timber.d(myListItem.toString());
                 if(myListItem.quoteText.isEmpty()) {
                     holder.textView.setVisibility(View.GONE);
                 } else {
-                    holder.textView.setMinHeight((int) Math.round(dpHeight * 0.20)); //min 20% of height
+                    holder.textView.setVisibility(View.VISIBLE);
                     holder.textView.setText(myListItem.quoteText);
-                    Timber.d("Quote: " + myListItem.quoteText + ", link: " + myListItem.imageSourceUri);
                 }
 
-                // In v1.1.6 we stored the likes info in the DB, starting v1.1.7 we're storing it in a file
+                // In v1.1.6 we stored the likes info in the DB, in later versions we store them in a file
                 myListItem.favorite = mLikes.contains(myListItem.id);
 
                 if (myListItem.favorite) {
@@ -382,6 +381,18 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                     @Override
                     public void onClick(View v) {
                         Answers.getInstance().logCustom(new CustomEvent("Rate card clicked"));
+                        Utils.showAppPageLaunchToast(mContext);
+                        mContext.startActivity(Utils.getRateAppIntent(mContext));
+                    }
+                });
+                break;
+            }
+            case WompWompConstants.TYPE_UPGRADE_CARD: {
+                View rate_button = VH.itemView.findViewById(R.id.upgradeappbutton);
+                rate_button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Answers.getInstance().logCustom(new CustomEvent("Upgrade card clicked"));
                         Utils.showAppPageLaunchToast(mContext);
                         mContext.startActivity(Utils.getRateAppIntent(mContext));
                     }

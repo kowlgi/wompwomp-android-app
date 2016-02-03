@@ -125,17 +125,6 @@
         </service>
 
         <activity
-            android:name=".LikesActivity"
-            android:label="@string/title_activity_likes"
-            android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme" >
-
-            <!-- Parent activity meta-data to support 4.0 and lower -->
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="co.wompwomp.sunshine.MainActivity" />
-        </activity>
-        <activity
             android:name="com.facebook.FacebookActivity"
             android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
             android:label="wompwomp"

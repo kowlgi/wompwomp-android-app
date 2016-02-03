@@ -201,9 +201,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @Override
     protected void onResume() {
         super.onResume();
-        mLoadingBottom = false;
-        mLoadingTop = false;
-        mImageFetcher.setExitTasksEarly(false);
         LocalBroadcastManager.getInstance(this).registerReceiver(mSyncBroadcastReceiver, syncIntentFilter);
         /* Crude check to opportunistically resync only if we're resuming after putting the app in background */
         if(PreferenceManager
@@ -217,6 +214,14 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                     .getDefaultSharedPreferences(this).edit()
                     .putBoolean(WompWompConstants.PREF_RESYNC_FEED, true).commit();
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mLoadingBottom = false;
+        mLoadingTop = false;
+        mImageFetcher.setExitTasksEarly(false);
 
         /* Because we're loading images asynchronously, we might pause() this activity before
         fetching the image from network. When this activity is resumed, recycler view doesn't call

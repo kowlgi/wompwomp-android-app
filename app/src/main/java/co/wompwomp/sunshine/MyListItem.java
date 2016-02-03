@@ -58,4 +58,19 @@ public class MyListItem {
         boolean hasDecimal = truncated < 100 && (truncated / 10d) != (truncated / 10);
         return hasDecimal ? (truncated / 10d) + suffix : (truncated / 10) + suffix;
     }
+
+    @Override
+    public String toString() {
+        String result = "_id: " + _id +
+                ", entryId: " + id +
+                ", imageuri: " + imageSourceUri +
+                ", quoteText: " + quoteText +
+                ", favorite: " + favorite +
+                ", numfavorite:" + numFavorites +
+                ", numShares: " + numShares +
+                ", created_on: " + createdOn +
+                ", cardType: " + cardType +
+                ", author: " + author;
+        return result;
+    }
 }

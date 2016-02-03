@@ -2,7 +2,6 @@
     <string name="action_share_app">Share the app</string>
     <string name="action_rate">Rate us</string>
     <string name="action_refresh">Refresh</string>
-    <string name="action_likes">Likes</string>
     <string name="action_about">About</string>
 
     <string name="title_activity_main">MainActivity</string>
@@ -11,7 +10,6 @@
     <string name="rate">RATE</string>
 
     <string name="no_network_connection_toast">No network connection found</string>
-    <string name="title_activity_likes">Likes</string>
     <string name="rate_us_placeholder">Next bus to the Play store arriving shortly…</string>
     <string name="share_app">Install the wompwomp app for your funniest minute every day: http://wompwomp.co/install</string>
     <string name="share_us_if_you_like">If you like our app share it with others</string>
@@ -40,8 +38,8 @@
         <item>Waiting on kittens to approve today\'s content…</item>
     </string-array>
     <string name="facebook_app_id">570524353097440</string>
-    <string name="empty_likes_cta">You have not liked any items. Tap the heart button on an item to like it</string>
     <string name="undoPostMessage">Removed post from your stream</string>
     <string name="restorePostMessage">Restored post</string>
     <string name="defaultAuthor">higgsboson</string>
+    <string name="upgrade_to_new_version">Get the new version of the app</string>
 </resources>

@@ -32,7 +32,6 @@ import timber.log.Timber;
 public class RegistrationIntentService extends IntentService {
 
     private static final String TAG = "RegIntentService";
-    private static final String[] TOPICS = {"content", "sync", "cta_share", "cta_rate", "remove_all_ctas"};
 
     public RegistrationIntentService() {
         super(TAG);
@@ -94,8 +93,8 @@ public class RegistrationIntentService extends IntentService {
     // [START subscribe_topics]
     private void subscribeTopics(String token) throws IOException {
         GcmPubSub pubSub = GcmPubSub.getInstance(this);
-        for (String topic : TOPICS) {
-            pubSub.subscribe(token, "/topics/" + topic, null);
+        for (String topic : WompWompConstants.NOTIFICATION_TOPICS) {
+            pubSub.subscribe(token, topic, null);
         }
     }
     // [END subscribe_topics]

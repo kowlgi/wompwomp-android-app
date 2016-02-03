@@ -27,6 +27,7 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 
 import co.wompwomp.sunshine.provider.FeedContract;
 import timber.log.Timber;
@@ -49,52 +50,71 @@ public class MyGcmListenerService extends GcmListenerService {
     // [START receive_message]
     @Override
     public void onMessageReceived(String from, Bundle data) {
-        if (from.startsWith("/topics/content")) {
+        if (from.startsWith(WompWompConstants.CONTENT_NOTIFICATION)) {
             String message = data.getString("message");
             String imageUri = data.getString("imageuri");
             String itemId = data.getString("itemid");
-            // message received from some topic.
-            /**
-             * In some cases it may be useful to show a notification indicating to the user
-             * that a message was received.
-             */
-            pushNotification(message, imageUri, itemId);
-            Timber.i("Pushed notification to user. Text: %s, ImageUri: %s, ItemId: %s", message, imageUri, itemId);
-        } else if (from.startsWith("/topics/sync")){
+            String versionCode = data.getString("versionCode");
+            String versionCondition = data.getString("versionCondition");
+
+            if(versionCondition == null || versionCode == null) {
+                versionCondition = ">";
+                versionCode = "0";
+            }
+
+            boolean pushNotify = false;
+            if(versionCondition.equals(">")){
+                pushNotify = (BuildConfig.VERSION_CODE > Integer.valueOf(versionCode));
+            } else if (versionCondition.equals("<")){
+                pushNotify = (BuildConfig.VERSION_CODE < Integer.valueOf(versionCode));
+            }
+            Timber.d("wompwomp notify", "versionCode: " + versionCode + ", versionCondition: "
+                    + versionCondition + ", pushNotify: " + pushNotify +
+                    ", build version: " + BuildConfig.VERSION_CODE);
+
+            if(pushNotify) {
+                pushNotification(message, imageUri, itemId);
+                Timber.i("Pushed notification to user. Text: %s, ImageUri: %s, ItemId: %s", message, imageUri, itemId);
+            }
+        } else if (from.startsWith(WompWompConstants.SYNC_NOTIFICATION)){
             SyncUtils.TriggerSync(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR);
             Timber.i("Initiated sync latest items");
-        } else if(from.startsWith("/topics/cta_share")) {
+        } else if(from.startsWith(WompWompConstants.CTA_SHARE_NOTIFICATION)) {
             String timestamp = data.getString("message");
             Timber.i("Pushed Share CTA to feed");
             // push 'share now' card to feed
             getContentResolver().insert(FeedContract.Entry.CONTENT_URI, populateContentValues(WompWompConstants.TYPE_SHARE_CARD, timestamp));
-        } else if(from.startsWith("/topics/cta_rate")) {
+        } else if(from.startsWith(WompWompConstants.CTA_RATE_NOTIFICATION)) {
             String timestamp = data.getString("message");
             // push 'rate now' card to feed
             getContentResolver().insert(FeedContract.Entry.CONTENT_URI, populateContentValues(WompWompConstants.TYPE_RATE_CARD, timestamp));
             Timber.i("Pushed Rate CTA to feed");
-        } else if(from.startsWith("/topics/remove_all_ctas")) {
+        } else if(from.startsWith(WompWompConstants.CTA_UPGRADE_NOTIFICATION)) {
+            String timestamp = data.getString("message");
+            String versionCode = data.getString("versionCode");
+
+            if(versionCode == null) {
+                versionCode = "0";
+            }
+
+            if(BuildConfig.VERSION_CODE < Integer.valueOf(versionCode)) {
+                // push 'upgrade now' card to feed
+                getContentResolver().insert(FeedContract.Entry.CONTENT_URI, populateContentValues(WompWompConstants.TYPE_UPGRADE_CARD, timestamp));
+                Timber.i("Pushed Upgrade CTA to feed");
+            }
+        } else if(from.startsWith(WompWompConstants.REMOVE_ALL_CTAS_NOTIFICATION)) {
             Uri uri = FeedContract.Entry.CONTENT_URI; // Get all entries
             String[] share_args = new String[] { WompWompConstants.WOMPWOMP_CTA_SHARE};
             String[] rate_args = new String[] { WompWompConstants.WOMPWOMP_CTA_RATE};
+            String[] upgrade_args = new String[] { WompWompConstants.WOMPWOMP_CTA_UPGRADE};
             getContentResolver().delete(uri, FeedContract.Entry.COLUMN_NAME_ENTRY_ID+"=?", share_args);
             getContentResolver().delete(uri, FeedContract.Entry.COLUMN_NAME_ENTRY_ID+"=?", rate_args);
+            getContentResolver().delete(uri, FeedContract.Entry.COLUMN_NAME_ENTRY_ID+"=?", upgrade_args);
             Timber.i("Removed all CTAs from feed");
-        }
-        else {
+        } else {
             // normal downstream message.
             Timber.i("GOT NOTIFIED BOUT NOTHIN'");
         }
-
-        // [START_EXCLUDE]
-        /**
-         * Production applications would usually process the message here.
-         * Eg: - Syncing with server.
-         *     - Store message in local database.
-         *     - Update UI.
-         */
-
-        // [END_EXCLUDE]
     }
     // [END receive_message]
 
@@ -136,7 +156,6 @@ public class MyGcmListenerService extends GcmListenerService {
         notificationManager.notify(0 /* ID of notification */, notificationBuilder.build());
     }
 
-
     private Bitmap getBitmap(String imageUri) {
 
         if(imageUri == null) return null;
@@ -173,10 +192,12 @@ public class MyGcmListenerService extends GcmListenerService {
         String entry_id = null;
         if(card_type == WompWompConstants.TYPE_RATE_CARD) {
             entry_id = WompWompConstants.WOMPWOMP_CTA_RATE;
-        }
-        else if(card_type == WompWompConstants.TYPE_SHARE_CARD) {
+        } else if(card_type == WompWompConstants.TYPE_SHARE_CARD) {
             entry_id = WompWompConstants.WOMPWOMP_CTA_SHARE;
+        } else if(card_type == WompWompConstants.TYPE_UPGRADE_CARD) {
+            entry_id = WompWompConstants.WOMPWOMP_CTA_UPGRADE;
         }
+
         contentValues.put(FeedContract.Entry.COLUMN_NAME_ENTRY_ID, entry_id);
         contentValues.put(FeedContract.Entry.COLUMN_NAME_QUOTE_TEXT, "");
         contentValues.put(FeedContract.Entry.COLUMN_NAME_IMAGE_SOURCE_URI, "");
@@ -185,6 +206,7 @@ public class MyGcmListenerService extends GcmListenerService {
         contentValues.put(FeedContract.Entry.COLUMN_NAME_NUM_SHARES, 0);
         contentValues.put(FeedContract.Entry.COLUMN_NAME_CREATED_ON, timestamp);
         contentValues.put(FeedContract.Entry.COLUMN_NAME_CARD_TYPE, card_type);
+        contentValues.put(FeedContract.Entry.COLUMN_NAME_AUTHOR, "");
         return contentValues;
     }
 }
