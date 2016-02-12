@@ -25,16 +25,19 @@ import android.os.Build;
 import android.widget.Toast;
 
 import co.wompwomp.sunshine.R;
+import okhttp3.Call;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okio.BufferedSink;
+import okio.Okio;
 import timber.log.Timber;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
@@ -239,35 +242,20 @@ public class ImageFetcher extends ImageWorker {
      */
     public boolean downloadUrlToStream(String urlString, OutputStream outputStream) {
         disableConnectionReuseIfNecessary();
-        HttpURLConnection urlConnection = null;
-        BufferedOutputStream out = null;
-        BufferedInputStream in = null;
+        OkHttpClient client = new OkHttpClient();
 
         try {
             final URL url = new URL(urlString);
-            urlConnection = (HttpURLConnection) url.openConnection();
-            in = new BufferedInputStream(urlConnection.getInputStream(), IO_BUFFER_SIZE);
-            out = new BufferedOutputStream(outputStream, IO_BUFFER_SIZE);
+            Call call = client.newCall(new Request.Builder().url(url).get().build());
+            Response response = call.execute();
 
-            int b;
-            while ((b = in.read()) != -1) {
-                out.write(b);
-            }
+            BufferedSink sink = Okio.buffer(Okio.sink(outputStream));
+            sink.writeAll(response.body().source());
+            sink.close();
+
             return true;
         } catch (final IOException e) {
             Timber.e( "Error in downloadBitmap - " + e);
-        } finally {
-            if (urlConnection != null) {
-                urlConnection.disconnect();
-            }
-            try {
-                if (out != null) {
-                    out.close();
-                }
-                if (in != null) {
-                    in.close();
-                }
-            } catch (final IOException e) {}
         }
         return false;
     }

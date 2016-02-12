@@ -2,6 +2,7 @@ package co.wompwomp.sunshine;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 //public class SquareImageView extends NetworkImageView{
@@ -25,9 +26,9 @@ public class SquareImageView extends ImageView {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-
-        int width = getMeasuredWidth();
-        setMeasuredDimension(width, width);
+        int parentWidth = MeasureSpec.getSize(widthMeasureSpec);
+        int scaledHeight = getDrawable().getIntrinsicHeight() * parentWidth / getDrawable().getIntrinsicWidth();
+        this.setLayoutParams(new FrameLayout.LayoutParams(parentWidth, scaledHeight));
+        setMeasuredDimension(parentWidth, scaledHeight);
     }
 }

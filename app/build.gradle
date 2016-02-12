@@ -23,16 +23,13 @@ android {
     buildToolsVersion "23.0.0"
     defaultConfig {
         applicationId 'co.wompwomp.sunshine'
-        minSdkVersion 11
+        minSdkVersion 14
         targetSdkVersion 23
-        versionCode 8
-        versionName "1.2"
+        versionCode 9
+        versionName "1.3"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         resValue "string", "app_name", "wompwomp"
         resValue "string", "app_version", versionName
-        resValue "string", "authorities", applicationId
-        resValue "string", "account_type", applicationId + ".SyncAdapter"
-        buildConfigField "String", "ACCOUNT_TYPE", "\"co.wompwomp.sunshine.SyncAdapter\""
     }
     buildTypes {
         release {
@@ -40,6 +37,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             versionNameSuffix ".release"
             resValue "string", "app_version", defaultConfig.versionName + ".release"
+            resValue "string", "authorities", defaultConfig.applicationId
+            resValue "string", "account_type", defaultConfig.applicationId + ".SyncAdapter"
+            resValue "string", "facebook_provider_authorities", "com.facebook.app.FacebookContentProvider570524353097440"
+            buildConfigField "String", "ACCOUNT_TYPE", "\"co.wompwomp.sunshine.SyncAdapter\""
         }
         debug {
             ext.enableCrashlytics = false
@@ -49,6 +50,7 @@ android {
             resValue "string", "app_version", defaultConfig.versionName + ".debug"
             resValue "string", "authorities", defaultConfig.applicationId + '.debug'
             resValue "string", "account_type", defaultConfig.applicationId + ".SyncAdapter.debug"
+            resValue "string", "facebook_provider_authorities", "com.facebook.app.FacebookContentProvider570524353097440.debug"
             buildConfigField "String", "ACCOUNT_TYPE", "\"co.wompwomp.sunshine.SyncAdapter.debug\""
         }
     }
@@ -88,4 +90,7 @@ dependencies {
     compile 'com.facebook.android:facebook-android-sdk:4.7.0'
     compile 'com.davemorrissey.labs:subsampling-scale-image-view:3.4.1'
     compile 'com.plattysoft.leonids:LeonidsLib:1.3.1'
+    compile 'com.google.android.exoplayer:exoplayer:r1.5.5'
+    compile 'com.squareup.okhttp3:okhttp:3.1.2'
+    compile 'com.squareup.okio:okio:1.6.0'
 }

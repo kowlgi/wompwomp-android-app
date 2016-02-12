@@ -30,7 +30,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Build.VERSION_CODES;
 import android.os.Environment;
-import android.os.StrictMode;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -43,14 +42,17 @@ import com.loopj.android.http.RequestParams;
 import com.loopj.android.http.TextHttpResponseHandler;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 
 import co.wompwomp.sunshine.BuildConfig;
 import co.wompwomp.sunshine.PermissionsDialogFragment;
 import co.wompwomp.sunshine.R;
-import co.wompwomp.sunshine.provider.FeedContract;
 import cz.msebera.android.httpclient.Header;
+import okio.BufferedSink;
+import okio.Okio;
+import okio.Source;
 
 /**
  * Class containing some static utility methods.
@@ -80,6 +82,31 @@ public class Utils {
         return Build.VERSION.SDK_INT >= VERSION_CODES.KITKAT;
     }
 
+    public static Uri getLocalVideoUri(String filename, Context context){
+        try {
+            File videofile =  new File(Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOWNLOADS), filename);
+            if(videofile.exists()) {
+                return Uri.fromFile(videofile);
+            }
+
+            FileInputStream from = context.openFileInput(filename);
+            if(from == null) {
+                return null;
+            }
+
+            Source a = Okio.source(from);
+            BufferedSink b = Okio.buffer(Okio.sink(videofile));
+            b.writeAll(a);
+            b.close();
+            a.close();
+            return Uri.fromFile(videofile);
+        }
+        catch(Exception e) {
+            return null;
+        }
+    }
+
     public static Uri getLocalViewBitmapUri(String filename, View aView, Context context){
         Uri bmpUri = null;
         Bitmap.CompressFormat compressFormat = Bitmap.CompressFormat.JPEG;
@@ -89,8 +116,7 @@ public class Utils {
                 Environment.DIRECTORY_DOWNLOADS), filename);
 
         if(file.exists()) {
-            bmpUri = Uri.fromFile(file);
-            return bmpUri;
+            return Uri.fromFile(file);
         }
 
         // Example: Extract Bitmap from ImageView drawable

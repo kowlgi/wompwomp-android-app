@@ -42,4 +42,5 @@
     <string name="restorePostMessage">Restored post</string>
     <string name="defaultAuthor">higgsboson</string>
     <string name="upgrade_to_new_version">Get the new version of the app</string>
+    <string name="views">views</string>
 </resources>

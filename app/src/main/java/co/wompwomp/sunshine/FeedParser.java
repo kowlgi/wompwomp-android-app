@@ -56,6 +56,8 @@ public class FeedParser {
         Integer numShares = null;
         String createdOn = null;
         String author = null;
+        String videoUri = null;
+        Integer numPlays = 0;
 
         reader.beginObject();
         while (reader.hasNext()) {
@@ -82,13 +84,19 @@ public class FeedParser {
                 case WompWompConstants.WOMPWOMP_AUTHOR:
                     author = reader.nextString();
                     break;
+                case WompWompConstants.WOMPWOMP_VIDEOURI:
+                    videoUri = reader.nextString();
+                    break;
+                case WompWompConstants.WOMPWOMP_NUMPLAYS:
+                    numPlays = reader.nextInt();
+                    break;
                 default:
                     reader.skipValue();
                     break;
             }
         }
         reader.endObject();
-        return new Entry(id, imageSourceUri, quoteText, numFavorites, numShares, createdOn, author);
+        return new Entry(id, imageSourceUri, quoteText, numFavorites, numShares, createdOn, author, videoUri, numPlays);
     }
 
     /**
@@ -102,8 +110,11 @@ public class FeedParser {
         public final Integer numShares;
         public final String createdOn;
         public final String author;
+        public final String videoUri;
+        public final Integer numPlays;
 
-        Entry(String id, String imageSourceUri, String quoteText, Integer numFavorites, Integer numShares, String createdOn, String author) {
+        Entry(String id, String imageSourceUri, String quoteText, Integer numFavorites,
+              Integer numShares, String createdOn, String author, String videoUri, Integer numPlays) {
             this.id = id;
             this.imageSourceUri = imageSourceUri;
             this.quoteText = quoteText;
@@ -111,6 +122,8 @@ public class FeedParser {
             this.numShares = numShares;
             this.createdOn = createdOn;
             this.author = author;
+            this.videoUri = videoUri;
+            this.numPlays = numPlays;
         }
     }
 }

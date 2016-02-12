@@ -17,6 +17,8 @@ public class MyListItem {
     public String createdOn;
     public Integer cardType;
     public String author;
+    public String videoUri;
+    public Integer numPlays;
 
     public static MyListItem fromCursor(Cursor c) {
         MyListItem myItem = new MyListItem();
@@ -30,6 +32,8 @@ public class MyListItem {
         myItem.createdOn = c.getString(WompWompConstants.COLUMN_CREATED_ON);
         myItem.cardType = c.getInt(WompWompConstants.COLUMN_CARD_TYPE);
         myItem.author = c.getString(WompWompConstants.COLUMN_AUTHOR);
+        myItem.videoUri = c.getString(WompWompConstants.COLUMN_VIDEOURI);
+        myItem.numPlays = c.getInt(WompWompConstants.COLUMN_NUM_PLAYS);
         return myItem;
     }
 
@@ -70,7 +74,9 @@ public class MyListItem {
                 ", numShares: " + numShares +
                 ", created_on: " + createdOn +
                 ", cardType: " + cardType +
-                ", author: " + author;
+                ", author: " + author +
+                ", videouri: " + videoUri +
+                ", numPlays: " + numPlays;
         return result;
     }
 }

@@ -30,12 +30,13 @@ public class FeedContract {
     private FeedContract() {
     }
 
-    public static final String BASE_URL = "http://wompwomp.co";
-    public static final String FEED_URL = BASE_URL + "/i";
+    public static final String BASE_URL = "http://54.201.227.101:3000";
+    public static final String FEED_URL = BASE_URL + "/iv";
     public static final String ITEM_VIEW_URL = BASE_URL + "/v/";
     public static final String ITEM_FAVORITE_URL = BASE_URL + "/f/";
     public static final String ITEM_UNFAVORITE_URL = BASE_URL + "/uf/";
     public static final String ITEM_SHARE_URL = BASE_URL + "/s/";
+    public static final String ITEM_PLAY_URL = BASE_URL + "/p/";
 
     /**
      * Content provider authority.
@@ -114,6 +115,14 @@ public class FeedContract {
          * Item author
          */
         public static final String COLUMN_NAME_AUTHOR = "author";
+        /**
+         * Link to video
+         */
+        public static final String COLUMN_NAME_VIDEOURI = "videouri";
+        /**
+         * Number of times the video has been played
+         */
+        public static final String COLUMN_NAME_NUM_PLAYS = "num_plays";
 
     }
 }

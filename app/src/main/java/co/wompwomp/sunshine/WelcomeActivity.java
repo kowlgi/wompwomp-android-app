@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.widget.Toast;
+import android.webkit.URLUtil;
 
 import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.common.ConnectionResult;
@@ -81,6 +81,53 @@ public class WelcomeActivity extends AppCompatActivity {
             }
         }
 
+        /* Only keep the videos that correspond to items in the db */
+        if (fileExists(this, WompWompConstants.VIDEO_DOWNLOADS_FILENAME)) {
+            try {
+                FileInputStream fis = openFileInput(WompWompConstants.VIDEO_DOWNLOADS_FILENAME);
+                ObjectInputStream ois = new ObjectInputStream(fis);
+                HashSet<String> videoFiles = (HashSet<String>) ois.readObject();
+                ois.close();
+
+                final String[] VIDEOS_PROJECTION = new String[]{
+                        FeedContract.Entry.COLUMN_NAME_VIDEOURI,
+                };
+                final String VIDEOS_SELECTION = "(" + FeedContract.Entry.COLUMN_NAME_VIDEOURI +
+                        " IS NOT NULL OR " + FeedContract.Entry.COLUMN_NAME_VIDEOURI + " <> '' )";
+
+                Cursor c = getContentResolver().query(FeedContract.Entry.CONTENT_URI,
+                        VIDEOS_PROJECTION,
+                        VIDEOS_SELECTION,
+                        null,
+                        null);
+
+                if(c != null && c.getCount() > 0) {
+                    c.moveToFirst();
+                    HashSet<String> videoFilesToKeep = new HashSet<>();
+                    do {
+                        String filename = URLUtil.guessFileName(c.getString(0), null, null);
+                        if(videoFiles.remove(filename)){
+                            videoFilesToKeep.add(filename); // video file we want to keep
+                        }; // remove filenames corresponding to items in db
+                    } while(c.moveToNext());
+
+                    // delete files corresponding to items not in the db
+                    for(String filename: videoFiles) {
+                        deleteFile(filename);
+                    }
+
+                    FileOutputStream fos = openFileOutput(WompWompConstants.VIDEO_DOWNLOADS_FILENAME, Context.MODE_PRIVATE);
+                    ObjectOutputStream oos = new ObjectOutputStream(fos);
+                    oos.writeObject(videoFilesToKeep);
+                    oos.close();
+
+                    Timber.d("Video files to keep: " + videoFilesToKeep);
+                }
+
+            }catch (Exception ignored) {
+            }
+        }
+
         SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.SUBSET_OF_LATEST_ITEMS_NO_CURSOR);
 
         Intent mainIntent = new Intent(this, MainActivity.class);
@@ -111,14 +158,5 @@ public class WelcomeActivity extends AppCompatActivity {
     private boolean fileExists(Context context, String filename) {
         File file = context.getFileStreamPath(filename);
         return file != null && file.exists();
-    }
-
-    private HashSet<String> getLikesFromFile (String filePath) throws Exception {
-        FileInputStream fis = this.openFileInput(filePath);
-        ObjectInputStream ois = new ObjectInputStream(fis);
-        HashSet<String> obj = (HashSet<String>) ois.readObject();
-        //Make sure you close all streams.
-        ois.close();
-        return obj;
     }
 }

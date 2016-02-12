@@ -34,6 +34,10 @@ import android.os.RemoteException;
 import android.support.v4.content.LocalBroadcastManager;
 
 import co.wompwomp.sunshine.provider.FeedContract;
+import okhttp3.Call;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import timber.log.Timber;
 
 import org.xmlpull.v1.XmlPullParserException;
@@ -89,7 +93,9 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             FeedContract.Entry.COLUMN_NAME_NUM_SHARES,
             FeedContract.Entry.COLUMN_NAME_CREATED_ON,
             FeedContract.Entry.COLUMN_NAME_CARD_TYPE,
-            FeedContract.Entry.COLUMN_NAME_AUTHOR};
+            FeedContract.Entry.COLUMN_NAME_AUTHOR,
+            FeedContract.Entry.COLUMN_NAME_VIDEOURI,
+            FeedContract.Entry.COLUMN_NAME_NUM_PLAYS};
 
     /* Projection used for obtaining high and low cursors for fetching feed data */
     final String[] CURSOR_PROJECTION = new String[]{
@@ -275,6 +281,8 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             String author;
             String imageSourceUri;
             String quoteText;
+            String videoUri;
+            Integer numPlays;
 
             while (c.moveToNext()) {
                 syncResult.stats.numEntries++;
@@ -285,6 +293,8 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 author = c.getString(WompWompConstants.COLUMN_AUTHOR);
                 imageSourceUri = c.getString(WompWompConstants.COLUMN_IMAGE_SOURCE_URI);
                 quoteText = c.getString(WompWompConstants.COLUMN_QUOTE_TEXT);
+                videoUri = c.getString(WompWompConstants.COLUMN_VIDEOURI);
+                numPlays = c.getInt(WompWompConstants.COLUMN_NUM_PLAYS);
 
                 FeedParser.Entry match = entryMap.get(entryId);
                 if (match != null) {
@@ -297,7 +307,9 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                             (match.numShares != numShares) ||
                             (match.author != author) ||
                             (match.imageSourceUri != imageSourceUri) ||
-                            (match.quoteText != quoteText)){
+                            (match.quoteText != quoteText) ||
+                            (match.videoUri != videoUri) ||
+                            (match.numPlays != numPlays)){
                         // Update existing record
                         batch.add(ContentProviderOperation.newUpdate(existingUri)
                                 .withValue(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, match.numFavorites)
@@ -305,6 +317,8 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                                 .withValue(FeedContract.Entry.COLUMN_NAME_AUTHOR, match.author)
                                 .withValue(FeedContract.Entry.COLUMN_NAME_IMAGE_SOURCE_URI, match.imageSourceUri)
                                 .withValue(FeedContract.Entry.COLUMN_NAME_QUOTE_TEXT, match.quoteText)
+                                .withValue(FeedContract.Entry.COLUMN_NAME_VIDEOURI, match.videoUri)
+                                .withValue(FeedContract.Entry.COLUMN_NAME_NUM_PLAYS, match.numPlays)
                                 .build());
                         syncResult.stats.numUpdates++;
                     } else {
@@ -335,8 +349,11 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                     .withValue(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, e.numFavorites)
                     .withValue(FeedContract.Entry.COLUMN_NAME_NUM_SHARES, e.numShares)
                     .withValue(FeedContract.Entry.COLUMN_NAME_CREATED_ON, e.createdOn)
-                    .withValue(FeedContract.Entry.COLUMN_NAME_CARD_TYPE, WompWompConstants.TYPE_CONTENT_CARD)
+                    .withValue(FeedContract.Entry.COLUMN_NAME_CARD_TYPE,
+                            e.videoUri.length() > 0 ? WompWompConstants.TYPE_VIDEO_CONTENT_CARD: WompWompConstants.TYPE_CONTENT_CARD)
                     .withValue(FeedContract.Entry.COLUMN_NAME_AUTHOR, e.author)
+                    .withValue(FeedContract.Entry.COLUMN_NAME_VIDEOURI, e.videoUri)
+                    .withValue(FeedContract.Entry.COLUMN_NAME_NUM_PLAYS, e.numPlays)
                     .build());
             syncResult.stats.numInserts++;
         }
@@ -353,13 +370,9 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
      * Given a string representation of a URL, sets up a connection and gets an input stream.
      */
     private InputStream downloadUrl(final URL url) throws IOException {
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setReadTimeout(NET_READ_TIMEOUT_MILLIS /* milliseconds */);
-        conn.setConnectTimeout(NET_CONNECT_TIMEOUT_MILLIS /* milliseconds */);
-        conn.setRequestMethod("GET");
-        conn.setDoInput(true);
-        // Starts the query
-        conn.connect();
-        return conn.getInputStream();
+        OkHttpClient client = new OkHttpClient();
+        Call call = client.newCall(new Request.Builder().url(url).get().build());
+        Response response = call.execute();
+        return response.body().byteStream();
     }
 }

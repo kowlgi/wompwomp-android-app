@@ -59,6 +59,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private Toast mNoNetworkToast = null;
     private ShareDialog mShareDialog;
     private CallbackManager mCallbackManager;
+    private int mItemCurrentlyFullyVisible = -1;
 
     /**
      * Projection for querying the content provider.
@@ -73,13 +74,14 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             FeedContract.Entry.COLUMN_NAME_NUM_SHARES,
             FeedContract.Entry.COLUMN_NAME_CREATED_ON,
             FeedContract.Entry.COLUMN_NAME_CARD_TYPE,
-            FeedContract.Entry.COLUMN_NAME_AUTHOR
+            FeedContract.Entry.COLUMN_NAME_AUTHOR,
+            FeedContract.Entry.COLUMN_NAME_VIDEOURI,
+            FeedContract.Entry.COLUMN_NAME_NUM_PLAYS
     };
 
     @SuppressLint("ShowToast")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Timber.i("Create MainActivity");
         super.onCreate(savedInstanceState);
         mNoNetworkToast = Toast.makeText(this,
                 R.string.no_network_connection_toast,
@@ -219,10 +221,10 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @Override
     protected void onStart() {
         super.onStart();
+        mAdapter.start();
         mLoadingBottom = false;
         mLoadingTop = false;
         mImageFetcher.setExitTasksEarly(false);
-
         /* Because we're loading images asynchronously, we might pause() this activity before
         fetching the image from network. When this activity is resumed, recycler view doesn't call
         adapter.onBindViewholder() automatically, which is needed to kickstart image loading again.
@@ -242,7 +244,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @Override
     protected void onStop(){
         super.onStop();
-        mAdapter.flush();
+        mAdapter.stop();
     }
 
     @Override
@@ -322,8 +324,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
      */
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
-        Timber.d("onCreateLoader()");
-
         // We only have one loader, so we can ignore the value of i.
         // (It'll be '0', as set in onCreate().)
         return new CursorLoader(this,  // Context
@@ -340,7 +340,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
      */
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
-        Timber.d("onLoadFinished()");
         if(cursor.getCount() >= 1) {
             mProgressBarLayout.setVisibility(View.GONE);
         }
@@ -355,7 +354,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
      */
     @Override
     public void onLoaderReset(Loader<Cursor> cursorLoader) {
-        Timber.d("onLoadReset()");
         mAdapter.changeCursor(null);
     }
 
@@ -363,7 +361,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         mCallbackManager.onActivityResult(requestCode, resultCode, data);
-        Timber.d(Integer.valueOf(resultCode).toString());
     }
 
     private void syncItems(WompWompConstants.SyncMethod syncMethod) {
@@ -398,7 +395,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 String syncMethod = intentExtras.getString(WompWompConstants.SYNC_METHOD);
                 if(syncMethod == null) return;
 
-                Timber.i("Received sync intent: " + syncMethod);
                 if(syncMethod.equals(WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR.name())) {
                     mLoadingBottom = false;
                 }

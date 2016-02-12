@@ -22,11 +22,19 @@
             android:id="@+id/shareCard"
             android:layout_height="match_parent">
 
-            <co.wompwomp.sunshine.SquareImageView
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/imageView"
-                android:scaleType="fitXY" />
+                android:background="@android:color/white">
+                <co.wompwomp.sunshine.SquareImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/imageView"/>
+
+                <SurfaceView android:id="@+id/surfaceView"
+                    android:layout_width="1px"
+                    android:layout_height="1px"/>
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/textView"
@@ -39,15 +47,41 @@
 
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/createdon"
-            style="@android:style/TextAppearance.Small"
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:layout_gravity="start"
-            android:background="@android:color/white"
-            android:textAlignment="textStart" />
+            android:background="@android:color/white">
+            <TextView
+                android:id="@+id/createdon"
+                style="@android:style/TextAppearance.Small"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="10dp"
+                android:layout_alignParentLeft="true" />
+            
+            <TextView
+                android:id="@+id/viewsText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_alignParentRight="true"
+                android:text="@string/views"
+                android:paddingLeft="3dp"
+                android:paddingTop="10dp"
+                android:paddingRight="10dp"
+                android:paddingBottom="10dp" />
+
+            <TextView
+                android:id="@+id/numViews"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_toLeftOf="@id/viewsText"
+                android:paddingLeft="10dp"
+                android:paddingTop="10dp"
+                android:paddingRight="3dp"
+                android:paddingBottom="10dp" />
+        </RelativeLayout>
 
         <RelativeLayout
             xmlns:android="http://schemas.android.com/apk/res/android"
