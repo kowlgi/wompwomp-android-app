@@ -18,6 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.URLUtil;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import co.wompwomp.sunshine.provider.FeedContract;
@@ -161,6 +162,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
         public TextView numViews;
         public SurfaceView surfaceView;
         public String videoUri;
+        public ImageView playButton;
 
         public ContentCardViewHolder(View itemView) {
             super(itemView);
@@ -179,6 +181,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
             surfaceView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
             surfaceView.setZOrderOnTop(true);
             videoUri = "";
+            playButton = (ImageView) itemView.findViewById(R.id.playButton);
 
             int whatsappButtonVisibility = Utils.isPackageInstalled("com.whatsapp", mContext) ? View.VISIBLE : View.GONE;
             whatsappshareButton.setVisibility(whatsappButtonVisibility);
@@ -315,6 +318,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 
                     holder.viewsText.setVisibility(View.VISIBLE);
                     holder.numViews.setVisibility(View.VISIBLE);
+                    holder.playButton.setVisibility(View.VISIBLE);
                     if(!mViewCounts.containsKey(myListItem.id)){
                         mViewCounts.put(myListItem.id, myListItem.numPlays);
                     }
@@ -323,6 +327,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 } else {
                     holder.viewsText.setVisibility(View.GONE);
                     holder.numViews.setVisibility(View.GONE);
+                    holder.playButton.setVisibility(View.GONE);
                 }
 
                 Timber.d(myListItem.toString());

@@ -30,6 +30,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:id="@+id/imageView"/>
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:visibility="invisible"
+                    android:src="@drawable/ic_play_circle_filled_gradient_black_48px"
+                    android:id="@+id/playButton"/>
 
                 <SurfaceView android:id="@+id/surfaceView"
                     android:layout_width="1px"
