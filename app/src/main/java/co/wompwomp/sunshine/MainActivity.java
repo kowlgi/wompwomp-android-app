@@ -132,7 +132,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                     @Override
                     public void onRefresh() {
                         Answers.getInstance().logCustom(new CustomEvent("Swiped to refresh"));
-                        syncItems(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR);
+                        syncItems(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER);
                     }
                 }
         );
@@ -288,7 +288,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         if (id == R.id.action_refresh) {
             Answers.getInstance().logCustom(new CustomEvent("Options menu: Refresh"));
             mSwipeRefreshLayout.setRefreshing(true);
-            syncItems(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR);
+            syncItems(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER);
             return true;
         }
         else if( id == R.id.action_rate_us) {
@@ -370,7 +370,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             return;
         }
 
-        if(syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR) {
+        if(syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER) {
             mLoadingTop = true;
         } else if (syncMethod == WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR) {
             mLoadingBottom = true;
@@ -398,7 +398,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 if(syncMethod.equals(WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR.name())) {
                     mLoadingBottom = false;
                 }
-                else if(syncMethod.equals(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR.name())) {
+                else if(syncMethod.equals(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER.name())) {
                     mLoadingTop = false;
                 }
             }

@@ -377,9 +377,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                             Integer updatedViewCount = mViewCounts.get(myListItem.id) + 1;
                             mViewCounts.put(myListItem.id, updatedViewCount);
                             holder.numViews.setText(MyListItem.format(updatedViewCount));
-
-                            WompWompHTTPParams params = new WompWompHTTPParams(mContext);
-                            Utils.postToWompwomp(FeedContract.ITEM_PLAY_URL + myListItem.id, params);
+                            Utils.postToWompwomp(FeedContract.ITEM_PLAY_URL + myListItem.id, mContext);
                         }else{
                             Intent zoomIntent = new Intent(mContext, ItemZoomActivity.class);
                             final Bitmap bmp = ((BitmapDrawable) holder.imageView.getDrawable()).getBitmap();
@@ -413,9 +411,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         Integer updatedShareCount = mShareCounts.get(myListItem.id) + 1;
                         mShareCounts.put(myListItem.id, updatedShareCount);
                         holder.numsharesView.setText(MyListItem.format(updatedShareCount));
-
-                        WompWompHTTPParams params = new WompWompHTTPParams(mContext);
-                        Utils.postToWompwomp(FeedContract.ITEM_SHARE_URL + myListItem.id, params);
+                        Utils.postToWompwomp(FeedContract.ITEM_SHARE_URL + myListItem.id, mContext);
 
                         Intent shareIntent = new Intent();
                         shareIntent.setAction(Intent.ACTION_SEND);
@@ -462,9 +458,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         Integer updatedShareCount = mShareCounts.get(myListItem.id) + 1;
                         mShareCounts.put(myListItem.id, updatedShareCount);
                         holder.numsharesView.setText(MyListItem.format(updatedShareCount));
-
-                        WompWompHTTPParams params = new WompWompHTTPParams(mContext);
-                        Utils.postToWompwomp(FeedContract.ITEM_SHARE_URL + myListItem.id, params);
+                        Utils.postToWompwomp(FeedContract.ITEM_SHARE_URL + myListItem.id, mContext);
 
                         ShareLinkContent content = new ShareLinkContent.Builder()
                                 .setContentTitle(myListItem.quoteText)
@@ -486,9 +480,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         Integer updatedShareCount = mShareCounts.get(myListItem.id) + 1;
                         mShareCounts.put(myListItem.id, updatedShareCount);
                         holder.numsharesView.setText(MyListItem.format(updatedShareCount));
-
-                        WompWompHTTPParams params = new WompWompHTTPParams(mContext);
-                        Utils.postToWompwomp(FeedContract.ITEM_SHARE_URL + myListItem.id, params);
+                        Utils.postToWompwomp(FeedContract.ITEM_SHARE_URL + myListItem.id, mContext);
 
                         Intent shareIntent = new Intent();
                         shareIntent.setAction(Intent.ACTION_SEND);
@@ -553,9 +545,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         }
 
                         URL += myListItem.id;
-
-                        WompWompHTTPParams params = new WompWompHTTPParams(mContext);
-                        Utils.postToWompwomp(URL, params);
+                        Utils.postToWompwomp(URL, mContext);
                     }
                 });
                 break;

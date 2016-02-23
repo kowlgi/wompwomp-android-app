@@ -77,17 +77,17 @@ public class MyGcmListenerService extends GcmListenerService {
                 Timber.i("Pushed notification to user. Text: %s, ImageUri: %s, ItemId: %s", message, imageUri, itemId);
             }
         } else if (from.startsWith(WompWompConstants.SYNC_NOTIFICATION)){
-            SyncUtils.TriggerSync(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR);
+            SyncUtils.TriggerSync(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO);
             Timber.i("Initiated sync latest items");
         } else if(from.startsWith(WompWompConstants.CTA_SHARE_NOTIFICATION)) {
             String timestamp = data.getString("message");
             Timber.i("Pushed Share CTA to feed");
             // push 'share now' card to feed
-            getContentResolver().insert(FeedContract.Entry.CONTENT_URI, populateContentValues(WompWompConstants.TYPE_SHARE_CARD, timestamp));
+            getContentResolver().insert(FeedContract.Entry.CONTENT_URI, populateContentValues(WompWompConstants.TYPE_SHARE_CARD, timestamp, null));
         } else if(from.startsWith(WompWompConstants.CTA_RATE_NOTIFICATION)) {
             String timestamp = data.getString("message");
             // push 'rate now' card to feed
-            getContentResolver().insert(FeedContract.Entry.CONTENT_URI, populateContentValues(WompWompConstants.TYPE_RATE_CARD, timestamp));
+            getContentResolver().insert(FeedContract.Entry.CONTENT_URI, populateContentValues(WompWompConstants.TYPE_RATE_CARD, timestamp, null));
             Timber.i("Pushed Rate CTA to feed");
         } else if(from.startsWith(WompWompConstants.CTA_UPGRADE_NOTIFICATION)) {
             String timestamp = data.getString("message");
@@ -99,7 +99,7 @@ public class MyGcmListenerService extends GcmListenerService {
 
             if(BuildConfig.VERSION_CODE < Integer.valueOf(versionCode)) {
                 // push 'upgrade now' card to feed
-                getContentResolver().insert(FeedContract.Entry.CONTENT_URI, populateContentValues(WompWompConstants.TYPE_UPGRADE_CARD, timestamp));
+                getContentResolver().insert(FeedContract.Entry.CONTENT_URI, populateContentValues(WompWompConstants.TYPE_UPGRADE_CARD, timestamp, versionCode));
                 Timber.i("Pushed Upgrade CTA to feed");
             }
         } else if(from.startsWith(WompWompConstants.REMOVE_ALL_CTAS_NOTIFICATION)) {
@@ -187,7 +187,7 @@ public class MyGcmListenerService extends GcmListenerService {
         return aBitmap;
     }
 
-    private ContentValues populateContentValues(Integer card_type, String timestamp) {
+    private ContentValues populateContentValues(Integer card_type, String timestamp, String versionCode) {
         ContentValues contentValues = new ContentValues();
         String entry_id = null;
         if(card_type == WompWompConstants.TYPE_RATE_CARD) {
@@ -199,7 +199,7 @@ public class MyGcmListenerService extends GcmListenerService {
         }
 
         contentValues.put(FeedContract.Entry.COLUMN_NAME_ENTRY_ID, entry_id);
-        contentValues.put(FeedContract.Entry.COLUMN_NAME_QUOTE_TEXT, "");
+        contentValues.put(FeedContract.Entry.COLUMN_NAME_QUOTE_TEXT, versionCode);
         contentValues.put(FeedContract.Entry.COLUMN_NAME_IMAGE_SOURCE_URI, "");
         contentValues.put(FeedContract.Entry.COLUMN_NAME_FAVORITE, 0);
         contentValues.put(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, 0);

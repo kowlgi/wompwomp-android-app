@@ -3,6 +3,7 @@ package co.wompwomp.sunshine;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.webkit.URLUtil;
@@ -127,6 +128,11 @@ public class WelcomeActivity extends AppCompatActivity {
             }catch (Exception ignored) {
             }
         }
+
+        getContentResolver().delete(FeedContract.Entry.CONTENT_URI,
+                FeedContract.Entry.COLUMN_NAME_ENTRY_ID + "= '" + WompWompConstants.WOMPWOMP_CTA_UPGRADE + "' " +
+                " AND CAST(" + FeedContract.Entry.COLUMN_NAME_QUOTE_TEXT+" AS INTEGER) <=" + BuildConfig.VERSION_CODE,
+                null);
 
         SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.SUBSET_OF_LATEST_ITEMS_NO_CURSOR);
 

@@ -45,11 +45,18 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 
 import co.wompwomp.sunshine.BuildConfig;
+import co.wompwomp.sunshine.Installation;
 import co.wompwomp.sunshine.PermissionsDialogFragment;
 import co.wompwomp.sunshine.R;
 import cz.msebera.android.httpclient.Header;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
@@ -247,20 +254,21 @@ public class Utils {
         }
     }
 
-    public static void postToWompwomp(String url, RequestParams params) {
+    public static void postToWompwomp(String url, Context context) {
         if(BuildConfig.DEBUG) return;
 
-        AsyncHttpClient client = new AsyncHttpClient();
-        client.post(url, params, new TextHttpResponseHandler() {
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, String res) {
-                // we received status 200 OK..wohoo!
-            }
+        OkHttpClient client = new OkHttpClient();
+        RequestBody formBody = new FormBody.Builder()
+                .add("inst_id", Installation.id(context))
+                .build();
+        Request request = new Request.Builder()
+                .url(url)
+                .post(formBody)
+                .build();
 
-            @Override
-            public void onFailure(int statusCode, Header[] headers, String res, Throwable t) {
-                //do nothing
-            }
-        });
+        try {
+            client.newCall(request).execute();
+        } catch (IOException ignored) {
+        }
     }
 }

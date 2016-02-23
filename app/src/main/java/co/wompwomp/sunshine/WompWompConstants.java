@@ -41,12 +41,13 @@ public class WompWompConstants {
 
     // item fetch limit/cursor
     public static final String SYNC_METHOD = "sync_method";
-    public static final int SYNC_NUM_SUBSET_ITEMS = 10;
+    public static final int SYNC_NUM_SUBSET_ITEMS = 20;
     public static final int SYNC_NUM_ALL_ITEMS = 0;
 
     public enum SyncMethod {
         EXISTING_AND_NEW_ABOVE_LOW_CURSOR, /* insert and update db in automatic background sync scenario */
-        ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR, /* insert only into db in in-app refresh scenario */
+        ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO, /* insert only into db in in-app refresh scenario */
+        ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER,
         SUBSET_OF_LATEST_ITEMS_NO_CURSOR, /* insert and update db on app open */
         SUBSET_OF_ITEMS_BELOW_LOW_CURSOR, /* insert only into db in in-app scroll down to bottom scenario */
         SYNC_METHOD_NONE

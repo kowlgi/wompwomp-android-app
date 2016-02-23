@@ -149,6 +149,12 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 syncMethod = WompWompConstants.SyncMethod.valueOf(syncMethodStr);
             }
 
+            boolean userInitiated = false;
+            if(syncMethod == WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR ||
+                    syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER) {
+                userInitiated = true;
+            }
+
             int limit = 0;
             boolean updateAndDeleteStaleItems = true;
             String cursor = null, params = "", cursorInclusive = null;
@@ -166,7 +172,8 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 limit = WompWompConstants.SYNC_NUM_SUBSET_ITEMS;
                 updateAndDeleteStaleItems =  true;
             }
-            else if (syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR) {
+            else if (syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO ||
+                    syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER) {
                 /* insert only into db in in-app refresh scenario */
                 limit = WompWompConstants.SYNC_NUM_ALL_ITEMS;
                 c.moveToFirst();
@@ -197,8 +204,11 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 params += "&cursor=" + cursor;
             }
             if(cursorInclusive != null) {
-                params+= "&cursorInclusive=" + cursorInclusive;
+                params += "&cursorInclusive=" + cursorInclusive;
             }
+
+            params += "&id=" + Installation.id(getContext());
+            params += "&userInitiated=" + userInitiated;
             final URL location = new URL(FeedContract.FEED_URL + params);
             stream = downloadUrl(location);
             updateLocalFeedData(stream, syncResult, updateAndDeleteStaleItems);
