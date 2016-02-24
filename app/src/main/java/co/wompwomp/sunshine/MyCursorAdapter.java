@@ -61,9 +61,24 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
     private Context mContext = null;
     private ShareDialog mShareDialog = null;
     private HashSet<String> mLikes = null;
+
+    /* the downloaded videos hashset serves two purposes: 1. addition of an item to this hashset is
+       an indication that the video file was downloaded successfully 2. by storing hashset to file,
+       we can compare entries in the hashset to entries in the db. For hashset entries that don't
+       have a corresponding db entry, delete those entries from the hashset and
+       corresponding files from the filesystem (helps save storage on user's phone)
+     */
     private HashSet<String> mDownloadedVideos = null;
+
+    /* we maintain these counts in this adapter as starting with v1.2 we don't do a db update when
+       the user favorites or likes an item. Avoiding a db update is 1. needed, because a db update
+       causes a cursor update, which causes a re-bind view that'll end up redrawing the surface view
+       a.k.a a playing video will be stopped. 2. useful, because it helps improve performance by
+       avoiding a db update
+     */
     private HashMap<String, Integer> mShareCounts = null;
     private HashMap<String, Integer> mViewCounts = null;
+
     private WompwompPlayer mPlayer = null;
     private ContentCardViewHolder mItemPlayingVideo = null;
 
@@ -117,18 +132,22 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 
     public void stop(){
         mPlayer.release();
+
+        /* we clear the share and like counts under the assumption that MainActivity::start() will
+           sync items from the server, thus obtaining in the latest global values for these counts
+         */
         mShareCounts.clear();
         mViewCounts.clear();
         try {
-            FileOutputStream fos = mContext.openFileOutput(WompWompConstants.LIKES_FILENAME, Context.MODE_PRIVATE);
-            ObjectOutputStream oos = new ObjectOutputStream(fos);
-            oos.writeObject(mLikes);
-            oos.close();
+            FileOutputStream likesfos = mContext.openFileOutput(WompWompConstants.LIKES_FILENAME, Context.MODE_PRIVATE);
+            ObjectOutputStream likesoos = new ObjectOutputStream(likesfos);
+            likesoos.writeObject(mLikes);
+            likesoos.close();
 
-            FileOutputStream fos1 = mContext.openFileOutput(WompWompConstants.VIDEO_DOWNLOADS_FILENAME, Context.MODE_PRIVATE);
-            ObjectOutputStream oos1 = new ObjectOutputStream(fos1);
-            oos1.writeObject(mDownloadedVideos);
-            oos1.close();
+            FileOutputStream videosfos = mContext.openFileOutput(WompWompConstants.VIDEO_DOWNLOADS_FILENAME, Context.MODE_PRIVATE);
+            ObjectOutputStream videosoos = new ObjectOutputStream(videosfos);
+            videosoos.writeObject(mDownloadedVideos);
+            videosoos.close();
 
             Timber.d("Wrote likes and downloaded videos in-memory hashmaps to corresponding files");
         } catch (java.io.FileNotFoundException fnf) {

@@ -59,7 +59,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private Toast mNoNetworkToast = null;
     private ShareDialog mShareDialog;
     private CallbackManager mCallbackManager;
-    private int mItemCurrentlyFullyVisible = -1;
 
     /**
      * Projection for querying the content provider.
@@ -283,7 +282,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_refresh) {
             Answers.getInstance().logCustom(new CustomEvent("Options menu: Refresh"));
             mSwipeRefreshLayout.setRefreshing(true);

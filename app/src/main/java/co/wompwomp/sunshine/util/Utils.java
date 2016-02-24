@@ -104,11 +104,11 @@ public class Utils {
                 return null;
             }
 
-            Source a = Okio.source(from);
-            BufferedSink b = Okio.buffer(Okio.sink(videofile));
-            b.writeAll(a);
-            b.close();
-            a.close();
+            Source src = Okio.source(from);
+            BufferedSink dest = Okio.buffer(Okio.sink(videofile));
+            dest.writeAll(src);
+            dest.close();
+            src.close();
             return Uri.fromFile(videofile);
         }
         catch(Exception e) {

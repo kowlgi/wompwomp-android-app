@@ -219,8 +219,6 @@ public class FeedProvider extends ContentProvider {
      * database should never be accessed by other parts of the application directly.
      */
     static class FeedDatabase extends SQLiteOpenHelper {
-
-        private static final String TAG = "FeedDatabase";
         /** Schema version. */
         public static final int DATABASE_VERSION = 4;
         /** Filename for SQLite file. */
