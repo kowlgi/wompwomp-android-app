@@ -3,7 +3,6 @@ package co.wompwomp.sunshine;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.webkit.URLUtil;
@@ -65,6 +64,7 @@ public class WelcomeActivity extends AppCompatActivity {
                     likes.add(c.getString(0));
                 } while(c.moveToNext());
             }
+            if(c != null) c.close();
 
             Timber.d("Creating " + WompWompConstants.LIKES_FILENAME + " with content: " + likes.toString());
 
@@ -124,6 +124,7 @@ public class WelcomeActivity extends AppCompatActivity {
 
                     Timber.d("Video files to keep: " + videoFilesToKeep);
                 }
+                if(c != null) c.close();
 
             }catch (Exception ignored) {
             }

@@ -29,6 +29,7 @@ import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import okio.BufferedSink;
 import okio.Okio;
 import timber.log.Timber;
@@ -243,21 +244,25 @@ public class ImageFetcher extends ImageWorker {
     public boolean downloadUrlToStream(String urlString, OutputStream outputStream) {
         disableConnectionReuseIfNecessary();
         OkHttpClient client = new OkHttpClient();
-
+        boolean result = false;
+        ResponseBody body = null;
         try {
             final URL url = new URL(urlString);
             Call call = client.newCall(new Request.Builder().url(url).get().build());
             Response response = call.execute();
+            body = response.body();
 
             BufferedSink sink = Okio.buffer(Okio.sink(outputStream));
-            sink.writeAll(response.body().source());
+            sink.writeAll(body.source());
             sink.close();
-
-            return true;
+            result = true;
         } catch (final IOException e) {
             Timber.e( "Error in downloadBitmap - " + e);
+            result = false;
+        } finally {
+            if(body != null) body.close();
         }
-        return false;
+        return result;
     }
 
     /**

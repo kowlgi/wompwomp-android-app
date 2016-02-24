@@ -44,7 +44,6 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
@@ -63,18 +62,6 @@ import java.util.List;
  * SyncService.
  */
 class SyncAdapter extends AbstractThreadedSyncAdapter {
-    public static final String TAG = "WompwompSyncAdapter";
-
-    /**
-     * Network connection timeout, in milliseconds.
-     */
-    private static final int NET_CONNECT_TIMEOUT_MILLIS = 15000;  // 15 seconds
-
-    /**
-     * Network read timeout, in milliseconds.
-     */
-    private static final int NET_READ_TIMEOUT_MILLIS = 10000;  // 10 seconds
-
     /**
      * Content resolver, for performing database operations.
      */
@@ -207,7 +194,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 params += "&cursorInclusive=" + cursorInclusive;
             }
 
-            params += "&id=" + Installation.id(getContext());
+            params += "&instId=" + Installation.id(getContext());
             params += "&userInitiated=" + userInitiated;
             final URL location = new URL(FeedContract.FEED_URL + params);
             stream = downloadUrl(location);

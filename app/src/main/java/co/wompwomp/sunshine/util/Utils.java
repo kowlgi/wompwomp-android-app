@@ -52,6 +52,8 @@ import co.wompwomp.sunshine.Installation;
 import co.wompwomp.sunshine.PermissionsDialogFragment;
 import co.wompwomp.sunshine.R;
 import cz.msebera.android.httpclient.Header;
+import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -266,9 +268,16 @@ public class Utils {
                 .post(formBody)
                 .build();
 
-        try {
-            client.newCall(request).execute();
-        } catch (IOException ignored) {
-        }
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, final Response response) throws IOException {
+                response.body().close();
+            }
+        });
     }
 }

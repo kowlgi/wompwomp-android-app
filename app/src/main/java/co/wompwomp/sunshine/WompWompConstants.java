@@ -53,7 +53,7 @@ public class WompWompConstants {
         SYNC_METHOD_NONE
     }
 
-    public static final String PREF_RESYNC_FEED = "resync_feed";
+    public static final String APP_RESUMED_FROM_BG = "app_resumed_from_bg";
     public static final String LIKES_FILENAME = "wwlikes.ser";
     public static final String VIDEO_DOWNLOADS_FILENAME = "wwdownloads.ser";
     public static final String CONTENT_NOTIFICATION = "/topics/content";

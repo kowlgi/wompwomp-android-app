@@ -81,9 +81,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 Timber.e("Error from file read operation ", e);
                 e.printStackTrace();
             }
-        } else {
-            mLikes = new HashSet<String>();
-        }
+        } else mLikes = new HashSet<>();
 
         if (fileExists(mContext, WompWompConstants.VIDEO_DOWNLOADS_FILENAME)) {
             try {
@@ -255,8 +253,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
     public void resizeSurface(int width, int height) {
         ViewGroup.LayoutParams lp = mItemPlayingVideo.surfaceView.getLayoutParams();
         DisplayMetrics displayMetrics = mContext.getResources().getDisplayMetrics();
-        lp.width = (int) displayMetrics.widthPixels;
-        lp.height = (int) (displayMetrics.widthPixels * height / width);
+        lp.width = displayMetrics.widthPixels;
+        lp.height = displayMetrics.widthPixels * height / width;
 
         Timber.d("new width: " + lp.width + ", new height: " + lp.height);
         mItemPlayingVideo.surfaceView.setLayoutParams(lp);
@@ -424,7 +422,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         shareIntent.putExtra(Intent.EXTRA_TEXT, caption);
                         shareIntent.setType("text/plain");
                         if (cardType == WompWompConstants.TYPE_VIDEO_CONTENT_CARD) {
-                            String filename = URLUtil.guessFileName(myListItem.videoUri.toString(), null, null);
+                            String filename = URLUtil.guessFileName(myListItem.videoUri, null, null);
                             Uri videoUri = Utils.getLocalVideoUri(filename, mContext);
                             if (videoUri != null) {
                                 shareIntent.putExtra(Intent.EXTRA_STREAM, videoUri);
@@ -493,7 +491,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         shareIntent.putExtra(Intent.EXTRA_TEXT, caption);
                         shareIntent.setType("text/plain");
                         if(cardType == WompWompConstants.TYPE_VIDEO_CONTENT_CARD) {
-                            String filename = URLUtil.guessFileName(myListItem.videoUri.toString(), null, null);
+                            String filename = URLUtil.guessFileName(myListItem.videoUri, null, null);
                             Uri videoUri = Utils.getLocalVideoUri(filename, mContext);
                             if (videoUri != null) {
                                 shareIntent.putExtra(Intent.EXTRA_STREAM, videoUri);
@@ -602,11 +600,9 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 // that way, you can easily modify the UI thread from here
     private class DownloadTask extends AsyncTask<String, Integer, String> {
 
-        private Context context;
         private String filename;
 
         public DownloadTask(Context context) {
-            this.context = context;
             this.filename = "";
         }
 

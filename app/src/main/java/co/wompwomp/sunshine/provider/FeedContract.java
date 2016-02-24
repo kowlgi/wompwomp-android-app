@@ -31,12 +31,15 @@ public class FeedContract {
     }
 
     public static final String BASE_URL = "http://54.201.227.101:3000";
+    //Deprecated: public static final String FEED_URL = BASE_URL + "/i";
     public static final String FEED_URL = BASE_URL + "/iv";
     public static final String ITEM_VIEW_URL = BASE_URL + "/v/";
     public static final String ITEM_FAVORITE_URL = BASE_URL + "/f/";
     public static final String ITEM_UNFAVORITE_URL = BASE_URL + "/uf/";
     public static final String ITEM_SHARE_URL = BASE_URL + "/s/";
     public static final String ITEM_PLAY_URL = BASE_URL + "/p/";
+    public static final String APP_INSTALLED_URL = BASE_URL + "/in";
+    public static final String APP_OPENED_URL = BASE_URL + "/op";
 
     /**
      * Content provider authority.

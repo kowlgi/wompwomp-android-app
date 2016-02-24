@@ -207,14 +207,13 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         /* Crude check to opportunistically resync only if we're resuming after putting the app in background */
         if(PreferenceManager
                 .getDefaultSharedPreferences(this)
-                .getBoolean(WompWompConstants.PREF_RESYNC_FEED, true)) {
-            Timber.d("Yes, we need to resync");
+                .getBoolean(WompWompConstants.APP_RESUMED_FROM_BG, true)) {
+            Utils.postToWompwomp(FeedContract.APP_OPENED_URL, this);
             SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.EXISTING_AND_NEW_ABOVE_LOW_CURSOR);
         } else {
-            Timber.d("No need to resync");
             PreferenceManager
                     .getDefaultSharedPreferences(this).edit()
-                    .putBoolean(WompWompConstants.PREF_RESYNC_FEED, true).commit();
+                    .putBoolean(WompWompConstants.APP_RESUMED_FROM_BG, true).commit();
         }
     }
 
