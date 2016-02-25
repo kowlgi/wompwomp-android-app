@@ -38,12 +38,12 @@ import com.crashlytics.android.answers.CustomEvent;
 import com.crashlytics.android.answers.ShareEvent;
 import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.widget.ShareDialog;
-import com.ocpsoft.pretty.time.PrettyTime;
 import com.plattysoft.leonids.ParticleSystem;
 
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 import org.joda.time.format.ISODateTimeFormat;
+import org.ocpsoft.prettytime.PrettyTime;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -395,6 +395,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                             mViewCounts.put(myListItem.id, updatedViewCount);
                             holder.numViews.setText(MyListItem.format(updatedViewCount));
                             Utils.postToWompwomp(FeedContract.ITEM_PLAY_URL + myListItem.id, mContext);
+                            Answers.getInstance().logCustom(new CustomEvent("Video played")
+                                    .putCustomAttribute("itemid", myListItem.id));
                         }else{
                             Intent zoomIntent = new Intent(mContext, ItemZoomActivity.class);
                             final Bitmap bmp = ((BitmapDrawable) holder.imageView.getDrawable()).getBitmap();

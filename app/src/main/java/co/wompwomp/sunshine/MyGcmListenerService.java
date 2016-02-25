@@ -27,11 +27,12 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
 
 import co.wompwomp.sunshine.provider.FeedContract;
 import timber.log.Timber;
 
+import com.crashlytics.android.answers.Answers;
+import com.crashlytics.android.answers.CustomEvent;
 import com.google.android.gms.gcm.GcmListenerService;
 
 import java.io.IOException;
@@ -74,6 +75,8 @@ public class MyGcmListenerService extends GcmListenerService {
 
             if(pushNotify) {
                 pushNotification(message, imageUri, itemId);
+                Answers.getInstance().logCustom(new CustomEvent("Posted push notification")
+                        .putCustomAttribute("itemid", itemId));
                 Timber.i("Pushed notification to user. Text: %s, ImageUri: %s, ItemId: %s", message, imageUri, itemId);
             }
         } else if (from.startsWith(WompWompConstants.SYNC_NOTIFICATION)){

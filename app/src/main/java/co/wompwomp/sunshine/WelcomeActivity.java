@@ -132,7 +132,7 @@ public class WelcomeActivity extends AppCompatActivity {
 
         getContentResolver().delete(FeedContract.Entry.CONTENT_URI,
                 FeedContract.Entry.COLUMN_NAME_ENTRY_ID + "= '" + WompWompConstants.WOMPWOMP_CTA_UPGRADE + "' " +
-                " AND CAST(" + FeedContract.Entry.COLUMN_NAME_QUOTE_TEXT+" AS INTEGER) <=" + BuildConfig.VERSION_CODE,
+                        " AND CAST(" + FeedContract.Entry.COLUMN_NAME_QUOTE_TEXT + " AS INTEGER) <=" + BuildConfig.VERSION_CODE,
                 null);
 
         SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.SUBSET_OF_LATEST_ITEMS_NO_CURSOR);

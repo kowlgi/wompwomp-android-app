@@ -37,9 +37,6 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.RequestParams;
-import com.loopj.android.http.TextHttpResponseHandler;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -51,7 +48,6 @@ import co.wompwomp.sunshine.BuildConfig;
 import co.wompwomp.sunshine.Installation;
 import co.wompwomp.sunshine.PermissionsDialogFragment;
 import co.wompwomp.sunshine.R;
-import cz.msebera.android.httpclient.Header;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;

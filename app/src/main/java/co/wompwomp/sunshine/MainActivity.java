@@ -263,6 +263,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             if(itemId != null) {
                 Answers.getInstance().logCustom(new CustomEvent("Push notification clicked")
                         .putCustomAttribute("itemlink", itemId));
+                Utils.postToWompwomp(FeedContract.APP_PUSH_NOTIFICATION_CLICKED_URL+itemId, this);
                 smoothScrollToTop();
             }
         }
