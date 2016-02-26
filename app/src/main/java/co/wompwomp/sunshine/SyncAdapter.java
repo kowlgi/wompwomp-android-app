@@ -346,8 +346,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                     .withValue(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, e.numFavorites)
                     .withValue(FeedContract.Entry.COLUMN_NAME_NUM_SHARES, e.numShares)
                     .withValue(FeedContract.Entry.COLUMN_NAME_CREATED_ON, e.createdOn)
-                    .withValue(FeedContract.Entry.COLUMN_NAME_CARD_TYPE,
-                            e.videoUri.length() > 0 ? WompWompConstants.TYPE_VIDEO_CONTENT_CARD: WompWompConstants.TYPE_CONTENT_CARD)
+                    .withValue(FeedContract.Entry.COLUMN_NAME_CARD_TYPE, WompWompConstants.TYPE_CONTENT_CARD)
                     .withValue(FeedContract.Entry.COLUMN_NAME_AUTHOR, e.author)
                     .withValue(FeedContract.Entry.COLUMN_NAME_VIDEOURI, e.videoUri)
                     .withValue(FeedContract.Entry.COLUMN_NAME_NUM_PLAYS, e.numPlays)

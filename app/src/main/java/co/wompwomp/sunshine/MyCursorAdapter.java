@@ -19,6 +19,7 @@ import android.view.ViewGroup;
 import android.webkit.URLUtil;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import co.wompwomp.sunshine.provider.FeedContract;
@@ -180,6 +181,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
         public SurfaceView surfaceView;
         public String videoUri;
         public ImageView playButton;
+        public ProgressBar videoProgress;
 
         public ContentCardViewHolder(View itemView) {
             super(itemView);
@@ -199,6 +201,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
             surfaceView.setZOrderOnTop(true);
             videoUri = "";
             playButton = (ImageView) itemView.findViewById(R.id.playButton);
+            videoProgress = (ProgressBar) itemView.findViewById(R.id.video_progress);
 
             int whatsappButtonVisibility = Utils.isPackageInstalled("com.whatsapp", mContext) ? View.VISIBLE : View.GONE;
             whatsappshareButton.setVisibility(whatsappButtonVisibility);
@@ -233,6 +236,10 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
     public int getItemViewType(int position) {
         // here your custom logic to choose the view type
         MyListItem item = getListItem(position);
+        if(item.cardType == WompWompConstants.TYPE_CONTENT_CARD && item.videoUri.length() > 0) {
+            return WompWompConstants.TYPE_VIDEO_CONTENT_CARD;
+        }
+
         return item.cardType;
     }
 
@@ -276,6 +283,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
         lp.height = displayMetrics.widthPixels * height / width;
 
         Timber.d("new width: " + lp.width + ", new height: " + lp.height);
+        mItemPlayingVideo.videoProgress.setVisibility(View.GONE);
         mItemPlayingVideo.surfaceView.setLayoutParams(lp);
     }
 
@@ -346,6 +354,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                     holder.numViews.setVisibility(View.GONE);
                     holder.playButton.setVisibility(View.GONE);
                 }
+                holder.videoProgress.setVisibility(View.GONE);
 
                 Timber.d(myListItem.toString());
                 if(myListItem.quoteText.isEmpty()) {
@@ -390,7 +399,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                     public void onClick(View v) {
                         if(cardType == WompWompConstants.TYPE_VIDEO_CONTENT_CARD) {
                             playVideo(holder);
-
+                            holder.videoProgress.setVisibility(View.VISIBLE);
                             Integer updatedViewCount = mViewCounts.get(myListItem.id) + 1;
                             mViewCounts.put(myListItem.id, updatedViewCount);
                             holder.numViews.setText(MyListItem.format(updatedViewCount));
