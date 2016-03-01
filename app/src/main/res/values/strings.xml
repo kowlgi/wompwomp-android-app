@@ -22,7 +22,7 @@
     <string name="cannot_share">We tried but were not able to share the image for some reason</string>
     <string name="launching_app_page">Launching wompwomp product page…</string>
     <string name="permissions_title">Allow wompwomp to write files</string>
-    <string name="permissions_description">To share pictures to other apps wompwomp needs permission to write pictures to your device.</string>
+    <string name="permissions_description">To share pictures and videos to other apps wompwomp needs permission to write files to your device.</string>
     <string name="next">NEXT</string>
     <string-array name="loading_messages">
         <item>Bringing you funny content from Antarctica…</item>
@@ -39,4 +39,5 @@
     <string name="defaultAuthor">higgsboson</string>
     <string name="upgrade_to_new_version">Get the new version of the app</string>
     <string name="views">views</string>
+    <string name="video_not_ready_for_sharing_yet">Video not yet ready for sharing. Please try again shortly.</string>
 </resources>

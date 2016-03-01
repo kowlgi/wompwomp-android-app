@@ -100,29 +100,32 @@ public class WelcomeActivity extends AppCompatActivity {
                         VIDEOS_PROJECTION,
                         VIDEOS_SELECTION,
                         null,
-                        null);
+                        FeedContract.Entry.COLUMN_NAME_CREATED_ON + " desc");
 
                 if(c != null && c.getCount() > 0) {
                     c.moveToFirst();
                     HashSet<String> videoFilesToKeep = new HashSet<>();
-                    do {
+                    int count = WompWompConstants.MAX_VIDEOS_FILES_TO_RETAIN;
+                    do{
                         String filename = URLUtil.guessFileName(c.getString(0), null, null);
                         if(videoFiles.remove(filename)){
-                            videoFilesToKeep.add(filename); // video file we want to keep
-                        }; // remove filenames corresponding to items in db
+                            videoFilesToKeep.add(filename);
+                            count--;
+                        }
+                        if(count == 0) break;
                     } while(c.moveToNext());
 
-                    // delete files corresponding to items not in the db
-                    for(String filename: videoFiles) {
-                        deleteFile(filename);
+                    for(String filename: fileList()) {
+                        if(filename.endsWith(".mp4") && !videoFilesToKeep.contains(filename)){
+                            deleteFile(filename);
+                        }
                     }
 
                     FileOutputStream fos = openFileOutput(WompWompConstants.VIDEO_DOWNLOADS_FILENAME, Context.MODE_PRIVATE);
                     ObjectOutputStream oos = new ObjectOutputStream(fos);
                     oos.writeObject(videoFilesToKeep);
                     oos.close();
-
-                    Timber.d("Video files to keep: " + videoFilesToKeep);
+                    fos.close();
                 }
                 if(c != null) c.close();
 

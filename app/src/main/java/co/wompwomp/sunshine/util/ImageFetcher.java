@@ -84,7 +84,6 @@ public class ImageFetcher extends ImageWorker {
             if (ImageCache.getUsableSpace(mHttpCacheDir) > HTTP_CACHE_SIZE) {
                 try {
                     mHttpDiskCache = DiskLruCache.open(mHttpCacheDir, 1, 1, HTTP_CACHE_SIZE);
-                    Timber.d("HTTP cache initialized");
                 } catch (IOException e) {
                     mHttpDiskCache = null;
                 }
@@ -101,7 +100,6 @@ public class ImageFetcher extends ImageWorker {
             if (mHttpDiskCache != null && !mHttpDiskCache.isClosed()) {
                 try {
                     mHttpDiskCache.delete();
-                    Timber.d( "HTTP cache cleared");
                 } catch (IOException e) {
                     Timber.e( "clearCacheInternal - " + e);
                 }
@@ -119,7 +117,6 @@ public class ImageFetcher extends ImageWorker {
             if (mHttpDiskCache != null) {
                 try {
                     mHttpDiskCache.flush();
-                    Timber.d( "HTTP cache flushed");
                 } catch (IOException e) {
                     Timber.e( "flush - " + e);
                 }
@@ -136,7 +133,6 @@ public class ImageFetcher extends ImageWorker {
                     if (!mHttpDiskCache.isClosed()) {
                         mHttpDiskCache.close();
                         mHttpDiskCache = null;
-                        Timber.d( "HTTP cache closed");
                     }
                 } catch (IOException e) {
                     Timber.e( "closeCacheInternal - " + e);
@@ -184,7 +180,6 @@ public class ImageFetcher extends ImageWorker {
                 try {
                     snapshot = mHttpDiskCache.get(key);
                     if (snapshot == null) {
-                        Timber.d( "4. Not in HTTP cache. Going to network: " + data);
                         DiskLruCache.Editor editor = mHttpDiskCache.edit(key);
                         if (editor != null) {
                             if (downloadUrlToStream(data,
@@ -196,9 +191,7 @@ public class ImageFetcher extends ImageWorker {
                         }
                         snapshot = mHttpDiskCache.get(key);
                     }
-                    else {
-                        Timber.d( "4. Found in HTTP Cache: " + data);
-                    }
+
                     if (snapshot != null) {
                         fileInputStream =
                                 (FileInputStream) snapshot.getInputStream(DISK_CACHE_INDEX);

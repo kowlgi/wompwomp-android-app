@@ -8,6 +8,7 @@ import android.graphics.PixelFormat;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
@@ -30,6 +31,7 @@ import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import okio.BufferedSink;
 import okio.Okio;
 import timber.log.Timber;
@@ -62,6 +64,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
     private Context mContext = null;
     private ShareDialog mShareDialog = null;
     private HashSet<String> mLikes = null;
+    private HashSet<String> mVideoDownloadsInProgress = null;
 
     /* the downloaded videos hashset serves two purposes: 1. addition of an item to this hashset is
        an indication that the video file was downloaded successfully 2. by storing hashset to file,
@@ -90,6 +93,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
         mShareDialog = shareDialog;
         mShareCounts = new HashMap<>();
         mViewCounts = new HashMap<>();
+        mVideoDownloadsInProgress = new HashSet<>();
         if (fileExists(mContext, WompWompConstants.LIKES_FILENAME)) {
             try {
                 mLikes =  getKeysFromFile(WompWompConstants.LIKES_FILENAME);
@@ -108,7 +112,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 e.printStackTrace();
             }
         } else {
-            mDownloadedVideos = new HashSet<String>();
+            mDownloadedVideos = new HashSet<>();
         }
         Timber.d("Populated likes in-memory hashmap: " + mLikes.toString());
     }
@@ -133,12 +137,14 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 
     public void stop(){
         mPlayer.release();
+        mPlayer = null;
 
         /* we clear the share and like counts under the assumption that MainActivity::start() will
            sync items from the server, thus obtaining in the latest global values for these counts
          */
         mShareCounts.clear();
         mViewCounts.clear();
+        mVideoDownloadsInProgress.clear();
         try {
             FileOutputStream likesfos = mContext.openFileOutput(WompWompConstants.LIKES_FILENAME, Context.MODE_PRIVATE);
             ObjectOutputStream likesoos = new ObjectOutputStream(likesfos);
@@ -236,7 +242,9 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
     public int getItemViewType(int position) {
         // here your custom logic to choose the view type
         MyListItem item = getListItem(position);
-        if(item.cardType == WompWompConstants.TYPE_CONTENT_CARD && item.videoUri.length() > 0) {
+        if(item.cardType == WompWompConstants.TYPE_CONTENT_CARD &&
+                item.videoUri != null &&
+                item.videoUri.length() > 0) {
             return WompWompConstants.TYPE_VIDEO_CONTENT_CARD;
         }
 
@@ -336,9 +344,14 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                     holder.videoUri = myListItem.videoUri;
                     String filename = URLUtil.guessFileName(holder.videoUri, null, null);
 
-                    if(!mDownloadedVideos.contains(filename) ||  !fileExists(mContext, filename)) {
-                        DownloadTask downloadTask = new DownloadTask(mContext);
-                        downloadTask.execute(holder.videoUri);
+                    if(mDownloadedVideos.contains(filename) || mVideoDownloadsInProgress.contains(filename)) {
+                        // video's either already downloaded or a download is in progress
+                    } else {
+                        DownloadTask downloadTask = new DownloadTask();
+                        DownloadTaskParams params = new DownloadTaskParams(myListItem.videoUri, myListItem.fileSize);
+                        if(Utils.hasHoneycomb()) downloadTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, params);
+                        else downloadTask.execute(params);
+                        mVideoDownloadsInProgress.add(filename);
                     }
 
                     holder.viewsText.setVisibility(View.VISIBLE);
@@ -433,6 +446,15 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 holder.shareButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        String filename = null;
+                        if (cardType == WompWompConstants.TYPE_VIDEO_CONTENT_CARD) {
+                            filename = URLUtil.guessFileName(myListItem.videoUri, null, null);
+                            if (!isVideoReadyForSharing(filename)) {
+                                Utils.showVideoNotReadyForSharingYetToast(mContext);
+                                return;
+                            }
+                        }
+
                         Answers.getInstance().logShare(new ShareEvent().putMethod("Destination: unspecified")
                                 .putContentId(myListItem.id));
 
@@ -452,7 +474,6 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         shareIntent.putExtra(Intent.EXTRA_TEXT, caption);
                         shareIntent.setType("text/plain");
                         if (cardType == WompWompConstants.TYPE_VIDEO_CONTENT_CARD) {
-                            String filename = URLUtil.guessFileName(myListItem.videoUri, null, null);
                             Uri videoUri = Utils.getLocalVideoUri(filename, mContext);
                             if (videoUri != null) {
                                 shareIntent.putExtra(Intent.EXTRA_STREAM, videoUri);
@@ -502,6 +523,15 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 holder.whatsappshareButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        String filename = null;
+                        if (cardType == WompWompConstants.TYPE_VIDEO_CONTENT_CARD) {
+                            filename = URLUtil.guessFileName(myListItem.videoUri, null, null);
+                            if (!isVideoReadyForSharing(filename)) {
+                                Utils.showVideoNotReadyForSharingYetToast(mContext);
+                                return;
+                            }
+                        }
+
                         Answers.getInstance().logShare(new ShareEvent().putMethod("Destination: whatsapp")
                                 .putContentId(myListItem.id));
 
@@ -521,7 +551,6 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         shareIntent.putExtra(Intent.EXTRA_TEXT, caption);
                         shareIntent.setType("text/plain");
                         if(cardType == WompWompConstants.TYPE_VIDEO_CONTENT_CARD) {
-                            String filename = URLUtil.guessFileName(myListItem.videoUri, null, null);
                             Uri videoUri = Utils.getLocalVideoUri(filename, mContext);
                             if (videoUri != null) {
                                 shareIntent.putExtra(Intent.EXTRA_STREAM, videoUri);
@@ -626,49 +655,73 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
         return myListItem;
     }
 
+    private static class DownloadTaskParams {
+        String url;
+        Integer fileSize;
+
+        DownloadTaskParams(String url, Integer fileSize) {
+            this.url = url;
+            this.fileSize = fileSize;
+        }
+    }
+
     // usually, subclasses of AsyncTask are declared inside the activity class.
 // that way, you can easily modify the UI thread from here
-    private class DownloadTask extends AsyncTask<String, Integer, String> {
+    private class DownloadTask extends AsyncTask<DownloadTaskParams, Integer, String> {
 
         private String filename;
+        private Integer fileSize;
 
-        public DownloadTask(Context context) {
+        public DownloadTask() {
             this.filename = "";
+            this.fileSize = 0;
         }
 
         @Override
-        protected String doInBackground(String... sUrl) {
+        protected String doInBackground(DownloadTaskParams... params) {
             OkHttpClient client = new OkHttpClient();
             String result = null;
-
+            fileSize = params[0].fileSize;
+            ResponseBody body = null;
             try {
-                URL url = new URL(sUrl[0]);
+                URL url = new URL(params[0].url);
                 Call call = client.newCall(new Request.Builder().url(url).get().build());
                 Response response = call.execute();
+                body = response.body();
 
                 filename = URLUtil.guessFileName(url.toString(), null, null);
+                Timber.d("Video download in progress. filename: " + filename);
                 FileOutputStream output = mContext.openFileOutput(filename, Context.MODE_PRIVATE);
 
                 BufferedSink sink = Okio.buffer(Okio.sink(output));
-                sink.writeAll(response.body().source());
+                sink.writeAll(body.source());
                 sink.close();
-
-                if(isCancelled()) {
-                    /* return a non-empty string, so we don't
-                    consider the download successful in onPostExecute() */
-                    result = "Canceled";
-                }
             } catch (Exception e) {
                 result = e.toString();
+            } finally {
+                if(body != null) body.close();
             }
             return result;
         }
 
         protected void onPostExecute(String result) {
             if(result == null) {
-                Timber.d("Downloaded video: " + filename);
-                mDownloadedVideos.add(filename);
+                File videofile = new File(mContext.getFilesDir(), filename);
+                if(fileSize == videofile.length()) {
+                    Timber.d("Completed video download. filename: " + filename);
+                    mDownloadedVideos.add(filename);
+                    mVideoDownloadsInProgress.remove(filename);
+                }
+                else Timber.d("Video not fully downloaded. Expected: " + fileSize + ", actual: " + videofile.length());
             }
         }
     }
+
+    private boolean isVideoReadyForSharing(String filename) {
+        File videofile =  new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_DOWNLOADS), filename);
+
+        return videofile.exists() || mDownloadedVideos.contains(filename);
+    }
+
 }

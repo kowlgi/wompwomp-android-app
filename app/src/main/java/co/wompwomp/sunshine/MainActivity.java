@@ -75,7 +75,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             FeedContract.Entry.COLUMN_NAME_CARD_TYPE,
             FeedContract.Entry.COLUMN_NAME_AUTHOR,
             FeedContract.Entry.COLUMN_NAME_VIDEOURI,
-            FeedContract.Entry.COLUMN_NAME_NUM_PLAYS
+            FeedContract.Entry.COLUMN_NAME_NUM_PLAYS,
+            FeedContract.Entry.COLUMN_NAME_FILE_SIZE
     };
 
     @SuppressLint("ShowToast")

@@ -16,7 +16,6 @@
 
 package co.wompwomp.sunshine.util;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -58,6 +57,7 @@ import okhttp3.Response;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
+import timber.log.Timber;
 
 /**
  * Class containing some static utility methods.
@@ -88,26 +88,28 @@ public class Utils {
     }
 
     public static Uri getLocalVideoUri(String filename, Context context){
-        try {
-            File videofile =  new File(Environment.getExternalStoragePublicDirectory(
-                    Environment.DIRECTORY_DOWNLOADS), filename);
-            if(videofile.exists()) {
-                return Uri.fromFile(videofile);
-            }
+        File videofile =  new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_DOWNLOADS), filename);
+        if(videofile.exists()) {
+            return Uri.fromFile(videofile);
+        }
 
-            FileInputStream from = context.openFileInput(filename);
-            if(from == null) {
+        try {
+            if (Build.VERSION.SDK_INT > VERSION_CODES.LOLLIPOP_MR1 &&
+                    context.checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") == PackageManager.PERMISSION_DENIED) {
                 return null;
             }
 
+            videofile.getParentFile().mkdirs();
+            FileInputStream from = context.openFileInput(filename);
             Source src = Okio.source(from);
             BufferedSink dest = Okio.buffer(Okio.sink(videofile));
             dest.writeAll(src);
             dest.close();
             src.close();
             return Uri.fromFile(videofile);
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
+            Timber.e(e.toString());
             return null;
         }
     }
@@ -152,6 +154,7 @@ public class Utils {
                 bgPaint);
 
         // Store image to default external storage directory
+        FileOutputStream out = null;
         try {
             if (Build.VERSION.SDK_INT > VERSION_CODES.LOLLIPOP_MR1 &&
                     context.checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") == PackageManager.PERMISSION_DENIED) {
@@ -159,11 +162,13 @@ public class Utils {
             }
 
             file.getParentFile().mkdirs();
-            FileOutputStream out = new FileOutputStream(file);
+            out = new FileOutputStream(file);
             image.compress(compressFormat, 90, out); //Output
             bmpUri = Uri.fromFile(file);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
+        } finally {
+            if(out != null) try { out.close(); } catch (Exception ignored) {}
         }
         return bmpUri;
     }
@@ -186,6 +191,13 @@ public class Utils {
         Toast toast = Toast.makeText(context,
                 context.getResources().getString(R.string.launching_app_page),
                 Toast.LENGTH_SHORT);
+        toast.show();
+    }
+
+    public static void showVideoNotReadyForSharingYetToast(Context context) {
+        Toast toast = Toast.makeText(context,
+                context.getResources().getString(R.string.video_not_ready_for_sharing_yet),
+                Toast.LENGTH_LONG);
         toast.show();
     }
 

@@ -9,6 +9,8 @@ import com.crashlytics.android.core.CrashlyticsCore;
 import com.facebook.FacebookSdk;
 import com.squareup.leakcanary.LeakCanary;
 
+import net.danlew.android.joda.JodaTimeAndroid;
+
 import io.fabric.sdk.android.Fabric;
 import timber.log.Timber;
 
@@ -53,6 +55,8 @@ public class MyApplication extends Application {
         }
 
         FacebookSdk.sdkInitialize(getApplicationContext());
+
+        JodaTimeAndroid.init(this);
 
         mInstance = this;
         this.setAppContext(getApplicationContext());

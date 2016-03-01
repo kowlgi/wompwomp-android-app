@@ -19,6 +19,7 @@ public class MyListItem {
     public String author;
     public String videoUri;
     public Integer numPlays;
+    public Integer fileSize;
 
     public static MyListItem fromCursor(Cursor c) {
         MyListItem myItem = new MyListItem();
@@ -34,6 +35,7 @@ public class MyListItem {
         myItem.author = c.getString(WompWompConstants.COLUMN_AUTHOR);
         myItem.videoUri = c.getString(WompWompConstants.COLUMN_VIDEOURI);
         myItem.numPlays = c.getInt(WompWompConstants.COLUMN_NUM_PLAYS);
+        myItem.fileSize = c.getInt(WompWompConstants.COLUMN_FILE_SIZE);
         return myItem;
     }
 
@@ -65,7 +67,7 @@ public class MyListItem {
 
     @Override
     public String toString() {
-        String result = "_id: " + _id +
+        return "_id: " + _id +
                 ", entryId: " + id +
                 ", imageuri: " + imageSourceUri +
                 ", quoteText: " + quoteText +
@@ -76,7 +78,7 @@ public class MyListItem {
                 ", cardType: " + cardType +
                 ", author: " + author +
                 ", videouri: " + videoUri +
-                ", numPlays: " + numPlays;
-        return result;
+                ", numPlays: " + numPlays +
+                ", fileSize: " + fileSize;
     }
 }

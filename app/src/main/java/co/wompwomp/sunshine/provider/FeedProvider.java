@@ -24,16 +24,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
-import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
+import android.support.annotation.NonNull;
 
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
-import java.util.HashSet;
-
-import co.wompwomp.sunshine.WompWompConstants;
 import co.wompwomp.sunshine.db.SelectionBuilder;
-import timber.log.Timber;
 
 public class FeedProvider extends ContentProvider {
     FeedDatabase mDatabaseHelper;
@@ -97,7 +90,7 @@ public class FeedProvider extends ContentProvider {
      * (/entries/{ID}).
      */
     @Override
-    public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
+    public Cursor query(@NonNull Uri uri, String[] projection, String selection, String[] selectionArgs,
                         String sortOrder) {
         SQLiteDatabase db = mDatabaseHelper.getReadableDatabase();
         SelectionBuilder builder = new SelectionBuilder();
@@ -153,7 +146,7 @@ public class FeedProvider extends ContentProvider {
      * Delete an entry by database by URI.
      */
     @Override
-    public int delete(Uri uri, String selection, String[] selectionArgs) {
+    public int delete(@NonNull Uri uri, String selection, String[] selectionArgs) {
         SelectionBuilder builder = new SelectionBuilder();
         final SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
         final int match = sUriMatcher.match(uri);
@@ -241,7 +234,8 @@ public class FeedProvider extends ContentProvider {
                         FeedContract.Entry.COLUMN_NAME_CARD_TYPE + TYPE_INTEGER + COMMA_SEP +
                         FeedContract.Entry.COLUMN_NAME_AUTHOR + TYPE_TEXT + COMMA_SEP +
                         FeedContract.Entry.COLUMN_NAME_VIDEOURI + TYPE_TEXT + COMMA_SEP +
-                        FeedContract.Entry.COLUMN_NAME_NUM_PLAYS + TYPE_INTEGER + ")";
+                        FeedContract.Entry.COLUMN_NAME_NUM_PLAYS + TYPE_INTEGER + COMMA_SEP +
+                        FeedContract.Entry.COLUMN_NAME_FILE_SIZE + TYPE_INTEGER + ")";
 
         private static final String SQL_V3_1_NEW_ENTRIES =
                 "ALTER TABLE " + FeedContract.Entry.TABLE_NAME + " ADD COLUMN " +
@@ -254,6 +248,10 @@ public class FeedProvider extends ContentProvider {
         private static final String SQL_V4_2_NEW_ENTRIES =
                 "ALTER TABLE " + FeedContract.Entry.TABLE_NAME + " ADD COLUMN " +
                         FeedContract.Entry.COLUMN_NAME_NUM_PLAYS + TYPE_INTEGER + " DEFAULT 0";
+
+        private static final String SQL_V4_3_NEW_ENTRIES =
+                "ALTER TABLE " + FeedContract.Entry.TABLE_NAME + " ADD COLUMN " +
+                        FeedContract.Entry.COLUMN_NAME_FILE_SIZE + TYPE_INTEGER + " DEFAULT 0";
 
         public FeedDatabase(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -273,6 +271,7 @@ public class FeedProvider extends ContentProvider {
             if(oldVersion < 4 && newVersion >=4) {
                 db.execSQL(SQL_V4_1_NEW_ENTRIES);
                 db.execSQL(SQL_V4_2_NEW_ENTRIES);
+                db.execSQL(SQL_V4_3_NEW_ENTRIES);
             }
         }
     }

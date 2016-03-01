@@ -127,6 +127,10 @@ public class FeedContract {
          * Number of times the video has been played
          */
         public static final String COLUMN_NAME_NUM_PLAYS = "num_plays";
+        /**
+         * Size of the video file
+         */
+        public static final String COLUMN_NAME_FILE_SIZE = "file_size";
 
     }
 }

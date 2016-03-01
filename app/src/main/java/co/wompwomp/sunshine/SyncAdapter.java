@@ -82,7 +82,8 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             FeedContract.Entry.COLUMN_NAME_CARD_TYPE,
             FeedContract.Entry.COLUMN_NAME_AUTHOR,
             FeedContract.Entry.COLUMN_NAME_VIDEOURI,
-            FeedContract.Entry.COLUMN_NAME_NUM_PLAYS};
+            FeedContract.Entry.COLUMN_NAME_NUM_PLAYS,
+            FeedContract.Entry.COLUMN_NAME_FILE_SIZE};
 
     /* Projection used for obtaining high and low cursors for fetching feed data */
     final String[] CURSOR_PROJECTION = new String[]{
@@ -280,6 +281,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             String quoteText;
             String videoUri;
             Integer numPlays;
+            Integer fileSize;
 
             while (c.moveToNext()) {
                 syncResult.stats.numEntries++;
@@ -292,6 +294,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 quoteText = c.getString(WompWompConstants.COLUMN_QUOTE_TEXT);
                 videoUri = c.getString(WompWompConstants.COLUMN_VIDEOURI);
                 numPlays = c.getInt(WompWompConstants.COLUMN_NUM_PLAYS);
+                fileSize = c.getInt(WompWompConstants.COLUMN_FILE_SIZE);
 
                 FeedParser.Entry match = entryMap.get(entryId);
                 if (match != null) {
@@ -300,13 +303,14 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                     // Check to see if the entry needs to be updated
                     Uri existingUri = FeedContract.Entry.CONTENT_URI.buildUpon()
                             .appendPath(Integer.toString(id)).build();
-                    if ((match.numFavorites != numFavorites) ||
-                            (match.numShares != numShares) ||
-                            (match.author != author) ||
-                            (match.imageSourceUri != imageSourceUri) ||
-                            (match.quoteText != quoteText) ||
-                            (match.videoUri != videoUri) ||
-                            (match.numPlays != numPlays)){
+                    if (numFavorites.equals(match.numFavorites) ||
+                            numShares.equals(match.numShares) ||
+                            author.equals(match.author) ||
+                            imageSourceUri.equals(match.imageSourceUri) ||
+                            quoteText.equals(match.quoteText) ||
+                            videoUri.equals(match.videoUri) ||
+                            numPlays.equals(match.numPlays) ||
+                            fileSize.equals(match.fileSize)){
                         // Update existing record
                         batch.add(ContentProviderOperation.newUpdate(existingUri)
                                 .withValue(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, match.numFavorites)
@@ -316,6 +320,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                                 .withValue(FeedContract.Entry.COLUMN_NAME_QUOTE_TEXT, match.quoteText)
                                 .withValue(FeedContract.Entry.COLUMN_NAME_VIDEOURI, match.videoUri)
                                 .withValue(FeedContract.Entry.COLUMN_NAME_NUM_PLAYS, match.numPlays)
+                                .withValue(FeedContract.Entry.COLUMN_NAME_FILE_SIZE, match.fileSize)
                                 .build());
                         syncResult.stats.numUpdates++;
                     } else {
@@ -350,6 +355,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                     .withValue(FeedContract.Entry.COLUMN_NAME_AUTHOR, e.author)
                     .withValue(FeedContract.Entry.COLUMN_NAME_VIDEOURI, e.videoUri)
                     .withValue(FeedContract.Entry.COLUMN_NAME_NUM_PLAYS, e.numPlays)
+                    .withValue(FeedContract.Entry.COLUMN_NAME_FILE_SIZE, e.fileSize)
                     .build());
             syncResult.stats.numInserts++;
         }

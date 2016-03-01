@@ -56,8 +56,9 @@ public class FeedParser {
         Integer numShares = null;
         String createdOn = null;
         String author = null;
-        String videoUri = null;
+        String videoUri = ""; /* this is deliberately not initialized to null as we check if uri length is 0 to determine if item is a video */
         Integer numPlays = 0;
+        Integer fileSize = 0;
 
         reader.beginObject();
         while (reader.hasNext()) {
@@ -90,13 +91,16 @@ public class FeedParser {
                 case WompWompConstants.WOMPWOMP_NUMPLAYS:
                     numPlays = reader.nextInt();
                     break;
+                case WompWompConstants.WOMPWOMP_FILESIZE:
+                    fileSize = reader.nextInt();
+                    break;
                 default:
                     reader.skipValue();
                     break;
             }
         }
         reader.endObject();
-        return new Entry(id, imageSourceUri, quoteText, numFavorites, numShares, createdOn, author, videoUri, numPlays);
+        return new Entry(id, imageSourceUri, quoteText, numFavorites, numShares, createdOn, author, videoUri, numPlays, fileSize);
     }
 
     /**
@@ -112,9 +116,11 @@ public class FeedParser {
         public final String author;
         public final String videoUri;
         public final Integer numPlays;
+        public final Integer fileSize;
 
         Entry(String id, String imageSourceUri, String quoteText, Integer numFavorites,
-              Integer numShares, String createdOn, String author, String videoUri, Integer numPlays) {
+              Integer numShares, String createdOn, String author, String videoUri,
+              Integer numPlays, Integer fileSize) {
             this.id = id;
             this.imageSourceUri = imageSourceUri;
             this.quoteText = quoteText;
@@ -124,6 +130,7 @@ public class FeedParser {
             this.author = author;
             this.videoUri = videoUri;
             this.numPlays = numPlays;
+            this.fileSize = fileSize;
         }
     }
 }

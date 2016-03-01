@@ -14,6 +14,7 @@ public class WompWompConstants {
     public static final int COLUMN_AUTHOR = 9;
     public static final int COLUMN_VIDEOURI = 10;
     public static final int COLUMN_NUM_PLAYS = 11;
+    public static final int COLUMN_FILE_SIZE = 12;
 
     /* Card types */
     public static final int TYPE_CONTENT_CARD = 100;
@@ -32,6 +33,7 @@ public class WompWompConstants {
     public static final String WOMPWOMP_AUTHOR = "a";
     public static final String WOMPWOMP_VIDEOURI = "m";
     public static final String WOMPWOMP_NUMPLAYS = "p";
+    public static final String WOMPWOMP_FILESIZE = "z";
 
     // Constants for entry id for prompt cards
     public static final String WOMPWOMP_CTA_SHARE = "CTA_SHARE";
@@ -70,4 +72,6 @@ public class WompWompConstants {
             REMOVE_ALL_CTAS_NOTIFICATION,
             CTA_UPGRADE_NOTIFICATION
     };
+
+    public static final Integer MAX_VIDEOS_FILES_TO_RETAIN = 10;
 }
