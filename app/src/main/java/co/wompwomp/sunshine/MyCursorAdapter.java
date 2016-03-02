@@ -127,6 +127,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
         ObjectInputStream ois = new ObjectInputStream(fis);
         HashSet<String> obj = (HashSet<String>) ois.readObject();
         ois.close();
+        fis.close();
         return obj;
     }
 
@@ -150,11 +151,13 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
             ObjectOutputStream likesoos = new ObjectOutputStream(likesfos);
             likesoos.writeObject(mLikes);
             likesoos.close();
+            likesfos.close();
 
             FileOutputStream videosfos = mContext.openFileOutput(WompWompConstants.VIDEO_DOWNLOADS_FILENAME, Context.MODE_PRIVATE);
             ObjectOutputStream videosoos = new ObjectOutputStream(videosfos);
             videosoos.writeObject(mDownloadedVideos);
             videosoos.close();
+            videosfos.close();
 
             Timber.d("Wrote likes and downloaded videos in-memory hashmaps to corresponding files");
         } catch (java.io.FileNotFoundException fnf) {
@@ -285,14 +288,16 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
     }
 
     public void resizeSurface(int width, int height) {
-        ViewGroup.LayoutParams lp = mItemPlayingVideo.surfaceView.getLayoutParams();
-        DisplayMetrics displayMetrics = mContext.getResources().getDisplayMetrics();
-        lp.width = displayMetrics.widthPixels;
-        lp.height = displayMetrics.widthPixels * height / width;
+        if(mItemPlayingVideo != null) {
+            ViewGroup.LayoutParams lp = mItemPlayingVideo.surfaceView.getLayoutParams();
+            DisplayMetrics displayMetrics = mContext.getResources().getDisplayMetrics();
+            lp.width = displayMetrics.widthPixels;
+            lp.height = displayMetrics.widthPixels * height / width;
 
-        Timber.d("new width: " + lp.width + ", new height: " + lp.height);
-        mItemPlayingVideo.videoProgress.setVisibility(View.GONE);
-        mItemPlayingVideo.surfaceView.setLayoutParams(lp);
+            Timber.d("new width: " + lp.width + ", new height: " + lp.height);
+            mItemPlayingVideo.videoProgress.setVisibility(View.GONE);
+            mItemPlayingVideo.surfaceView.setLayoutParams(lp);
+        }
     }
 
     private void resetSurfaceViewSize(SurfaceView sv) {
@@ -402,7 +407,6 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 holder.createdOnView.setText(timeAndAuthor);
 
                 holder.numfavoritesView.setText(MyListItem.format(myListItem.numFavorites));
-
                 if(!mShareCounts.containsKey(myListItem.id)){
                     mShareCounts.put(myListItem.id, myListItem.numShares);
                 }
