@@ -306,6 +306,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
         if(mItemPlayingVideo != null) {
             mItemPlayingVideo.surfaceView.getHolder().removeCallback(this);
             mPlayer.blockingClearSurface();
+            mItemPlayingVideo.videoProgress.setVisibility(View.GONE);
             resetSurfaceViewSize(mItemPlayingVideo.surfaceView);
         }
 

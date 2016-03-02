@@ -204,7 +204,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     protected void onResume() {
         super.onResume();
         LocalBroadcastManager.getInstance(this).registerReceiver(mSyncBroadcastReceiver, syncIntentFilter);
-        /* Crude check to opportunistically resync only if we're resuming after putting the app in background */
+        /* Opportunistically resync only if we're resuming after putting the app in background */
         if(PreferenceManager
                 .getDefaultSharedPreferences(this)
                 .getBoolean(WompWompConstants.APP_RESUMED_FROM_BG, true)) {

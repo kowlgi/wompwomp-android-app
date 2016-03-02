@@ -73,5 +73,5 @@ public class WompWompConstants {
             CTA_UPGRADE_NOTIFICATION
     };
 
-    public static final Integer MAX_VIDEOS_FILES_TO_RETAIN = 10;
+    public static final Integer MAX_VIDEOS_FILES_TO_RETAIN = 100;
 }
