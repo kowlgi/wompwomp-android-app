@@ -30,7 +30,7 @@ public class FeedContract {
     private FeedContract() {
     }
 
-    public static final String BASE_URL = "http://54.201.227.101:3000";
+    public static final String BASE_URL = "http://wompwomp.co";
     //Deprecated: public static final String FEED_URL = BASE_URL + "/i";
     public static final String FEED_URL = BASE_URL + "/iv";
     public static final String ITEM_VIEW_URL = BASE_URL + "/v/";
