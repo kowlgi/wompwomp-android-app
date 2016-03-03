@@ -26,3 +26,9 @@
 # to avoid problem on certain Android 4.2.2/4.4.2 devices
 # see https://code.google.com/p/android/issues/detail?id=78377
 -keep class !android.support.v7.view.menu.**,!android.support.design.internal.NavigationMenu,!android.support.design.internal.NavigationMenuPresenter,!android.support.design.internal.NavigationSubMenu,android.support.** {*;}
+
+
+# Fabric: We’ve made it simple to set up ProGuard and Dexguard to automatically upload your
+# mapping.txt file to de-obfuscate your crash reports. Add the following line to your
+# ProGuard configuration file:
+-keepattributes SourceFile,LineNumberTable,*Annotation*
