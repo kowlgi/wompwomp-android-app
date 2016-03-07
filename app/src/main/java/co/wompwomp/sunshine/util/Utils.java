@@ -37,6 +37,10 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -268,8 +272,11 @@ public class Utils {
         if(BuildConfig.DEBUG) return;
 
         OkHttpClient client = new OkHttpClient();
+        DateTime dt = new DateTime();
+        DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
         RequestBody formBody = new FormBody.Builder()
                 .add("inst_id", Installation.id(context))
+                .add("timestamp", fmt.print(dt))
                 .build();
         Request request = new Request.Builder()
                 .url(url)

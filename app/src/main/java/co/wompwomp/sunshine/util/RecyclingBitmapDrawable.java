@@ -69,11 +69,6 @@ public class RecyclingBitmapDrawable extends BitmapDrawable {
         // has been displayed, then recycle/home/kowlgi/Sunshine/app/src/main/java/co.wompwomp.sunshine.services
         if (mCacheRefCount <= 0 && mDisplayRefCount <= 0 && mHasBeenDisplayed
                 && hasValidBitmap()) {
-            if (BuildConfig.DEBUG) {
-                Timber.d("No longer being used or cached so recycling. "
-                        + toString());
-            }
-
             getBitmap().recycle();
         }
         //END_INCLUDE(check_state)

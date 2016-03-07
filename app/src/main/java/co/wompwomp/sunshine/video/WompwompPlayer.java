@@ -113,7 +113,6 @@ public class WompwompPlayer implements ExoPlayer.Listener, MediaCodecVideoTrackR
 
     @Override
     public void onDrawnToSurface(Surface surface) {
-        Timber.d("Video drawn to surface");
     }
 
     @Override
@@ -124,7 +123,7 @@ public class WompwompPlayer implements ExoPlayer.Listener, MediaCodecVideoTrackR
 
     @Override
     public void onDroppedFrames(int count, long elapsed) {
-        Timber.d("Video dropped frames");
+        //do nothing
     }
 
     @Override

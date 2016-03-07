@@ -41,6 +41,7 @@ public class FeedContract {
     public static final String APP_INSTALLED_URL = BASE_URL + "/in";
     public static final String APP_OPENED_URL = BASE_URL + "/op";
     public static final String APP_PUSH_NOTIFICATION_CLICKED_URL = BASE_URL + "/not/";
+    public static final String APP_CLOSED_URL = BASE_URL + "/cl";
 
     /**
      * Content provider authority.

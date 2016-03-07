@@ -218,7 +218,6 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                     // ignore
                 }
             }
-            Timber.i("Sending sync intent: " + syncMethod.name());
             Intent intent = new Intent(MainActivity.ACTION_FINISHED_SYNC);
             intent.putExtra(WompWompConstants.SYNC_METHOD, syncMethod.name());
             LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);

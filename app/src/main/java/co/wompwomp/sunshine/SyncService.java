@@ -43,13 +43,11 @@ public class SyncService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        Timber.i("onCreate: pre-lock");
         synchronized (sSyncAdapterLock) {
             if (sSyncAdapter == null) {
                 sSyncAdapter = new SyncAdapter(getApplicationContext(), true);
             }
         }
-        Timber.i("onCreate: post-lock");
     }
 
     @Override
@@ -58,7 +56,6 @@ public class SyncService extends Service {
      */
     public void onDestroy() {
         super.onDestroy();
-        Timber.i("destroyed");
     }
 
     /**

@@ -51,6 +51,8 @@ public class MyGcmListenerService extends GcmListenerService {
     // [START receive_message]
     @Override
     public void onMessageReceived(String from, Bundle data) {
+        if(from == null) return; // this should ideally never happen but we've seen a few crashes reported on crashlytics
+
         if (from.startsWith(WompWompConstants.CONTENT_NOTIFICATION)) {
             String message = data.getString("message");
             String imageUri = data.getString("imageuri");
@@ -69,29 +71,22 @@ public class MyGcmListenerService extends GcmListenerService {
             } else if (versionCondition.equals("<")){
                 pushNotify = (BuildConfig.VERSION_CODE < Integer.valueOf(versionCode));
             }
-            Timber.d("wompwomp notify", "versionCode: " + versionCode + ", versionCondition: "
-                    + versionCondition + ", pushNotify: " + pushNotify +
-                    ", build version: " + BuildConfig.VERSION_CODE);
 
             if(pushNotify) {
                 pushNotification(message, imageUri, itemId);
                 Answers.getInstance().logCustom(new CustomEvent("Posted push notification")
                         .putCustomAttribute("itemid", itemId));
-                Timber.i("Pushed notification to user. Text: %s, ImageUri: %s, ItemId: %s", message, imageUri, itemId);
             }
         } else if (from.startsWith(WompWompConstants.SYNC_NOTIFICATION)){
             SyncUtils.TriggerSync(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO);
-            Timber.i("Initiated sync latest items");
         } else if(from.startsWith(WompWompConstants.CTA_SHARE_NOTIFICATION)) {
             String timestamp = data.getString("message");
-            Timber.i("Pushed Share CTA to feed");
             // push 'share now' card to feed
             getContentResolver().insert(FeedContract.Entry.CONTENT_URI, populateContentValues(WompWompConstants.TYPE_SHARE_CARD, timestamp, null));
         } else if(from.startsWith(WompWompConstants.CTA_RATE_NOTIFICATION)) {
             String timestamp = data.getString("message");
             // push 'rate now' card to feed
             getContentResolver().insert(FeedContract.Entry.CONTENT_URI, populateContentValues(WompWompConstants.TYPE_RATE_CARD, timestamp, null));
-            Timber.i("Pushed Rate CTA to feed");
         } else if(from.startsWith(WompWompConstants.CTA_UPGRADE_NOTIFICATION)) {
             String timestamp = data.getString("message");
             String versionCode = data.getString("versionCode");
@@ -103,7 +98,6 @@ public class MyGcmListenerService extends GcmListenerService {
             if(BuildConfig.VERSION_CODE < Integer.valueOf(versionCode)) {
                 // push 'upgrade now' card to feed
                 getContentResolver().insert(FeedContract.Entry.CONTENT_URI, populateContentValues(WompWompConstants.TYPE_UPGRADE_CARD, timestamp, versionCode));
-                Timber.i("Pushed Upgrade CTA to feed");
             }
         } else if(from.startsWith(WompWompConstants.REMOVE_ALL_CTAS_NOTIFICATION)) {
             Uri uri = FeedContract.Entry.CONTENT_URI; // Get all entries
@@ -113,10 +107,8 @@ public class MyGcmListenerService extends GcmListenerService {
             getContentResolver().delete(uri, FeedContract.Entry.COLUMN_NAME_ENTRY_ID+"=?", share_args);
             getContentResolver().delete(uri, FeedContract.Entry.COLUMN_NAME_ENTRY_ID+"=?", rate_args);
             getContentResolver().delete(uri, FeedContract.Entry.COLUMN_NAME_ENTRY_ID+"=?", upgrade_args);
-            Timber.i("Removed all CTAs from feed");
         } else {
             // normal downstream message.
-            Timber.i("GOT NOTIFIED BOUT NOTHIN'");
         }
     }
     // [END receive_message]

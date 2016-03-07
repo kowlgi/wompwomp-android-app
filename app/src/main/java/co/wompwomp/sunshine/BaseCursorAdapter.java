@@ -30,7 +30,6 @@ public abstract class BaseCursorAdapter<VH extends RecyclerView.ViewHolder> exte
     private DataSetObserver mDataSetObserver;
 
     public BaseCursorAdapter(Cursor cursor) {
-        Timber.d("BaseCursorAdapter() constructor");
         mCursor = cursor;
         mDataValid = cursor != null;
         mRowIdColumn = mDataValid ? mCursor.getColumnIndex("_id") : -1;

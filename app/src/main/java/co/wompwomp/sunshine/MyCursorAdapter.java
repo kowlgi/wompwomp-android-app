@@ -106,7 +106,6 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
         if (fileExists(mContext, WompWompConstants.VIDEO_DOWNLOADS_FILENAME)) {
             try {
                 mDownloadedVideos = getKeysFromFile(WompWompConstants.VIDEO_DOWNLOADS_FILENAME);
-                Timber.d("Video files: " + mDownloadedVideos);
             } catch (java.lang.Exception e) {
                 Timber.e("Error from file read operation ", e);
                 e.printStackTrace();
@@ -114,7 +113,6 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
         } else {
             mDownloadedVideos = new HashSet<>();
         }
-        Timber.d("Populated likes in-memory hashmap: " + mLikes.toString());
     }
 
     private boolean fileExists(Context context, String filename) {
@@ -159,7 +157,6 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
             videosoos.close();
             videosfos.close();
 
-            Timber.d("Wrote likes and downloaded videos in-memory hashmaps to corresponding files");
         } catch (java.io.FileNotFoundException fnf) {
             Timber.e("Error from file stream open operation ", fnf);
             fnf.printStackTrace();
@@ -221,7 +218,6 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         if (mPlayer != null) {
-            Timber.d("Surface created: " + holder.getSurface());
             mPlayer.setSurface(holder.getSurface());
         }
     }
@@ -229,13 +225,11 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
         // Do nothing.
-        Timber.d("surface changed: width=" + width + ", height=" + height);
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
         if (mPlayer != null) {
-            Timber.d("Surface destroyed: " + holder.getSurface());
             mPlayer.blockingClearSurface();
             resetSurfaceViewSize(mItemPlayingVideo.surfaceView);
         }
@@ -294,7 +288,6 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
             lp.width = displayMetrics.widthPixels;
             lp.height = displayMetrics.widthPixels * height / width;
 
-            Timber.d("new width: " + lp.width + ", new height: " + lp.height);
             mItemPlayingVideo.videoProgress.setVisibility(View.GONE);
             mItemPlayingVideo.surfaceView.setLayoutParams(lp);
         }
@@ -323,14 +316,11 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
             videoUri = Uri.fromFile(mContext.getFileStreamPath(filename));
         }
 
-        Timber.d("Video source: " + videoUri.toString());
         mPlayer.prepare(videoUri);
         mPlayer.setPlayWhenReady(true);
         if(mItemPlayingVideo.surfaceView.getHolder().getSurface() != null) {
-            Timber.d("Surface exists: " + mItemPlayingVideo.surfaceView.getHolder().getSurface());
             mPlayer.setSurface(mItemPlayingVideo.surfaceView.getHolder().getSurface());
         } else {
-            Timber.d("Surface doesn't exist yet");
             mItemPlayingVideo.surfaceView.getHolder().addCallback(this);
         }
     }
@@ -375,7 +365,6 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 }
                 holder.videoProgress.setVisibility(View.GONE);
 
-                Timber.d(myListItem.toString());
                 if(myListItem.quoteText.isEmpty()) {
                     holder.textView.setVisibility(View.GONE);
                 } else {
@@ -713,11 +702,9 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
             if(result == null) {
                 File videofile = new File(mContext.getFilesDir(), filename);
                 if(fileSize == videofile.length()) {
-                    Timber.d("Completed video download. filename: " + filename);
                     mDownloadedVideos.add(filename);
                     mVideoDownloadsInProgress.remove(filename);
                 }
-                else Timber.d("Video not fully downloaded. Expected: " + fileSize + ", actual: " + videofile.length());
             }
         }
     }

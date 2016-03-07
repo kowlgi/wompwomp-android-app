@@ -19,17 +19,26 @@ repositories {
 apply plugin: 'com.google.gms.google-services'
 
 android {
+    signingConfigs {
+        wompwomp {
+            keyAlias 'alpha'
+            keyPassword 'SangiNautilus86'
+            storeFile file('/home/kowlgi/Sunshine/wompwomp.keystore')
+            storePassword 'pongy2008'
+        }
+    }
     compileSdkVersion 23
     buildToolsVersion "23.0.1"
     defaultConfig {
         applicationId 'co.wompwomp.sunshine'
-        minSdkVersion 14
+        minSdkVersion 16
         targetSdkVersion 23
-        versionCode 9
-        versionName "1.3"
+        versionCode 11
+        versionName "1.3.2"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         resValue "string", "app_name", "wompwomp"
         resValue "string", "app_version", versionName
+        signingConfig signingConfigs.wompwomp
     }
     buildTypes {
         release {
