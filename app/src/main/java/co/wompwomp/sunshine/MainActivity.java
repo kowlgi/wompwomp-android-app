@@ -203,6 +203,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @Override
     protected void onResume() {
         super.onResume();
+        LocalBroadcastManager.getInstance(this).registerReceiver(mSyncBroadcastReceiver, syncIntentFilter);
     }
 
     @Override
@@ -218,7 +219,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         So, we call notifyDataSetChanged() so onBindViewHolder() gets invoked */
         mAdapter.notifyDataSetChanged();
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(mSyncBroadcastReceiver, syncIntentFilter);
         /* Opportunistically resync only if we're resuming after putting the app in background */
         if(PreferenceManager
                 .getDefaultSharedPreferences(this)
