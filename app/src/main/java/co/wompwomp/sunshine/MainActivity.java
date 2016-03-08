@@ -204,21 +204,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     protected void onResume() {
         super.onResume();
         LocalBroadcastManager.getInstance(this).registerReceiver(mSyncBroadcastReceiver, syncIntentFilter);
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        mAdapter.start();
-        mLoadingBottom = false;
-        mLoadingTop = false;
-        mImageFetcher.setExitTasksEarly(false);
-        /* Because we're loading images asynchronously, we might pause() this activity before
-        fetching the image from network. When this activity is resumed, recycler view doesn't call
-        adapter.onBindViewholder() automatically, which is needed to kickstart image loading again.
-        So, we call notifyDataSetChanged() so onBindViewHolder() gets invoked */
-        mAdapter.notifyDataSetChanged();
-
         /* Opportunistically resync only if we're resuming after putting the app in background */
         if(PreferenceManager
                 .getDefaultSharedPreferences(this)
@@ -233,19 +218,33 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        mAdapter.start();
+        mLoadingBottom = false;
+        mLoadingTop = false;
+        mImageFetcher.setExitTasksEarly(false);
+        /* Because we're loading images asynchronously, we might pause() this activity before
+        fetching the image from network. When this activity is resumed, recycler view doesn't call
+        adapter.onBindViewholder() automatically, which is needed to kickstart image loading again.
+        So, we call notifyDataSetChanged() so onBindViewHolder() gets invoked */
+        mAdapter.notifyDataSetChanged();
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mSyncBroadcastReceiver);
         mImageFetcher.setPauseWork(false);
         mImageFetcher.setExitTasksEarly(true);
         mImageFetcher.flushCache();
+        Utils.postToWompwomp(FeedContract.APP_CLOSED_URL, this);
     }
 
     @Override
     protected void onStop(){
         super.onStop();
         mAdapter.stop();
-        Utils.postToWompwomp(FeedContract.APP_CLOSED_URL, this);
     }
 
     @Override
