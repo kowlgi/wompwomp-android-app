@@ -66,18 +66,17 @@ public class WelcomeActivity extends AppCompatActivity {
             }
             if(c != null) c.close();
 
-            Timber.d("Creating " + WompWompConstants.LIKES_FILENAME + " with content: " + likes.toString());
-
             try {
                 FileOutputStream fos = this.openFileOutput(WompWompConstants.LIKES_FILENAME, Context.MODE_PRIVATE);
                 ObjectOutputStream oos = new ObjectOutputStream(fos);
                 oos.writeObject(likes);
                 oos.close();
+                fos.close();
             } catch (java.io.FileNotFoundException fnf) {
-                Timber.e("Error from file stream open operation ", fnf);
+                Timber.e("Error from file stream open operation ", fnf.toString());
                 fnf.printStackTrace();
             } catch (java.io.IOException ioe) {
-                Timber.e("Error from file write operation ", ioe);
+                Timber.e("Error from file write operation ", ioe.toString());
                 ioe.printStackTrace();
             }
         }

@@ -99,6 +99,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 mLikes =  getKeysFromFile(WompWompConstants.LIKES_FILENAME);
             } catch (java.lang.Exception e) {
                 Timber.e("Error from file read operation ", e);
+                mLikes = new HashSet<>();
                 e.printStackTrace();
             }
         } else mLikes = new HashSet<>();
@@ -107,8 +108,9 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
             try {
                 mDownloadedVideos = getKeysFromFile(WompWompConstants.VIDEO_DOWNLOADS_FILENAME);
             } catch (java.lang.Exception e) {
-                Timber.e("Error from file read operation ", e);
+                Timber.e("Error from file read operation ", e.toString());
                 e.printStackTrace();
+                mDownloadedVideos = new HashSet<>();
             }
         } else {
             mDownloadedVideos = new HashSet<>();
