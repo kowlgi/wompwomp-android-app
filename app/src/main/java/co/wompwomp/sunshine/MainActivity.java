@@ -223,8 +223,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         if(PreferenceManager
                 .getDefaultSharedPreferences(this)
                 .getBoolean(WompWompConstants.APP_RESUMED_FROM_BG, true)) {
-            Utils.postToWompwomp(FeedContract.APP_OPENED_URL, this);
             SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.EXISTING_AND_NEW_ABOVE_LOW_CURSOR);
+            Utils.postToWompwomp(FeedContract.APP_OPENED_URL, this);
         } else {
             PreferenceManager
                     .getDefaultSharedPreferences(this).edit()
