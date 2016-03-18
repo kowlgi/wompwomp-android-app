@@ -21,6 +21,8 @@ public class InstallReferrerReceiver extends BroadcastReceiver {
         if(BuildConfig.DEBUG) return;
 
         String referrer = intent.getStringExtra("referrer");
+        if(referrer == null) referrer = "campaignid%3dunknown";
+        
         OkHttpClient client = new OkHttpClient();
         RequestBody formBody = new FormBody.Builder()
                 .add("inst_id", Installation.id(context))

@@ -573,7 +573,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         if (myListItem.favorite) {
                             // she likes me not :(
                             if (myListItem.numFavorites > 0) {
-                                holder.numfavoritesView.setText(MyListItem.format(myListItem.numFavorites - 1));
+                                holder.numfavoritesView.setText(MyListItem.format(myListItem.numFavorites));
                             }
                             mLikes.remove(myListItem.id);
                             holder.favoriteButton.setImageResource(R.drawable.ic_favorite_lightred_24dp);
