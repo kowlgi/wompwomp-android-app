@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 
 import android.preference.PreferenceManager;
@@ -33,6 +35,10 @@ import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.share.Sharer;
 import com.facebook.share.widget.ShareDialog;
+
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -215,6 +221,10 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                     .getDefaultSharedPreferences(this).edit()
                     .putBoolean(WompWompConstants.APP_RESUMED_FROM_BG, true).commit();
         }
+
+        DateTime dt = new DateTime();
+        DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
+        PreferenceManager.getDefaultSharedPreferences(this).edit().putString(WompWompConstants.LAST_LOGGED_IN_TIMESTAMP,fmt.print(dt));
     }
 
     @Override
@@ -328,7 +338,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         return new CursorLoader(this,  // Context
                 FeedContract.Entry.CONTENT_URI, // URI
                 PROJECTION,                // Projection
-                null,                 // Selection
+                null,                      // Selection
                 null,                      // Selection args
                 FeedContract.Entry.COLUMN_NAME_CREATED_ON + " desc"); // Sort
     }
@@ -363,7 +373,10 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     private void syncItems(WompWompConstants.SyncMethod syncMethod) {
-        if(!Utils.hasConnectivity(this)) {
+        ConnectivityManager cm = (ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean hasConnectivity = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
+        if(!hasConnectivity) {
             mNoNetworkToast.show();
             mSwipeRefreshLayout.setRefreshing(false);
             return;

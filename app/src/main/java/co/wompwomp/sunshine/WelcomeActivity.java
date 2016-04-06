@@ -139,6 +139,10 @@ public class WelcomeActivity extends AppCompatActivity {
 
         SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.SUBSET_OF_LATEST_ITEMS_NO_CURSOR);
 
+        Intent pushNotificationIntent = new Intent(this, NotifierService.class);
+        pushNotificationIntent.setAction(WompWompConstants.INIT_NOTIFICATION_ALARM);
+        startService(pushNotificationIntent);
+
         Intent mainIntent = new Intent(this, MainActivity.class);
         startActivity(mainIntent);
         finish();

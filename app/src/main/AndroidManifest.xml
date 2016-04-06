@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="co.wompwomp.sunshine" > <!-- Because Timber's min supported SDK is 15, while this apps min SDK is 11 -->
+    package="co.wompwomp.sunshine"> <!-- Because Timber's min supported SDK is 15, while this apps min SDK is 11 -->
     <!-- Because Facebook's min supportted SDK is 15, while this apps min SDK is 11 -->
     <uses-sdk tools:overrideLibrary="timber.log, com.facebook" />
 
@@ -31,17 +31,16 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:theme="@style/AppTheme">
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
-            android:launchMode="singleTop">
-        </activity>
+            android:launchMode="singleTop"></activity>
         <!-- [START gcm_receiver] -->
         <receiver
             android:name="com.google.android.gms.gcm.GcmReceiver"
             android:exported="true"
-            android:permission="com.google.android.c2dm.permission.SEND" >
+            android:permission="com.google.android.c2dm.permission.SEND">
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
 
@@ -58,11 +57,10 @@
             </intent-filter>
         </receiver>
 
-
         <!-- [START gcm_listener] -->
         <service
             android:name=".MyGcmListenerService"
-            android:exported="false" >
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
             </intent-filter>
@@ -71,7 +69,7 @@
         <!-- [START instanceId_listener] -->
         <service
             android:name=".MyInstanceIDListenerService"
-            android:exported="false" >
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.google.android.gms.iid.InstanceID" />
             </intent-filter>
@@ -79,8 +77,7 @@
         <!-- [END instanceId_listener] -->
         <service
             android:name=".RegistrationIntentService"
-            android:exported="false" >
-        </service>
+            android:exported="false"></service>
 
         <provider
             android:name=".provider.FeedProvider"
@@ -97,7 +94,7 @@
         -->
         <service
             android:name=".SyncService"
-            android:exported="true" >
+            android:exported="true">
 
             <!--
             This intent filter is required. It allows the system to launch our sync service
@@ -120,7 +117,7 @@
         It's also possible to attach a SyncAdapter to an existing account provided by another
         package. In that case, this element could be omitted here.
         -->
-        <service android:name=".accounts.GenericAccountService" >
+        <service android:name=".accounts.GenericAccountService">
 
             <!-- Required filter used by the system to launch our account service. -->
             <intent-filter>
@@ -157,13 +154,18 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="co.wompwomp.sunshine.MainActivity" />
         </activity>
-        <activity android:name=".WelcomeActivity" >
+        <activity android:name=".WelcomeActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".NotifierService"
+            android:exported="false"></service>
+
     </application>
 
 </manifest>

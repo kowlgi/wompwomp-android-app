@@ -48,6 +48,7 @@ public class WompWompConstants {
 
     public enum SyncMethod {
         EXISTING_AND_NEW_ABOVE_LOW_CURSOR, /* insert and update db in automatic background sync scenario */
+        ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO_NOTIFIER_SERVICE,
         ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO, /* insert only into db in in-app refresh scenario */
         ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER,
         SUBSET_OF_LATEST_ITEMS_NO_CURSOR, /* insert and update db on app open */
@@ -55,7 +56,10 @@ public class WompWompConstants {
         SYNC_METHOD_NONE
     }
 
+    // Preferences
     public static final String APP_RESUMED_FROM_BG = "app_resumed_from_bg";
+    public static final String LAST_LOGGED_IN_TIMESTAMP = "last_logged_in_timestamp";
+
     public static final String LIKES_FILENAME = "wwlikes.ser";
     public static final String VIDEO_DOWNLOADS_FILENAME = "wwdownloads.ser";
     public static final String CONTENT_NOTIFICATION = "/topics/content";
@@ -64,14 +68,29 @@ public class WompWompConstants {
     public static final String CTA_RATE_NOTIFICATION = "/topics/cta_rate";
     public static final String CTA_UPGRADE_NOTIFICATION = "/topics/cta_upgrade";
     public static final String REMOVE_ALL_CTAS_NOTIFICATION = "/topics/remove_all_ctas";
+    public static final String INIT_NOTIF_ALARM = "/topics/init_notification_alarm";
     public static final String[] NOTIFICATION_TOPICS = {
             CONTENT_NOTIFICATION,
             SYNC_NOTIFICATION,
             CTA_SHARE_NOTIFICATION,
             CTA_RATE_NOTIFICATION,
             REMOVE_ALL_CTAS_NOTIFICATION,
-            CTA_UPGRADE_NOTIFICATION
+            CTA_UPGRADE_NOTIFICATION,
+            INIT_NOTIF_ALARM
     };
 
     public static final Integer MAX_VIDEOS_FILES_TO_RETAIN = 100;
+
+    // Push Notification defaults
+    public static final int DEFAULT_PUSH_NOTIFY_HOUR = 19;
+    public static final int DEFAULT_PUSH_NOTIFY_MINUTE = 0;
+    public static final int DEFAULT_PUSH_NOTIFY_INTERVAL_IN_HOURS = 24;
+    public static final String INIT_NOTIFICATION_ALARM = "init_notification_alarm";
+    public static final String PUSH_NOTIFICATION = "push_notification";
+
+    // Google Tag Manager stuff
+    public static final String GTM_CONTAINER_ID = "GTM-PV558G";
+    public static final String GTM_NOTIFICATION_HOUR = "notificationHour";
+    public static final String GTM_NOTIFICATION_MINUTE = "notificationMinute";
+    public static final String GTM_NOTIFICATION_INTERVAL_IN_HOURS = "notificationIntervalInHours";
 }

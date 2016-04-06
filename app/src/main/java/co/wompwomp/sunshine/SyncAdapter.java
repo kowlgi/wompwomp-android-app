@@ -139,7 +139,8 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
 
             boolean userInitiated = false;
             if(syncMethod == WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR ||
-                    syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER) {
+                    syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER ||
+                    syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO_NOTIFIER_SERVICE) {
                 userInitiated = true;
             }
 
@@ -218,7 +219,14 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                     // ignore
                 }
             }
-            Intent intent = new Intent(MainActivity.ACTION_FINISHED_SYNC);
+
+            Intent intent;
+            if(syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO_NOTIFIER_SERVICE){
+                intent = new Intent(NotifierService.ACTION_FINISHED_SYNC_FOR_NOTIFICATION);
+            }
+            else{
+                intent = new Intent(MainActivity.ACTION_FINISHED_SYNC);
+            }
             intent.putExtra(WompWompConstants.SYNC_METHOD, syncMethod.name());
             LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);
         }

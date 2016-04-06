@@ -29,6 +29,11 @@ import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 
 import co.wompwomp.sunshine.provider.FeedContract;
+import okhttp3.Call;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 import timber.log.Timber;
 
 import com.crashlytics.android.answers.Answers;
@@ -107,7 +112,12 @@ public class MyGcmListenerService extends GcmListenerService {
             getContentResolver().delete(uri, FeedContract.Entry.COLUMN_NAME_ENTRY_ID+"=?", share_args);
             getContentResolver().delete(uri, FeedContract.Entry.COLUMN_NAME_ENTRY_ID+"=?", rate_args);
             getContentResolver().delete(uri, FeedContract.Entry.COLUMN_NAME_ENTRY_ID+"=?", upgrade_args);
-        } else {
+        } else if(from.startsWith(WompWompConstants.INIT_NOTIF_ALARM)) {
+            Intent pushNotificationIntent = new Intent(this, NotifierService.class);
+            pushNotificationIntent.setAction(WompWompConstants.INIT_NOTIFICATION_ALARM);
+            startService(pushNotificationIntent);
+        }
+        else {
             // normal downstream message.
         }
     }
@@ -155,30 +165,21 @@ public class MyGcmListenerService extends GcmListenerService {
 
         if(imageUri == null) return null;
 
-        // These two need to be declared outside the try/catch
-        // so that they can be closed in the finally block.
-        HttpURLConnection urlConnection = null;
+        OkHttpClient client = new OkHttpClient();
         Bitmap aBitmap = null;
-
+        ResponseBody body = null;
         try {
-            URL url = new URL(imageUri);
-
-            // Create the request to OpenWeatherMap, and open the connection
-            urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setRequestMethod("GET");
-            urlConnection.connect();
-
-            // Read the input stream into a String
-            InputStream inputStream = urlConnection.getInputStream();
-            aBitmap = BitmapFactory.decodeStream(inputStream);
-
-        }catch (IOException e) {
-            Timber.e("Error ", e);
+            final URL url = new URL(imageUri);
+            Call call = client.newCall(new Request.Builder().url(url).get().build());
+            Response response = call.execute();
+            body = response.body();
+            aBitmap = BitmapFactory.decodeStream(body.byteStream());
+        } catch (final IOException e) {
+            Timber.e( "Error in downloadBitmap - " + e);
         } finally {
-            if (urlConnection != null) {
-                urlConnection.disconnect();
-            }
+            if(body != null) body.close();
         }
+
         return aBitmap;
     }
 

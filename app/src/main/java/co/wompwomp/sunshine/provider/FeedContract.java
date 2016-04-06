@@ -132,6 +132,5 @@ public class FeedContract {
          * Size of the video file
          */
         public static final String COLUMN_NAME_FILE_SIZE = "file_size";
-
     }
 }
