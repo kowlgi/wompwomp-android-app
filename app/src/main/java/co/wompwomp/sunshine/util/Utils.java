@@ -16,6 +16,7 @@
 
 package co.wompwomp.sunshine.util;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -32,6 +33,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Toast;
 
+import com.facebook.stetho.okhttp3.StethoInterceptor;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 
@@ -44,11 +46,14 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URL;
 
 import co.wompwomp.sunshine.BuildConfig;
 import co.wompwomp.sunshine.Installation;
 import co.wompwomp.sunshine.PermissionsDialogFragment;
 import co.wompwomp.sunshine.R;
+import co.wompwomp.sunshine.WompWompConstants;
+import co.wompwomp.sunshine.provider.FeedContract;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
@@ -56,6 +61,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
@@ -127,9 +133,6 @@ public class Utils {
         if(file.exists()) {
             return Uri.fromFile(file);
         }
-
-        // Example: Extract Bitmap from ImageView drawable
-        // final Bitmap bmp  = ((BitmapDrawable) imageview.getDrawable()).getBitmap();
 
         //Create a Bitmap with the same dimensions
         Bitmap image = Bitmap.createBitmap(aView.getWidth(),
@@ -285,5 +288,92 @@ public class Utils {
                 response.body().close();
             }
         });
+    }
+
+    public static void postToWompwomp(String url, String shareDestination, Context context) {
+        if(BuildConfig.DEBUG) return;
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addNetworkInterceptor(new StethoInterceptor())
+                .build();
+        DateTime dt = new DateTime();
+        DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
+        RequestBody formBody = new FormBody.Builder()
+                .add("inst_id", Installation.id(context))
+                .add("timestamp", fmt.print(dt))
+                .add("destination", shareDestination)
+                .build();
+        Request request = new Request.Builder()
+                .url(url)
+                .post(formBody)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, final Response response) throws IOException {
+                response.body().close();
+            }
+        });
+    }
+
+    public static ContentValues populateContentValues(Integer card_type, String timestamp, String versionCode) {
+        ContentValues contentValues = new ContentValues();
+        String entry_id = null;
+        if(card_type == WompWompConstants.TYPE_RATE_CARD) {
+            entry_id = WompWompConstants.WOMPWOMP_CTA_RATE;
+        } else if(card_type == WompWompConstants.TYPE_SHARE_CARD) {
+            entry_id = WompWompConstants.WOMPWOMP_CTA_SHARE;
+        } else if(card_type == WompWompConstants.TYPE_UPGRADE_CARD) {
+            entry_id = WompWompConstants.WOMPWOMP_CTA_UPGRADE;
+        }
+
+        contentValues.put(FeedContract.Entry.COLUMN_NAME_ENTRY_ID, entry_id);
+        contentValues.put(FeedContract.Entry.COLUMN_NAME_QUOTE_TEXT, versionCode);
+        contentValues.put(FeedContract.Entry.COLUMN_NAME_IMAGE_SOURCE_URI, "");
+        contentValues.put(FeedContract.Entry.COLUMN_NAME_FAVORITE, 0);
+        contentValues.put(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, 0);
+        contentValues.put(FeedContract.Entry.COLUMN_NAME_NUM_SHARES, 0);
+        contentValues.put(FeedContract.Entry.COLUMN_NAME_CREATED_ON, timestamp);
+        contentValues.put(FeedContract.Entry.COLUMN_NAME_CARD_TYPE, card_type);
+        contentValues.put(FeedContract.Entry.COLUMN_NAME_AUTHOR, "");
+        return contentValues;
+    }
+
+    public static Bitmap getBitmap(String imageUri) {
+        if (imageUri == null) return null;
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addNetworkInterceptor(new StethoInterceptor())
+                .build();
+        Bitmap aBitmap = null;
+        ResponseBody body = null;
+        try {
+            final URL url = new URL(imageUri);
+            Call call = client.newCall(new Request.Builder().url(url).get().build());
+            Response response = call.execute();
+            body = response.body();
+            aBitmap = BitmapFactory.decodeStream(body.byteStream());
+        } catch (final IOException e) {
+            Timber.e("Error in downloadBitmap - " + e);
+        } finally {
+            if (body != null) body.close();
+        }
+
+        return aBitmap;
+    }
+
+    public static boolean fileExists(Context context, String filename) {
+        File file = context.getFileStreamPath(filename);
+        return file != null && file.exists();
+    }
+
+    public static boolean validVideoFile(Context context, String videofilename, Integer filesize){
+        File internalVideofile = new File(context.getFilesDir(), videofilename);
+        return internalVideofile.exists() && internalVideofile.length() == filesize;
     }
 }

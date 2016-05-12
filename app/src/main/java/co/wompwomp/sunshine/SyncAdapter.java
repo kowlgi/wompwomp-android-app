@@ -33,12 +33,13 @@ import android.os.Bundle;
 import android.os.RemoteException;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.facebook.stetho.okhttp3.StethoInterceptor;
+
 import co.wompwomp.sunshine.provider.FeedContract;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import timber.log.Timber;
 
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -66,24 +67,6 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
      * Content resolver, for performing database operations.
      */
     private final ContentResolver mContentResolver;
-
-    /**
-     * Project used when querying content provider. Returns all known fields.
-     */
-    private static final String[] PROJECTION = new String[] {
-            FeedContract.Entry._ID,
-            FeedContract.Entry.COLUMN_NAME_ENTRY_ID,
-            FeedContract.Entry.COLUMN_NAME_IMAGE_SOURCE_URI,
-            FeedContract.Entry.COLUMN_NAME_QUOTE_TEXT,
-            FeedContract.Entry.COLUMN_NAME_FAVORITE,
-            FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES,
-            FeedContract.Entry.COLUMN_NAME_NUM_SHARES,
-            FeedContract.Entry.COLUMN_NAME_CREATED_ON,
-            FeedContract.Entry.COLUMN_NAME_CARD_TYPE,
-            FeedContract.Entry.COLUMN_NAME_AUTHOR,
-            FeedContract.Entry.COLUMN_NAME_VIDEOURI,
-            FeedContract.Entry.COLUMN_NAME_NUM_PLAYS,
-            FeedContract.Entry.COLUMN_NAME_FILE_SIZE};
 
     /* Projection used for obtaining high and low cursors for fetching feed data */
     final String[] CURSOR_PROJECTION = new String[]{
@@ -127,6 +110,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                               ContentProviderClient provider, SyncResult syncResult) {
         WompWompConstants.SyncMethod syncMethod = WompWompConstants.SyncMethod.SYNC_METHOD_NONE;
         InputStream stream = null;
+        String cursor = null;
         try {
             String syncMethodStr = extras.getString(WompWompConstants.SYNC_METHOD);
             if(syncMethodStr == null) {
@@ -139,14 +123,13 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
 
             boolean userInitiated = false;
             if(syncMethod == WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR ||
-                    syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER ||
-                    syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO_NOTIFIER_SERVICE) {
+                    syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER) {
                 userInitiated = true;
             }
 
             int limit = 0;
             boolean updateAndDeleteStaleItems = true;
-            String cursor = null, params = "", cursorInclusive = null;
+            String params = "", cursorInclusive = null;
 
             Cursor c = mContentResolver.query(
                     FeedContract.Entry.CONTENT_URI,
@@ -162,7 +145,8 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 updateAndDeleteStaleItems =  true;
             }
             else if (syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO ||
-                    syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER) {
+                    syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER ||
+                    syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO_NOTIFIER_SERVICE) {
                 /* insert only into db in in-app refresh scenario */
                 limit = WompWompConstants.SYNC_NUM_ALL_ITEMS;
                 c.moveToFirst();
@@ -200,7 +184,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             params += "&userInitiated=" + userInitiated;
             final URL location = new URL(FeedContract.FEED_URL + params);
             stream = downloadUrl(location);
-            updateLocalFeedData(stream, syncResult, updateAndDeleteStaleItems);
+            updateLocalFeedData(stream, syncResult, updateAndDeleteStaleItems, WompWompConstants.LIST_TYPE_HOME);
             if(stream != null) {
                 stream.close();
                 stream = null;
@@ -222,13 +206,16 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
 
             Intent intent;
             if(syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO_NOTIFIER_SERVICE){
-                intent = new Intent(NotifierService.ACTION_FINISHED_SYNC_FOR_NOTIFICATION);
+                intent = new Intent(getContext(), NotifierService.class);
+                intent.setAction(WompWompConstants.SYNC_COMPLETE);
+                intent.putExtra(WompWompConstants.SYNC_CURSOR, cursor);
+                getContext().startService(intent);
             }
             else{
-                intent = new Intent(MainActivity.ACTION_FINISHED_SYNC);
+                intent = new Intent(WompWompConstants.ACTION_FINISHED_SYNC);
+                intent.putExtra(WompWompConstants.SYNC_METHOD, syncMethod.name());
+                LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);
             }
-            intent.putExtra(WompWompConstants.SYNC_METHOD, syncMethod.name());
-            LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);
         }
     }
 
@@ -254,7 +241,8 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
      */
     public void updateLocalFeedData(final InputStream stream,
                                     final SyncResult syncResult,
-                                    final boolean updateAndDeleteStaleItems)
+                                    final boolean updateAndDeleteStaleItems,
+                                    final String list_type)
             throws IOException, XmlPullParserException, RemoteException,
             OperationApplicationException, ParseException {
         final FeedParser feedParser = new FeedParser();
@@ -274,7 +262,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
         // Get list of all items
 
         Uri uri = FeedContract.Entry.CONTENT_URI; // Get all entries
-        Cursor c = contentResolver.query(uri, PROJECTION, null, null, null);
+        Cursor c = contentResolver.query(uri, WompWompConstants.PROJECTION, null, null, null);
         assert c != null;
 
         // Update stale data
@@ -289,6 +277,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             String videoUri;
             Integer numPlays;
             Integer fileSize;
+            String annotation;
 
             while (c.moveToNext()) {
                 syncResult.stats.numEntries++;
@@ -302,6 +291,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 videoUri = c.getString(WompWompConstants.COLUMN_VIDEOURI);
                 numPlays = c.getInt(WompWompConstants.COLUMN_NUM_PLAYS);
                 fileSize = c.getInt(WompWompConstants.COLUMN_FILE_SIZE);
+                annotation = c.getString(WompWompConstants.COLUMN_ANNOTATION);
 
                 FeedParser.Entry match = entryMap.get(entryId);
                 if (match != null) {
@@ -317,7 +307,8 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                             quoteText.equals(match.quoteText) ||
                             videoUri.equals(match.videoUri) ||
                             numPlays.equals(match.numPlays) ||
-                            fileSize.equals(match.fileSize)){
+                            fileSize.equals(match.fileSize) ||
+                            annotation.equals(match.annotation)){
                         // Update existing record
                         batch.add(ContentProviderOperation.newUpdate(existingUri)
                                 .withValue(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, match.numFavorites)
@@ -328,6 +319,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                                 .withValue(FeedContract.Entry.COLUMN_NAME_VIDEOURI, match.videoUri)
                                 .withValue(FeedContract.Entry.COLUMN_NAME_NUM_PLAYS, match.numPlays)
                                 .withValue(FeedContract.Entry.COLUMN_NAME_FILE_SIZE, match.fileSize)
+                                .withValue(FeedContract.Entry.COLUMN_NAME_ANNOTATION, match.annotation)
                                 .build());
                         syncResult.stats.numUpdates++;
                     } else {
@@ -363,6 +355,8 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                     .withValue(FeedContract.Entry.COLUMN_NAME_VIDEOURI, e.videoUri)
                     .withValue(FeedContract.Entry.COLUMN_NAME_NUM_PLAYS, e.numPlays)
                     .withValue(FeedContract.Entry.COLUMN_NAME_FILE_SIZE, e.fileSize)
+                    .withValue(FeedContract.Entry.COLUMN_NAME_ANNOTATION, e.annotation)
+                    .withValue(FeedContract.Entry.COLUMN_NAME_LIST_TYPE, list_type)
                     .build());
             syncResult.stats.numInserts++;
         }
@@ -379,7 +373,9 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
      * Given a string representation of a URL, sets up a connection and gets an input stream.
      */
     private InputStream downloadUrl(final URL url) throws IOException {
-        OkHttpClient client = new OkHttpClient();
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addNetworkInterceptor(new StethoInterceptor())
+                .build();
         Call call = client.newCall(new Request.Builder().url(url).get().build());
         Response response = call.execute();
         return response.body().byteStream();

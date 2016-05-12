@@ -42,7 +42,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <Button
-                android:text="@string/rate"
+                android:text="@string/rate_all_caps"
                 android:id="@+id/rateappbutton"
                 android:textColor="#e1f5fe"
                 android:layout_width="wrap_content"

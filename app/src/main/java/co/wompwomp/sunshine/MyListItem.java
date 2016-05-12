@@ -2,6 +2,7 @@ package co.wompwomp.sunshine;
 
 import android.database.Cursor;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -20,6 +21,7 @@ public class MyListItem {
     public String videoUri;
     public Integer numPlays;
     public Integer fileSize;
+    public String annotation;
 
     public static MyListItem fromCursor(Cursor c) {
         MyListItem myItem = new MyListItem();
@@ -36,6 +38,7 @@ public class MyListItem {
         myItem.videoUri = c.getString(WompWompConstants.COLUMN_VIDEOURI);
         myItem.numPlays = c.getInt(WompWompConstants.COLUMN_NUM_PLAYS);
         myItem.fileSize = c.getInt(WompWompConstants.COLUMN_FILE_SIZE);
+        myItem.annotation = c.getString(WompWompConstants.COLUMN_ANNOTATION);
         return myItem;
     }
 
@@ -54,7 +57,7 @@ public class MyListItem {
     public static String format(long value) {
         //Long.MIN_VALUE == -Long.MIN_VALUE so we need an adjustment here
         if (value == Long.MIN_VALUE) return format(Long.MIN_VALUE + 1);
-        if (value < 1000) return String.format("%d", value); //deal with easy case
+        if (value < 1000) return String.format(Locale.US, "%d", value); //deal with easy case
 
         Map.Entry<Long, String> e = suffixes.floorEntry(value);
         Long divideBy = e.getKey();
@@ -79,6 +82,7 @@ public class MyListItem {
                 ", author: " + author +
                 ", videouri: " + videoUri +
                 ", numPlays: " + numPlays +
-                ", fileSize: " + fileSize;
+                ", fileSize: " + fileSize +
+                ", annotation: " + annotation;
     }
 }

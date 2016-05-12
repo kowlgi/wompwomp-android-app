@@ -37,8 +37,7 @@ import com.facebook.share.Sharer;
 import com.facebook.share.widget.ShareDialog;
 
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
+import org.joda.time.DateTimeZone;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -59,31 +58,16 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private final int mVisibleThreshold = 1;
     private int mFirstVisibleItem, mVisibleItemCount, mTotalItemCount;
     private View mProgressBarLayout;
-    public static final String ACTION_FINISHED_SYNC = "co.wompwomp.sunshine.ACTION_FINISHED_SYNC";
-    private static IntentFilter syncIntentFilter = new IntentFilter(ACTION_FINISHED_SYNC);
+    private IntentFilter syncIntentFilter = new IntentFilter(WompWompConstants.ACTION_FINISHED_SYNC);
     private boolean mLoadingBottom, mLoadingTop;
     private Toast mNoNetworkToast = null;
     private ShareDialog mShareDialog;
     private CallbackManager mCallbackManager;
+    private ConnectivityManager mConnectivityManager;
 
-    /**
-     * Projection for querying the content provider.
-     */
-    private static final String[] PROJECTION = new String[]{
-            FeedContract.Entry._ID,
-            FeedContract.Entry.COLUMN_NAME_ENTRY_ID,
-            FeedContract.Entry.COLUMN_NAME_IMAGE_SOURCE_URI,
-            FeedContract.Entry.COLUMN_NAME_QUOTE_TEXT,
-            FeedContract.Entry.COLUMN_NAME_FAVORITE,
-            FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES,
-            FeedContract.Entry.COLUMN_NAME_NUM_SHARES,
-            FeedContract.Entry.COLUMN_NAME_CREATED_ON,
-            FeedContract.Entry.COLUMN_NAME_CARD_TYPE,
-            FeedContract.Entry.COLUMN_NAME_AUTHOR,
-            FeedContract.Entry.COLUMN_NAME_VIDEOURI,
-            FeedContract.Entry.COLUMN_NAME_NUM_PLAYS,
-            FeedContract.Entry.COLUMN_NAME_FILE_SIZE
-    };
+    private static final String SELECTION = "(" + FeedContract.Entry.COLUMN_NAME_LIST_TYPE +
+            " IS NULL OR " + FeedContract.Entry.COLUMN_NAME_LIST_TYPE + " = '" +
+            WompWompConstants.LIST_TYPE_HOME + "' OR " + FeedContract.Entry.COLUMN_NAME_LIST_TYPE + " = '' )";
 
     @SuppressLint("ShowToast")
     @Override
@@ -94,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 Toast.LENGTH_SHORT);
 
         Utils.launchPermissionsDialogIfNecessary(this);
+        mConnectivityManager = (ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
 
         /* Set up the recycler view */
         setContentView(R.layout.main_activity);
@@ -132,7 +117,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mProgressBarLayout.setVisibility(View.VISIBLE);
 
         /* Set up the swipe refresh layout */
-        mSwipeRefreshLayout = ( SwipeRefreshLayout) findViewById(R.id.swiperefresh);
+        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
         mSwipeRefreshLayout.setOnRefreshListener(
                 new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
@@ -152,10 +137,10 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(myToolbar);
         android.support.v7.app.ActionBar actionBar = getSupportActionBar();
-        if(actionBar != null) {
+        if (actionBar != null) {
             actionBar.setDisplayShowTitleEnabled(false); // disable default title
         }
-        myToolbar.setNavigationIcon(R.drawable.ic_action_trombone_white);
+
         TextView toolbarTitle = (TextView) myToolbar.findViewById(R.id.toolbar_title);
         toolbarTitle.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -209,36 +194,42 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @Override
     protected void onResume() {
         super.onResume();
+
         LocalBroadcastManager.getInstance(this).registerReceiver(mSyncBroadcastReceiver, syncIntentFilter);
-        /* Opportunistically resync only if we're resuming after putting the app in background */
-        if(PreferenceManager
-                .getDefaultSharedPreferences(this)
-                .getBoolean(WompWompConstants.APP_RESUMED_FROM_BG, true)) {
-            SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.EXISTING_AND_NEW_ABOVE_LOW_CURSOR);
-            Utils.postToWompwomp(FeedContract.APP_OPENED_URL, this);
-        } else {
-            PreferenceManager
-                    .getDefaultSharedPreferences(this).edit()
-                    .putBoolean(WompWompConstants.APP_RESUMED_FROM_BG, true).commit();
-        }
-
-        DateTime dt = new DateTime();
-        DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
-        PreferenceManager.getDefaultSharedPreferences(this).edit().putString(WompWompConstants.LAST_LOGGED_IN_TIMESTAMP,fmt.print(dt));
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        mAdapter.start();
-        mLoadingBottom = false;
-        mLoadingTop = false;
         mImageFetcher.setExitTasksEarly(false);
         /* Because we're loading images asynchronously, we might pause() this activity before
         fetching the image from network. When this activity is resumed, recycler view doesn't call
         adapter.onBindViewholder() automatically, which is needed to kickstart image loading again.
         So, we call notifyDataSetChanged() so onBindViewHolder() gets invoked */
         mAdapter.notifyDataSetChanged();
+
+        DateTime ldt = DateTime.now().withZone(DateTimeZone.UTC);
+        PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .edit()
+                .putString(WompWompConstants.LAST_LOGGED_IN_TIMESTAMP, ldt.toString())
+                .apply();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mAdapter.start();
+
+        /* Opportunistically resync only if we're reopening the app */
+        if (PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .getBoolean(WompWompConstants.APP_RESUMED_FROM_BG, true)) {
+            SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.EXISTING_AND_NEW_ABOVE_LOW_CURSOR);
+            Utils.postToWompwomp(FeedContract.APP_OPENED_URL, this);
+        } else {
+            PreferenceManager
+                    .getDefaultSharedPreferences(this)
+                    .edit()
+                    .putBoolean(WompWompConstants.APP_RESUMED_FROM_BG, true)
+                    .apply();
+        }
+
     }
 
     @Override
@@ -252,7 +243,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     @Override
-    protected void onStop(){
+    protected void onStop() {
         super.onStop();
         mAdapter.stop();
     }
@@ -265,16 +256,16 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     @Override
-    protected void onNewIntent(Intent intent){
+    protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
         Bundle extras = intent.getExtras();
-        if(extras != null) {
+        if (extras != null) {
             String itemId = extras.getString("itemid");
-            if(itemId != null) {
+            if (itemId != null) {
                 Answers.getInstance().logCustom(new CustomEvent("Push notification clicked")
                         .putCustomAttribute("itemlink", itemId));
-                Utils.postToWompwomp(FeedContract.APP_PUSH_NOTIFICATION_CLICKED_URL+itemId, this);
+                Utils.postToWompwomp(FeedContract.APP_PUSH_NOTIFICATION_CLICKED_URL + itemId, this);
                 smoothScrollToTop();
             }
         }
@@ -299,21 +290,18 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             mSwipeRefreshLayout.setRefreshing(true);
             syncItems(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER);
             return true;
-        }
-        else if( id == R.id.action_rate_us) {
+        } else if (id == R.id.action_rate_us) {
             Answers.getInstance().logCustom(new CustomEvent("Options menu: Rate"));
             Utils.showAppPageLaunchToast(this);
             startActivity(Utils.getRateAppIntent(this));
             return true;
-        }
-        else if(id == R.id.action_share_app) {
+        } else if (id == R.id.action_share_app) {
             Answers.getInstance().logCustom(new CustomEvent("Options menu: Share_app"));
             Utils.showShareToast(this);
             startActivity(Intent.createChooser(Utils.getShareAppIntent(this),
                     getResources().getString(R.string.app_chooser_title)));
             return true;
-        }
-        else if(id == R.id.action_about) {
+        } else if (id == R.id.action_about) {
             FragmentManager fm = getSupportFragmentManager();
             AboutDialogFragment aboutDialogFragment = AboutDialogFragment.newInstance();
             aboutDialogFragment.show(fm, "about_dialog");
@@ -325,7 +313,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     /**
      * Query the content provider for data.
-     *
+     * <p/>
      * <p>Loaders do queries in a background thread. They also provide a ContentObserver that is
      * triggered when data in the content provider changes. When the sync adapter updates the
      * content provider, the ContentObserver responds by resetting the loader and then reloading
@@ -337,8 +325,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         // (It'll be '0', as set in onCreate().)
         return new CursorLoader(this,  // Context
                 FeedContract.Entry.CONTENT_URI, // URI
-                PROJECTION,                // Projection
-                null,                      // Selection
+                WompWompConstants.PROJECTION,                // Projection
+                SELECTION,                      // Selection
                 null,                      // Selection args
                 FeedContract.Entry.COLUMN_NAME_CREATED_ON + " desc"); // Sort
     }
@@ -349,7 +337,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
      */
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
-        if(cursor.getCount() >= 1) {
+        if (cursor.getCount() >= 1) {
             mProgressBarLayout.setVisibility(View.GONE);
         }
         mAdapter.changeCursor(cursor);
@@ -373,16 +361,15 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     private void syncItems(WompWompConstants.SyncMethod syncMethod) {
-        ConnectivityManager cm = (ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        NetworkInfo activeNetwork = mConnectivityManager.getActiveNetworkInfo();
         boolean hasConnectivity = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
-        if(!hasConnectivity) {
+        if (!hasConnectivity) {
             mNoNetworkToast.show();
             mSwipeRefreshLayout.setRefreshing(false);
             return;
         }
 
-        if(syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER) {
+        if (syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER) {
             mLoadingTop = true;
         } else if (syncMethod == WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR) {
             mLoadingBottom = true;
@@ -393,7 +380,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     private void smoothScrollToTop() {
-        if(mRecyclerView != null) {
+        if (mRecyclerView != null) {
             mRecyclerView.smoothScrollToPosition(0);
         }
     }
@@ -403,14 +390,13 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         public void onReceive(Context context, Intent intent) {
             // update your views
             Bundle intentExtras = intent.getExtras();
-            if(intentExtras != null) {
+            if (intentExtras != null) {
                 String syncMethod = intentExtras.getString(WompWompConstants.SYNC_METHOD);
-                if(syncMethod == null) return;
+                if (syncMethod == null) return;
 
-                if(syncMethod.equals(WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR.name())) {
+                if (syncMethod.equals(WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR.name())) {
                     mLoadingBottom = false;
-                }
-                else if(syncMethod.equals(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER.name())) {
+                } else if (syncMethod.equals(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER.name())) {
                     mLoadingTop = false;
                 }
             }

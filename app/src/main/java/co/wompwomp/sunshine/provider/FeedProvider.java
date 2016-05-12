@@ -213,7 +213,7 @@ public class FeedProvider extends ContentProvider {
      */
     static class FeedDatabase extends SQLiteOpenHelper {
         /** Schema version. */
-        public static final int DATABASE_VERSION = 4;
+        public static final int DATABASE_VERSION = 5;
         /** Filename for SQLite file. */
         public static final String DATABASE_NAME = "feed.db";
 
@@ -235,7 +235,9 @@ public class FeedProvider extends ContentProvider {
                         FeedContract.Entry.COLUMN_NAME_AUTHOR + TYPE_TEXT + COMMA_SEP +
                         FeedContract.Entry.COLUMN_NAME_VIDEOURI + TYPE_TEXT + COMMA_SEP +
                         FeedContract.Entry.COLUMN_NAME_NUM_PLAYS + TYPE_INTEGER + COMMA_SEP +
-                        FeedContract.Entry.COLUMN_NAME_FILE_SIZE + TYPE_INTEGER + ")";
+                        FeedContract.Entry.COLUMN_NAME_FILE_SIZE + TYPE_INTEGER + COMMA_SEP +
+                        FeedContract.Entry.COLUMN_NAME_ANNOTATION + TYPE_TEXT + COMMA_SEP +
+                        FeedContract.Entry.COLUMN_NAME_LIST_TYPE + TYPE_TEXT + ")";
 
         private static final String SQL_V3_1_NEW_ENTRIES =
                 "ALTER TABLE " + FeedContract.Entry.TABLE_NAME + " ADD COLUMN " +
@@ -252,6 +254,14 @@ public class FeedProvider extends ContentProvider {
         private static final String SQL_V4_3_NEW_ENTRIES =
                 "ALTER TABLE " + FeedContract.Entry.TABLE_NAME + " ADD COLUMN " +
                         FeedContract.Entry.COLUMN_NAME_FILE_SIZE + TYPE_INTEGER + " DEFAULT 0";
+
+        private static final String SQL_V5_1_NEW_ENTRIES =
+                "ALTER TABLE " + FeedContract.Entry.TABLE_NAME + " ADD COLUMN " +
+                        FeedContract.Entry.COLUMN_NAME_ANNOTATION + TYPE_TEXT;
+
+        private static final String SQL_V5_2_NEW_ENTRIES =
+                "ALTER TABLE " + FeedContract.Entry.TABLE_NAME + " ADD COLUMN " +
+                        FeedContract.Entry.COLUMN_NAME_LIST_TYPE + TYPE_TEXT;
 
         public FeedDatabase(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -272,6 +282,11 @@ public class FeedProvider extends ContentProvider {
                 db.execSQL(SQL_V4_1_NEW_ENTRIES);
                 db.execSQL(SQL_V4_2_NEW_ENTRIES);
                 db.execSQL(SQL_V4_3_NEW_ENTRIES);
+            }
+
+            if(oldVersion < 5 && newVersion >= 5) {
+                db.execSQL(SQL_V5_1_NEW_ENTRIES);
+                db.execSQL(SQL_V5_2_NEW_ENTRIES);
             }
         }
     }

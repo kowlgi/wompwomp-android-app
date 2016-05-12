@@ -5,15 +5,13 @@
     <string name="action_about">About</string>
 
     <string name="app_chooser_title">Share via</string>
-    <string name="share">SHARE</string>
-    <string name="rate">RATE</string>
+    <string name="share_all_caps">SHARE</string>
+    <string name="rate_all_caps">RATE</string>
 
     <string name="no_network_connection_toast">No network connection found</string>
-    <string name="share_app">Install the wompwomp app for your funniest minute every day: http://wompwomp.co/install</string>
-    <string name="share_us_if_you_like">If you like our app share it with others</string>
-    <string name="rate_us_on_play_store">We want your feedback. Rate us on the Play store</string>
-    <string name="whatsapp_share_button">whatsapp share button</string>
-    <string name="favorite_button">favorite button</string>
+    <string name="share_app">Hey, check out WompWomp. It has really funny videos and pictures: http://wompwomp.co/install</string>
+    <string name="share_us_if_you_like">Hope you\'re enjoying our app. Share it with your friends!</string>
+    <string name="rate_us_on_play_store">We\'d love to have your feedback. Rate us on the Play store</string>
     <string name="version_title">Version</string>
     <string name="email_id">wompwompapp@gmail.com</string>
     <string name="our_contact">Contact Us</string>
@@ -35,9 +33,20 @@
         <item>Waiting a few epochs before we take stuff out of the oven…</item>
         <item>Waiting on kittens to approve today\'s content…</item>
     </string-array>
-    <string name="facebook_app_id">570524353097440</string>
+    <string name="facebook_app_id" translatable="false">570524353097440</string>
     <string name="defaultAuthor">higgsboson</string>
     <string name="upgrade_to_new_version">Get the new version of the app</string>
-    <string name="views">views</string>
     <string name="video_not_ready_for_sharing_yet">Video not yet ready for sharing. Please try again shortly.</string>
+    <string name="likes">Likes</string>
+    <string name="like">Like</string>
+    <string name="share">Share</string>
+    <string name="shares">Shares</string>
+    <string name="views">Views</string>
+    <string name="view">View</string>
+    <string name="press_button_to_play_video">Press button to play video</string>
+    <string name="press_button_to_share">Press button to share</string>
+    <string name="press_button_to_like">press button to like</string>
+    <string name="this_week">THIS WEEK</string>
+    <string name="all_time">ALL TIME</string>
+    <string name="today">TODAY</string>
 </resources>

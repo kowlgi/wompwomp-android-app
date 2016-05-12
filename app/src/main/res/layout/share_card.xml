@@ -43,7 +43,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <Button
-                android:text="@string/share"
+                android:text="@string/share_all_caps"
                 android:id="@+id/shareappbutton"
                 android:textColor="#B9F6CA"
                 android:layout_width="wrap_content"

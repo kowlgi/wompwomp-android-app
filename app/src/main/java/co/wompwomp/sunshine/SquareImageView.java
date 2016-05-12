@@ -5,8 +5,8 @@ import android.util.AttributeSet;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
-//public class SquareImageView extends NetworkImageView{
 public class SquareImageView extends ImageView {
+    FrameLayout.LayoutParams mLayoutParams = new FrameLayout.LayoutParams(0, 0);
 
     // Without this parameterized constructor, the compiler will
     // automatically create a default constructor that invokes super().
@@ -28,7 +28,9 @@ public class SquareImageView extends ImageView {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int parentWidth = MeasureSpec.getSize(widthMeasureSpec);
         int scaledHeight = getDrawable().getIntrinsicHeight() * parentWidth / getDrawable().getIntrinsicWidth();
-        this.setLayoutParams(new FrameLayout.LayoutParams(parentWidth, scaledHeight));
+        mLayoutParams.width  = parentWidth;
+        mLayoutParams.height = scaledHeight;
+        this.setLayoutParams(mLayoutParams);
         setMeasuredDimension(parentWidth, scaledHeight);
     }
 }

@@ -24,6 +24,8 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.widget.Toast;
 
+import com.facebook.stetho.okhttp3.StethoInterceptor;
+
 import co.wompwomp.sunshine.R;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
@@ -236,7 +238,9 @@ public class ImageFetcher extends ImageWorker {
      */
     public boolean downloadUrlToStream(String urlString, OutputStream outputStream) {
         disableConnectionReuseIfNecessary();
-        OkHttpClient client = new OkHttpClient();
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addNetworkInterceptor(new StethoInterceptor())
+                .build();
         boolean result = false;
         ResponseBody body = null;
         try {

@@ -4,17 +4,16 @@ import android.app.AlarmManager;
 import android.app.IntentService;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
+import android.webkit.URLUtil;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
@@ -24,21 +23,14 @@ import com.google.android.gms.tagmanager.ContainerHolder;
 import com.google.android.gms.tagmanager.TagManager;
 
 import org.joda.time.DateTime;
-import org.joda.time.LocalDateTime;
-import org.joda.time.Period;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
+import org.joda.time.Duration;
 
-import java.io.IOException;
-import java.net.URL;
+import java.util.ArrayList;
 import java.util.Calendar;
 
 import co.wompwomp.sunshine.provider.FeedContract;
-import okhttp3.Call;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
+import co.wompwomp.sunshine.util.Utils;
+import co.wompwomp.sunshine.util.VideoFileInfo;
 import timber.log.Timber;
 
 
@@ -46,9 +38,7 @@ import timber.log.Timber;
  * An {@link IntentService} subclass for handling asynchronous task requests in
  * a service on a separate handler thread.
  */
-public class NotifierService extends IntentService{
-    public static final String ACTION_FINISHED_SYNC_FOR_NOTIFICATION = "co.wompwomp.sunshine.ACTION_FINISHED_SYNC_FOR_NOTIFICATION";
-
+public class NotifierService extends IntentService {
     public NotifierService() {
         super("NotifierService");
     }
@@ -61,13 +51,17 @@ public class NotifierService extends IntentService{
                 initNotificationAlarm();
             } else if (WompWompConstants.PUSH_NOTIFICATION.equals(action)) {
                 handlePushNotify();
+            } else if( WompWompConstants.SYNC_COMPLETE.equals(action)) {
+                Bundle intentExtras = intent.getExtras();
+                String oldContentTimestamp = intentExtras.getString(WompWompConstants.SYNC_CURSOR);
+                onSyncComplete(oldContentTimestamp);
             }
         }
     }
 
     private void initNotificationAlarm() {
         // update notification time using google tag manager if google play services exist on this phone
-        if(checkPlayServices()) {
+        if (checkPlayServices()) {
             TagManager tagManager = TagManager.getInstance(this);
             PendingResult<ContainerHolder> pending =
                     tagManager.loadContainerPreferNonDefault(WompWompConstants.GTM_CONTAINER_ID,
@@ -81,27 +75,35 @@ public class NotifierService extends IntentService{
                 minute = (int) container.getLong(WompWompConstants.GTM_NOTIFICATION_MINUTE);
             }
             configureAlarmForPushNotification(hour, minute);
-            Timber.i("Configured push notification with gtm:" + hour + ":" + minute);
         } else {
             configureAlarmForPushNotification(WompWompConstants.DEFAULT_PUSH_NOTIFY_HOUR, WompWompConstants.DEFAULT_PUSH_NOTIFY_MINUTE);
-            Timber.i("Configured push notification alarm:" + WompWompConstants.DEFAULT_PUSH_NOTIFY_HOUR + ":" + WompWompConstants.DEFAULT_PUSH_NOTIFY_MINUTE);
         }
     }
 
-    private void configureAlarmForPushNotification(int minute, int hour) {
+    private void configureAlarmForPushNotification(int hour, int minute) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(System.currentTimeMillis());
         calendar.set(Calendar.HOUR_OF_DAY, hour);
         calendar.set(Calendar.MINUTE, minute);
+        if (calendar.getTimeInMillis() < System.currentTimeMillis()) {
+            // If time is in the past, it'll trigger the alarm immediately. To avoid this situation,
+            // if the trigger time has already passed we add a day to it.
+            calendar.setTimeInMillis(calendar.getTimeInMillis() + AlarmManager.INTERVAL_DAY);
+        }
 
-        AlarmManager alarmMgr;
+        AlarmManager alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         PendingIntent alarmIntent;
-        alarmMgr = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(this, NotifierService.class);
         intent.setAction(WompWompConstants.PUSH_NOTIFICATION);
-        alarmIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
+        alarmIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
         alarmMgr.setInexactRepeating(AlarmManager.RTC, calendar.getTimeInMillis(),
                 AlarmManager.INTERVAL_FIFTEEN_MINUTES, alarmIntent);
+        Timber.i("Notifier Service alarm has been set for this time: " +
+                calendar.get(Calendar.HOUR_OF_DAY) + ":" +
+                calendar.get(Calendar.MINUTE) + ":" +
+                calendar.get(Calendar.SECOND) + ":" +
+                calendar.get(Calendar.MILLISECOND) + "(trigger time: " + calendar.getTimeInMillis() +
+                ", current time: " + System.currentTimeMillis() + ")");
     }
 
     /**
@@ -112,31 +114,18 @@ public class NotifierService extends IntentService{
     private boolean checkPlayServices() {
         GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
         int resultCode = apiAvailability.isGooglePlayServicesAvailable(this);
-        if (resultCode != ConnectionResult.SUCCESS) {
-            return false;
-        }
-        return true;
+        return resultCode == ConnectionResult.SUCCESS;
     }
 
     private void handlePushNotify() {
-        // DECIDING WHETHER TO SHOW NOTIFICATION
-        // get last logged in timestamp
-        // if timestamp is < notificationIntervalInHours, don't push a notification
-        // if timestamp is > notificationIntervalInHours or doesn't exist, send a notification
-
-        // CONTENT IN THE NOTIFICATION
-        // get timestamp of the newest item in the database
-        // sync new items from the server
-
-        DateTime dt = new DateTime();
-        DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
-        String twentyFourHoursAgo = fmt.print(dt.minusHours(24));
+        DateTime now = DateTime.now();
+        DateTime twentyFourHoursAgo = now.minusHours(24);
         String last_logged_in = PreferenceManager
                 .getDefaultSharedPreferences(this)
-                .getString(WompWompConstants.LAST_LOGGED_IN_TIMESTAMP, twentyFourHoursAgo);
+                .getString(WompWompConstants.LAST_LOGGED_IN_TIMESTAMP, twentyFourHoursAgo.toString());
 
-        int interval =  WompWompConstants.DEFAULT_PUSH_NOTIFY_INTERVAL_IN_HOURS;
-        if(checkPlayServices()) {
+        int interval = WompWompConstants.DEFAULT_PUSH_NOTIFY_INTERVAL_IN_HOURS;
+        if (checkPlayServices()) {
             TagManager tagManager = TagManager.getInstance(this);
             PendingResult<ContainerHolder> pending =
                     tagManager.loadContainerPreferNonDefault(WompWompConstants.GTM_CONTAINER_ID,
@@ -150,35 +139,82 @@ public class NotifierService extends IntentService{
             }
         }
 
-        LocalDateTime last_logged_in_dt = LocalDateTime.parse(last_logged_in, ISODateTimeFormat.dateTime());
-        boolean exceedsInterval = Period.fieldDifference(dt.toLocalDateTime(), last_logged_in_dt).getHours() >= interval;
+        DateTime last_logged_in_dt = new DateTime(last_logged_in);
+        Duration duration_since_login = new Duration(last_logged_in_dt, now);
+        Timber.i("Interval since last log in: " +
+                duration_since_login.getStandardHours() + ":" +
+                duration_since_login.getStandardMinutes() + ":" +
+                duration_since_login.getStandardSeconds());
 
+        if (duration_since_login.getStandardHours() >= interval) {
+            SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO_NOTIFIER_SERVICE);
+        }
+    }
 
+    private void onSyncComplete(String oldContentTimestamp) {
+        // update your views
+        final String SELECTION = FeedContract.Entry.COLUMN_NAME_CREATED_ON +
+                " > '" + oldContentTimestamp + "'";
 
+        Uri uri = FeedContract.Entry.CONTENT_URI; // Get all entries
+        Cursor cursor = getApplicationContext().getContentResolver().query(
+                uri,
+                WompWompConstants.PROJECTION,
+                SELECTION,
+                null,
+                FeedContract.Entry.COLUMN_NAME_CREATED_ON + " desc");
 
+        if (cursor == null || cursor.getCount() <= 0) {
+            return; // do nothing
+        }else {
+            cursor.moveToFirst();
+            ArrayList<VideoFileInfo> videoPrefetchList = new ArrayList<>();
+            int numVideos = 0;
+            do {
+                String videoUri = cursor.getString(WompWompConstants.COLUMN_VIDEOURI);
+                Integer fileSize = cursor.getInt(WompWompConstants.COLUMN_FILE_SIZE);
+                if(videoUri == null || videoUri.length() <= 0 ) continue;
 
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        intent.putExtra("itemid", "4kbF_bOpx");
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
+                String videofilename = URLUtil.guessFileName(videoUri, null, null);
+                if(Utils.validVideoFile(this, videofilename, fileSize)) continue;
+
+                VideoFileInfo vfi = new VideoFileInfo(videoUri, fileSize);
+                videoPrefetchList.add(vfi);
+                numVideos++;
+            } while(cursor.moveToNext() && numVideos <= WompWompConstants.MAX_NUM_PREFETCH_VIDEOS);
+            FileDownloaderService.startDownload(this, videoPrefetchList);
+        }
+
+        String quoteText = cursor.getString(WompWompConstants.COLUMN_QUOTE_TEXT);
+        String imageUri = cursor.getString(WompWompConstants.COLUMN_IMAGE_SOURCE_URI);
+        String itemId = cursor.getString(WompWompConstants.COLUMN_ENTRY_ID);
+        cursor.close();
+
+        Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
+        notificationIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        notificationIntent.putExtra("itemid", itemId);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                getApplicationContext(),
+                0 /* Request code */,
+                notificationIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
         String appName = getResources().getString(R.string.app_name);
 
-        Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.drawable.ic_stat_trombone)
+        Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(getApplicationContext())
+                .setSmallIcon(R.drawable.ic_stat_wompwomp_newicon)
                 .setContentTitle(appName)
-                .setContentText("When your pet and you have similar fashion taste")
+                .setContentText(quoteText)
                 .setAutoCancel(true)
                 .setSound(defaultSoundUri)
                 .setContentIntent(pendingIntent);
 
-        Bitmap aBigBitmap = getBitmap("http://i.imgur.com/lHCqJdM.jpg");
-        if(aBigBitmap != null) {
+        Bitmap aBigBitmap = Utils.getBitmap(imageUri);
+        if (aBigBitmap != null) {
             NotificationCompat.BigPictureStyle bigStyle = new
                     NotificationCompat.BigPictureStyle();
             bigStyle.setBigContentTitle(appName);
-            bigStyle.setSummaryText("When your pet and you have similar fashion taste");
+            bigStyle.setSummaryText(quoteText);
             bigStyle.bigPicture(aBigBitmap);
             notificationBuilder.setStyle(bigStyle);
         }
@@ -188,78 +224,4 @@ public class NotifierService extends IntentService{
 
         notificationManager.notify(0 /* ID of notification */, notificationBuilder.build());
     }
-
-    private Bitmap getBitmap(String imageUri) {
-
-        if(imageUri == null) return null;
-
-        OkHttpClient client = new OkHttpClient();
-        Bitmap aBitmap = null;
-        ResponseBody body = null;
-        try {
-            final URL url = new URL(imageUri);
-            Call call = client.newCall(new Request.Builder().url(url).get().build());
-            Response response = call.execute();
-            body = response.body();
-            aBitmap = BitmapFactory.decodeStream(body.byteStream());
-        } catch (final IOException e) {
-            Timber.e( "Error in downloadBitmap - " + e);
-        } finally {
-            if(body != null) body.close();
-        }
-
-        return aBitmap;
-    }
-
-    private BroadcastReceiver mSyncBroadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            // update your views
-            Bundle intentExtras = intent.getExtras();
-            if(intentExtras != null) {
-                String syncMethod = intentExtras.getString(WompWompConstants.SYNC_METHOD);
-                if(syncMethod == null) return;
-
-                if(syncMethod.equals(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO_NOTIFIER_SERVICE.name())) {
-                    final String[] PROJECTION = new String[]{
-                            FeedContract.Entry._ID,
-                            FeedContract.Entry.COLUMN_NAME_ENTRY_ID,
-                            FeedContract.Entry.COLUMN_NAME_IMAGE_SOURCE_URI,
-                            FeedContract.Entry.COLUMN_NAME_QUOTE_TEXT,
-                            FeedContract.Entry.COLUMN_NAME_FAVORITE,
-                            FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES,
-                            FeedContract.Entry.COLUMN_NAME_NUM_SHARES,
-                            FeedContract.Entry.COLUMN_NAME_CREATED_ON,
-                            FeedContract.Entry.COLUMN_NAME_CARD_TYPE,
-                            FeedContract.Entry.COLUMN_NAME_AUTHOR,
-                            FeedContract.Entry.COLUMN_NAME_VIDEOURI,
-                            FeedContract.Entry.COLUMN_NAME_NUM_PLAYS,
-                            FeedContract.Entry.COLUMN_NAME_FILE_SIZE
-                    };
-
-                    DateTime dt = new DateTime();
-                    DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
-                    String twentyFourHoursAgo = fmt.print(dt.minusHours(24));
-                    String last_logged_in = PreferenceManager
-                            .getDefaultSharedPreferences(getApplicationContext())
-                            .getString(WompWompConstants.LAST_LOGGED_IN_TIMESTAMP, twentyFourHoursAgo);
-                    LocalDateTime.parse(last_logged_in, ISODateTimeFormat.dateTime());
-
-                    final String SELECTION = "(" + FeedContract.Entry.COLUMN_NAME_CREATED_ON +
-                            " > " + last_logged_in + " )";
-
-                    Uri uri = FeedContract.Entry.CONTENT_URI; // Get all entries
-                    Cursor c = getApplicationContext().getContentResolver().query(
-                            uri,
-                            PROJECTION,
-                            null,
-                            null,
-                            FeedContract.Entry.COLUMN_NAME_CREATED_ON + " desc");
-
-
-
-                }
-            }
-        }
-    };
 }

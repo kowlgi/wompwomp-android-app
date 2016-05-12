@@ -25,7 +25,6 @@ import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.support.v4.app.FragmentManager;
 import android.widget.ImageView;
-
 import java.lang.ref.WeakReference;
 
 /**
@@ -190,6 +189,7 @@ public abstract class ImageWorker {
             final String dataString = String.valueOf(mData);
             Bitmap bitmap = null;
             BitmapDrawable drawable = null;
+
             // Wait here if work is paused and the task is not cancelled
             synchronized (mPauseWorkLock) {
                 while (mPauseWork && !isCancelled()) {
@@ -198,6 +198,7 @@ public abstract class ImageWorker {
                     } catch (InterruptedException e) {}
                 }
             }
+
             // If the image cache is available and this task has not been cancelled by another
             // thread and the ImageView that was originally bound to this task is still bound back
             // to this task and our "exit early" flag is not set then try and fetch the bitmap from

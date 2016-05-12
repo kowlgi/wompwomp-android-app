@@ -2,16 +2,16 @@ package co.wompwomp.sunshine;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
-import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -26,14 +26,8 @@ import android.widget.TextView;
 import co.wompwomp.sunshine.provider.FeedContract;
 import co.wompwomp.sunshine.util.ImageFetcher;
 import co.wompwomp.sunshine.util.Utils;
+import co.wompwomp.sunshine.util.VideoFileInfo;
 import co.wompwomp.sunshine.video.WompwompPlayer;
-import okhttp3.Call;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import okio.BufferedSink;
-import okio.Okio;
 import timber.log.Timber;
 
 import com.crashlytics.android.answers.Answers;
@@ -43,8 +37,11 @@ import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.widget.ShareDialog;
 import com.plattysoft.leonids.ParticleSystem;
 
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.ocpsoft.prettytime.PrettyTime;
 
@@ -54,7 +51,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -64,15 +61,6 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
     private Context mContext = null;
     private ShareDialog mShareDialog = null;
     private HashSet<String> mLikes = null;
-    private HashSet<String> mVideoDownloadsInProgress = null;
-
-    /* the downloaded videos hashset serves two purposes: 1. addition of an item to this hashset is
-       an indication that the video file was downloaded successfully 2. by storing hashset to file,
-       we can compare entries in the hashset to entries in the db. For hashset entries that don't
-       have a corresponding db entry, delete those entries from the hashset and
-       corresponding files from the filesystem (helps save storage on user's phone)
-     */
-    private HashSet<String> mDownloadedVideos = null;
 
     /* we maintain these counts in this adapter as starting with v1.2 we don't do a db update when
        the user favorites or likes an item. Avoiding a db update is 1. needed, because a db update
@@ -93,8 +81,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
         mShareDialog = shareDialog;
         mShareCounts = new HashMap<>();
         mViewCounts = new HashMap<>();
-        mVideoDownloadsInProgress = new HashSet<>();
-        if (fileExists(mContext, WompWompConstants.LIKES_FILENAME)) {
+        if (Utils.fileExists(mContext, WompWompConstants.LIKES_FILENAME)) {
             try {
                 mLikes =  getKeysFromFile(WompWompConstants.LIKES_FILENAME);
             } catch (java.lang.Exception e) {
@@ -103,23 +90,6 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 e.printStackTrace();
             }
         } else mLikes = new HashSet<>();
-
-        if (fileExists(mContext, WompWompConstants.VIDEO_DOWNLOADS_FILENAME)) {
-            try {
-                mDownloadedVideos = getKeysFromFile(WompWompConstants.VIDEO_DOWNLOADS_FILENAME);
-            } catch (java.lang.Exception e) {
-                Timber.e("Error from file read operation ", e.toString());
-                e.printStackTrace();
-                mDownloadedVideos = new HashSet<>();
-            }
-        } else {
-            mDownloadedVideos = new HashSet<>();
-        }
-    }
-
-    private boolean fileExists(Context context, String filename) {
-        File file = context.getFileStreamPath(filename);
-        return file != null && file.exists();
     }
 
     private HashSet<String> getKeysFromFile (String filePath) throws Exception {
@@ -145,19 +115,13 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
          */
         mShareCounts.clear();
         mViewCounts.clear();
-        mVideoDownloadsInProgress.clear();
+
         try {
             FileOutputStream likesfos = mContext.openFileOutput(WompWompConstants.LIKES_FILENAME, Context.MODE_PRIVATE);
             ObjectOutputStream likesoos = new ObjectOutputStream(likesfos);
             likesoos.writeObject(mLikes);
             likesoos.close();
             likesfos.close();
-
-            FileOutputStream videosfos = mContext.openFileOutput(WompWompConstants.VIDEO_DOWNLOADS_FILENAME, Context.MODE_PRIVATE);
-            ObjectOutputStream videosoos = new ObjectOutputStream(videosfos);
-            videosoos.writeObject(mDownloadedVideos);
-            videosoos.close();
-            videosfos.close();
 
         } catch (java.io.FileNotFoundException fnf) {
             Timber.e("Error from file stream open operation ", fnf);
@@ -184,12 +148,19 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
         public TextView createdOnView;
         public TextView numfavoritesView;
         public TextView numsharesView;
-        public TextView viewsText;
         public TextView numViews;
         public SurfaceView surfaceView;
         public String videoUri;
+        public Integer videoFileSize;
         public ImageView playButton;
         public ProgressBar videoProgress;
+        public TextView shareCountText;
+        public TextView likesText;
+        public TextView viewsText;
+        public TextView dateHeader;
+        public View allTimeTrending;
+        public View lastWeekTrending;
+        public View lastDayTrending;
 
         public ContentCardViewHolder(View itemView) {
             super(itemView);
@@ -199,8 +170,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
             favoriteButton = (ImageButton) itemView.findViewById(R.id.favorite_button);
             whatsappshareButton = (ImageButton) itemView.findViewById(R.id.whatsapp_share_button);
             createdOnView = (TextView) itemView.findViewById(R.id.createdon);
-            numfavoritesView = (TextView) itemView.findViewById(R.id.favoriteCount);
-            numsharesView = (TextView) itemView.findViewById(R.id.shareCount);
+            numfavoritesView = (TextView) itemView.findViewById(R.id.numLikes);
+            numsharesView = (TextView) itemView.findViewById(R.id.numShares);
             facebookshareButton = (ImageButton) itemView.findViewById(R.id.facebook_share_button);
             viewsText = (TextView) itemView.findViewById(R.id.viewsText);
             numViews = (TextView) itemView.findViewById(R.id.numViews);
@@ -208,8 +179,16 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
             surfaceView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
             surfaceView.setZOrderOnTop(true);
             videoUri = "";
+            videoFileSize = 0;
             playButton = (ImageView) itemView.findViewById(R.id.playButton);
             videoProgress = (ProgressBar) itemView.findViewById(R.id.video_progress);
+            shareCountText = (TextView) itemView.findViewById(R.id.shareCountText);
+            viewsText = (TextView) itemView.findViewById(R.id.viewsText);
+            likesText = (TextView) itemView.findViewById(R.id.likesText);
+            dateHeader = (TextView) itemView.findViewById(R.id.dateHeader);
+            allTimeTrending = itemView.findViewById(R.id.alltimepopularannotation);
+            lastWeekTrending = itemView.findViewById(R.id.trendinglastweekannotation);
+            lastDayTrending = itemView.findViewById(R.id.trendinglastdayannotation);
 
             int whatsappButtonVisibility = Utils.isPackageInstalled("com.whatsapp", mContext) ? View.VISIBLE : View.GONE;
             whatsappshareButton.setVisibility(whatsappButtonVisibility);
@@ -286,9 +265,10 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
     public void resizeSurface(int width, int height) {
         if(mItemPlayingVideo != null) {
             ViewGroup.LayoutParams lp = mItemPlayingVideo.surfaceView.getLayoutParams();
-            DisplayMetrics displayMetrics = mContext.getResources().getDisplayMetrics();
-            lp.width = displayMetrics.widthPixels;
-            lp.height = displayMetrics.widthPixels * height / width;
+            View parent = (View)mItemPlayingVideo.surfaceView.getParent();
+            int widthPixels = parent.getWidth();
+            lp.width = widthPixels;
+            lp.height = widthPixels * height / width;
 
             mItemPlayingVideo.videoProgress.setVisibility(View.GONE);
             mItemPlayingVideo.surfaceView.setLayoutParams(lp);
@@ -314,7 +294,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 
         Uri videoUri = Uri.parse(mItemPlayingVideo.videoUri);
         String filename = URLUtil.guessFileName(mItemPlayingVideo.videoUri, null, null);
-        if(mDownloadedVideos.contains(filename) && fileExists(mContext, filename)) {
+        if(Utils.validVideoFile(mContext, filename, mItemPlayingVideo.videoFileSize)){
             videoUri = Uri.fromFile(mContext.getFileStreamPath(filename));
         }
 
@@ -335,21 +315,76 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
             case WompWompConstants.TYPE_VIDEO_CONTENT_CARD: {
                 final ContentCardViewHolder holder = (ContentCardViewHolder) VH;
                 final MyListItem myListItem = MyListItem.fromCursor(cursor);
-
                 mImageFetcher.loadImage(myListItem.imageSourceUri, holder.imageView);
 
+                DateTime currentItemDate = new DateTime(myListItem.createdOn);
+                final int cursorPosition = cursor.getPosition();
+                String dateHeader = "";
+                if(cursor.moveToPrevious()) {
+                    MyListItem previousListItem = MyListItem.fromCursor(cursor);
+                    DateTime previousItemDate = new DateTime(previousListItem.createdOn);
+                    if(previousItemDate.getDayOfYear() - currentItemDate.getDayOfYear() > 0) {
+                        DateTimeFormatter fmt = DateTimeFormat.forPattern("EEEE, MMMM d, yyyy");
+                        dateHeader = currentItemDate.toString(fmt);
+                    }
+                    cursor.moveToPosition(cursorPosition);
+                } else {
+                    dateHeader = mContext.getResources().getString(R.string.today);
+                }
+
+                if(dateHeader.length() > 0) {
+                    holder.dateHeader.setText(dateHeader.toUpperCase());
+                    holder.dateHeader.setVisibility(View.VISIBLE);
+                } else {
+                    holder.dateHeader.setVisibility(View.GONE);
+                }
+
+                if(!myListItem.annotation.contains(WompWompConstants.ANNOTATION_ALL_TIME_POPULAR)) {
+                    holder.allTimeTrending.setVisibility(View.GONE);
+                } else {
+                    holder.allTimeTrending.setVisibility(View.VISIBLE);
+                }
+
+                if(!myListItem.annotation.contains(WompWompConstants.ANNOTATION_TRENDING_THIS_WEEK)){
+                    holder.lastWeekTrending.setVisibility(View.GONE);
+                } else {
+                    holder.lastWeekTrending.setVisibility(View.VISIBLE);
+                }
+
+                if(!myListItem.annotation.contains(WompWompConstants.ANNOTATION_TRENDING_TODAY)){
+                    holder.lastDayTrending.setVisibility(View.GONE);
+                } else {
+                    holder.lastDayTrending.setVisibility(View.VISIBLE);
+                }
+
+                final ArrayList<VideoFileInfo> videoPrefetchList = new ArrayList<>();
                 if(cardType == WompWompConstants.TYPE_VIDEO_CONTENT_CARD) {
                     holder.videoUri = myListItem.videoUri;
+                    holder.videoFileSize = myListItem.fileSize;
                     String filename = URLUtil.guessFileName(holder.videoUri, null, null);
 
-                    if(mDownloadedVideos.contains(filename) || mVideoDownloadsInProgress.contains(filename)) {
-                        // video's either already downloaded or a download is in progress
+                    if(Utils.validVideoFile(mContext, filename, myListItem.fileSize)) {
+                        /* Create a prefetch list for WompWompConstants.MAX_NUM_PREFETCH_VIDEOS # of items
+                           below current item */
+                        int numVideos = 0;
+                        while(cursor.moveToNext() && numVideos < WompWompConstants.MAX_NUM_PREFETCH_VIDEOS) {
+                            numVideos++;
+                            String videoUri = cursor.getString(WompWompConstants.COLUMN_VIDEOURI);
+                            Integer fileSize = cursor.getInt(WompWompConstants.COLUMN_FILE_SIZE);
+                            if(videoUri == null || videoUri.length() <= 0 ) continue;
+
+                            String videofilename = URLUtil.guessFileName(videoUri, null, null);
+                            if(Utils.validVideoFile(mContext, videofilename, fileSize)) continue;
+
+                            VideoFileInfo vfi = new VideoFileInfo(videoUri, fileSize);
+                            videoPrefetchList.add(vfi);
+                        }
+                        cursor.moveToPosition(cursorPosition);
                     } else {
-                        DownloadTask downloadTask = new DownloadTask();
-                        DownloadTaskParams params = new DownloadTaskParams(myListItem.videoUri, myListItem.fileSize);
-                        if(Utils.hasHoneycomb()) downloadTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, params);
-                        else downloadTask.execute(params);
-                        mVideoDownloadsInProgress.add(filename);
+                        ArrayList<VideoFileInfo> videoFileList = new ArrayList<>();
+                        VideoFileInfo vfi = new VideoFileInfo(myListItem.videoUri, myListItem.fileSize);
+                        videoFileList.add(vfi);
+                        FileDownloaderService.startDownload(mContext, videoFileList);
                     }
 
                     holder.viewsText.setVisibility(View.VISIBLE);
@@ -359,6 +394,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         mViewCounts.put(myListItem.id, myListItem.numPlays);
                     }
                     holder.numViews.setText(MyListItem.format(mViewCounts.get(myListItem.id)));
+                    holder.viewsText.setText(mViewCounts.get(myListItem.id) == 1 ? R.string.view : R.string.views);
                     resetSurfaceViewSize(holder.surfaceView);
                 } else {
                     holder.viewsText.setVisibility(View.GONE);
@@ -383,8 +419,6 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                     holder.favoriteButton.setImageResource(R.drawable.ic_favorite_lightred_24dp);
                 }
 
-                PrettyTime prettyTime = new PrettyTime();
-                LocalDateTime createdOn = LocalDateTime.parse(myListItem.createdOn, ISODateTimeFormat.dateTime());
                 String author;
                 if(myListItem.author == null || myListItem.author.isEmpty()) {
                     author = mContext.getResources().getString(R.string.defaultAuthor);
@@ -393,15 +427,19 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 }
 
                 //http://www.flowstopper.org/2012/11/prettytime-and-joda-playing-nice.html
+                PrettyTime prettyTime = new PrettyTime();
+                LocalDateTime createdOn = LocalDateTime.parse(myListItem.createdOn, ISODateTimeFormat.dateTime());
                 String timeAndAuthor = prettyTime.format(createdOn.toDateTime(DateTimeZone.UTC).toDate()) +
                         " by @" + author;
                 holder.createdOnView.setText(timeAndAuthor);
 
                 holder.numfavoritesView.setText(MyListItem.format(myListItem.numFavorites));
+                holder.likesText.setText(myListItem.numFavorites == 1 ? R.string.like : R.string.likes);
                 if(!mShareCounts.containsKey(myListItem.id)){
                     mShareCounts.put(myListItem.id, myListItem.numShares);
                 }
                 holder.numsharesView.setText(MyListItem.format(mShareCounts.get(myListItem.id)));
+                holder.shareCountText.setText(mShareCounts.get(myListItem.id) == 1 ? R.string.share : R.string.shares);
 
                 holder.imageView.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -412,9 +450,17 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                             Integer updatedViewCount = mViewCounts.get(myListItem.id) + 1;
                             mViewCounts.put(myListItem.id, updatedViewCount);
                             holder.numViews.setText(MyListItem.format(updatedViewCount));
+                            holder.viewsText.setText(updatedViewCount == 1 ? R.string.view : R.string.views);
+
+                            // prefetch videos in the background
+                            if(videoPrefetchList.size() > 0) {
+                                FileDownloaderService.startDownload(mContext, videoPrefetchList);
+                            }
+
                             Utils.postToWompwomp(FeedContract.ITEM_PLAY_URL + myListItem.id, mContext);
                             Answers.getInstance().logCustom(new CustomEvent("Video played")
                                     .putCustomAttribute("itemid", myListItem.id));
+
                         }else{
                             Intent zoomIntent = new Intent(mContext, ItemZoomActivity.class);
                             final Bitmap bmp = ((BitmapDrawable) holder.imageView.getDrawable()).getBitmap();
@@ -445,7 +491,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         String filename = null;
                         if (cardType == WompWompConstants.TYPE_VIDEO_CONTENT_CARD) {
                             filename = URLUtil.guessFileName(myListItem.videoUri, null, null);
-                            if (!isVideoReadyForSharing(filename)) {
+                            if (!isVideoReadyForSharing(filename, myListItem.fileSize)) {
                                 Utils.showVideoNotReadyForSharingYetToast(mContext);
                                 return;
                             }
@@ -457,7 +503,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         Integer updatedShareCount = mShareCounts.get(myListItem.id) + 1;
                         mShareCounts.put(myListItem.id, updatedShareCount);
                         holder.numsharesView.setText(MyListItem.format(updatedShareCount));
-                        Utils.postToWompwomp(FeedContract.ITEM_SHARE_URL + myListItem.id, mContext);
+                        holder.shareCountText.setText(updatedShareCount == 1 ? R.string.share : R.string.shares);
+                        Utils.postToWompwomp(FeedContract.ITEM_SHARE_URL + myListItem.id, "general", mContext);
 
                         Intent shareIntent = new Intent();
                         shareIntent.setAction(Intent.ACTION_SEND);
@@ -486,6 +533,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         Utils.showShareToast(mContext);
                         mContext.startActivity(Intent.createChooser(shareIntent,
                                 mContext.getResources().getString(R.string.app_chooser_title)));
+                        reinforceShareAndLikeIntent(myListItem.createdOn);
                     }
                 });
 
@@ -503,7 +551,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         Integer updatedShareCount = mShareCounts.get(myListItem.id) + 1;
                         mShareCounts.put(myListItem.id, updatedShareCount);
                         holder.numsharesView.setText(MyListItem.format(updatedShareCount));
-                        Utils.postToWompwomp(FeedContract.ITEM_SHARE_URL + myListItem.id, mContext);
+                        holder.shareCountText.setText(updatedShareCount == 1 ? R.string.share : R.string.shares);
+                        Utils.postToWompwomp(FeedContract.ITEM_SHARE_URL + myListItem.id, "facebook", mContext);
 
                         ShareLinkContent content = new ShareLinkContent.Builder()
                                 .setContentTitle(myListItem.quoteText)
@@ -513,6 +562,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                                 .build();
                         mShareDialog.show(content);
                         Utils.showShareToast(mContext);
+                        reinforceShareAndLikeIntent(myListItem.createdOn);
                     }
                 });
 
@@ -522,7 +572,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         String filename = null;
                         if (cardType == WompWompConstants.TYPE_VIDEO_CONTENT_CARD) {
                             filename = URLUtil.guessFileName(myListItem.videoUri, null, null);
-                            if (!isVideoReadyForSharing(filename)) {
+                            if (!isVideoReadyForSharing(filename, myListItem.fileSize)) {
                                 Utils.showVideoNotReadyForSharingYetToast(mContext);
                                 return;
                             }
@@ -534,7 +584,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         Integer updatedShareCount = mShareCounts.get(myListItem.id) + 1;
                         mShareCounts.put(myListItem.id, updatedShareCount);
                         holder.numsharesView.setText(MyListItem.format(updatedShareCount));
-                        Utils.postToWompwomp(FeedContract.ITEM_SHARE_URL + myListItem.id, mContext);
+                        holder.shareCountText.setText(updatedShareCount == 1 ? R.string.share : R.string.shares);
+                        Utils.postToWompwomp(FeedContract.ITEM_SHARE_URL + myListItem.id, "whatsapp", mContext);
 
                         Intent shareIntent = new Intent();
                         shareIntent.setAction(Intent.ACTION_SEND);
@@ -563,6 +614,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         shareIntent.setPackage("com.whatsapp");
                         Utils.showShareToast(mContext);
                         mContext.startActivity(shareIntent);
+                        reinforceShareAndLikeIntent(myListItem.createdOn);
                     }
                 });
 
@@ -572,9 +624,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                         String URL;
                         if (myListItem.favorite) {
                             // she likes me not :(
-                            if (myListItem.numFavorites > 0) {
-                                holder.numfavoritesView.setText(MyListItem.format(myListItem.numFavorites));
-                            }
+                            holder.numfavoritesView.setText(MyListItem.format(myListItem.numFavorites));
+                            holder.likesText.setText(myListItem.numFavorites == 1 ? R.string.like : R.string.likes);
                             mLikes.remove(myListItem.id);
                             holder.favoriteButton.setImageResource(R.drawable.ic_favorite_lightred_24dp);
                             myListItem.favorite = false;
@@ -584,7 +635,9 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                                     .putCustomAttribute("itemid", myListItem.id));
                         } else {
                             // she likes me :)
-                            holder.numfavoritesView.setText(MyListItem.format(myListItem.numFavorites + 1));
+                            int updatedLikeCount = myListItem.numFavorites + 1;
+                            holder.numfavoritesView.setText(MyListItem.format(updatedLikeCount));
+                            holder.likesText.setText(updatedLikeCount == 1 ? R.string.like : R.string.likes);
                             mLikes.add(myListItem.id);
                             holder.favoriteButton.setImageResource(R.drawable.ic_favorite_red_24dp);
                             myListItem.favorite = true;
@@ -651,71 +704,29 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
         return myListItem;
     }
 
-    private static class DownloadTaskParams {
-        String url;
-        Integer fileSize;
-
-        DownloadTaskParams(String url, Integer fileSize) {
-            this.url = url;
-            this.fileSize = fileSize;
-        }
-    }
-
-    // usually, subclasses of AsyncTask are declared inside the activity class.
-// that way, you can easily modify the UI thread from here
-    private class DownloadTask extends AsyncTask<DownloadTaskParams, Integer, String> {
-
-        private String filename;
-        private Integer fileSize;
-
-        public DownloadTask() {
-            this.filename = "";
-            this.fileSize = 0;
-        }
-
-        @Override
-        protected String doInBackground(DownloadTaskParams... params) {
-            OkHttpClient client = new OkHttpClient();
-            String result = null;
-            fileSize = params[0].fileSize;
-            ResponseBody body = null;
-            try {
-                URL url = new URL(params[0].url);
-                Call call = client.newCall(new Request.Builder().url(url).get().build());
-                Response response = call.execute();
-                body = response.body();
-
-                filename = URLUtil.guessFileName(url.toString(), null, null);
-                Timber.d("Video download in progress. filename: " + filename);
-                FileOutputStream output = mContext.openFileOutput(filename, Context.MODE_PRIVATE);
-
-                BufferedSink sink = Okio.buffer(Okio.sink(output));
-                sink.writeAll(body.source());
-                sink.close();
-            } catch (Exception e) {
-                result = e.toString();
-            } finally {
-                if(body != null) body.close();
-            }
-            return result;
-        }
-
-        protected void onPostExecute(String result) {
-            if(result == null) {
-                File videofile = new File(mContext.getFilesDir(), filename);
-                if(fileSize == videofile.length()) {
-                    mDownloadedVideos.add(filename);
-                    mVideoDownloadsInProgress.remove(filename);
-                }
-            }
-        }
-    }
-
-    private boolean isVideoReadyForSharing(String filename) {
-        File videofile =  new File(Environment.getExternalStoragePublicDirectory(
+    private boolean isVideoReadyForSharing(String filename, Integer filesize) {
+        File publicVideofile =  new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_DOWNLOADS), filename);
 
-        return videofile.exists() || mDownloadedVideos.contains(filename);
+        boolean validPublicVideoFile = publicVideofile.exists() &&
+                publicVideofile.length() == filesize;
+
+        return validPublicVideoFile || Utils.validVideoFile(mContext, filename, filesize);
     }
 
+    private void reinforceShareAndLikeIntent(String contentTimestamp){
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+        int shareCount = preferences.getInt(WompWompConstants.SHARE_LIKE_COUNTER, 0);
+        preferences.edit().putInt(WompWompConstants.SHARE_LIKE_COUNTER, ++shareCount).apply();
+
+        if(shareCount % WompWompConstants.DEFAULT_SHARE_APP_THRESHOLD == 0) {
+            Uri uri = FeedContract.Entry.CONTENT_URI; // Get all entries
+            String[] share_args = new String[] { WompWompConstants.WOMPWOMP_CTA_SHARE};
+            mContext.getContentResolver().delete(uri, FeedContract.Entry.COLUMN_NAME_ENTRY_ID+"=?", share_args);
+
+            DateTime ct = new DateTime(contentTimestamp);
+            DateTime oneSecondBeforeContentTimestamp = ct.minusSeconds(1).withZone(DateTimeZone.UTC);
+            mContext.getContentResolver().insert(FeedContract.Entry.CONTENT_URI, Utils.populateContentValues(WompWompConstants.TYPE_SHARE_CARD, oneSecondBeforeContentTimestamp.toString(), null));
+        }
+    }
 }

@@ -35,7 +35,7 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
-            android:launchMode="singleTop"></activity>
+            android:launchMode="singleTop" />
         <!-- [START gcm_receiver] -->
         <receiver
             android:name="com.google.android.gms.gcm.GcmReceiver"
@@ -77,7 +77,7 @@
         <!-- [END instanceId_listener] -->
         <service
             android:name=".RegistrationIntentService"
-            android:exported="false"></service>
+            android:exported="false" />
 
         <provider
             android:name=".provider.FeedProvider"
@@ -164,8 +164,11 @@
 
         <service
             android:name=".NotifierService"
-            android:exported="false"></service>
+            android:enabled="true"></service>
 
+        <service
+            android:name=".FileDownloaderService"
+            android:exported="false"></service>
     </application>
 
 </manifest>
