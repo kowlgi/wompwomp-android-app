@@ -48,6 +48,7 @@ public class MyGcmListenerService extends GcmListenerService {
         if(from == null) return; // this should ideally never happen but we've seen a few crashes reported on crashlytics
 
         if (from.startsWith(WompWompConstants.CONTENT_NOTIFICATION)) {
+            if(true) return; // remove this statement after the server stops sending regular content notifications
             String message = data.getString("message");
             String imageUri = data.getString("imageuri");
             String itemId = data.getString("itemid");
