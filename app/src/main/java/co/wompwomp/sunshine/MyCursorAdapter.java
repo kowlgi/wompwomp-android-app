@@ -158,7 +158,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
         public TextView shareCountText;
         public TextView likesText;
         public TextView viewsText;
-        public TextView dateHeader;
+        public TextView header;
+        public TextView footer;
         public TextView annotation;
 
         public ContentCardViewHolder(View itemView) {
@@ -185,7 +186,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
             shareCountText = (TextView) itemView.findViewById(R.id.shareCountText);
             viewsText = (TextView) itemView.findViewById(R.id.viewsText);
             likesText = (TextView) itemView.findViewById(R.id.likesText);
-            dateHeader = (TextView) itemView.findViewById(R.id.dateHeader);
+            header = (TextView) itemView.findViewById(R.id.content_header);
+            footer = (TextView) itemView.findViewById(R.id.content_footer);
             annotation = (TextView) itemView.findViewById(R.id.annotation);
 
             int whatsappButtonVisibility = Utils.isPackageInstalled("com.whatsapp", mContext) ? View.VISIBLE : View.GONE;
@@ -330,11 +332,21 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                     dateHeader = mContext.getResources().getString(R.string.today);
                 }
 
-                if(dateHeader.length() > 0 && myListItem.list_type.equals(WompWompConstants.LIST_TYPE_HOME)) {
-                    holder.dateHeader.setText(dateHeader);
-                    holder.dateHeader.setVisibility(View.VISIBLE);
-                } else {
-                    holder.dateHeader.setVisibility(View.GONE);
+                holder.header.setVisibility(View.GONE);
+                holder.footer.setVisibility(View.GONE);
+                if(myListItem.list_type.equals(WompWompConstants.LIST_TYPE_HOME) &&
+                        dateHeader.length() > 0) {
+                    holder.header.setText(dateHeader);
+                    holder.header.setVisibility(View.VISIBLE);
+                } else if (myListItem.list_type.equals(WompWompConstants.LIST_TYPE_FEATURED)){
+                    if(cursorPosition == 0) {
+                        holder.header.setText(R.string.updated_daily);
+                        holder.header.setVisibility(View.VISIBLE);
+                    } else if (!cursor.moveToNext()) {
+                        holder.footer.setText(R.string.the_end);
+                        holder.footer.setVisibility(View.VISIBLE);
+                    }
+                    cursor.moveToPosition(cursorPosition);
                 }
 
                 if(myListItem.annotation.contains(WompWompConstants.ANNOTATION_ALL_TIME_POPULAR)) {
@@ -502,6 +514,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 
                         Answers.getInstance().logShare(new ShareEvent().putMethod("Destination: unspecified")
                                 .putContentId(myListItem.id));
+                        Answers.getInstance().logCustom(new CustomEvent("Generic Share")
+                                .putCustomAttribute("itemid", myListItem.id));
 
                         Integer updatedShareCount = mShareCounts.get(myListItem.id) + 1;
                         mShareCounts.put(myListItem.id, updatedShareCount);
@@ -549,6 +563,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 
                         Answers.getInstance().logShare(new ShareEvent().putMethod("Destination: facebook")
                                 .putContentId(myListItem.id));
+                        Answers.getInstance().logCustom(new CustomEvent("Facebook Share")
+                                .putCustomAttribute("itemid", myListItem.id));
 
                         Integer updatedShareCount = mShareCounts.get(myListItem.id) + 1;
                         mShareCounts.put(myListItem.id, updatedShareCount);
@@ -582,6 +598,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 
                         Answers.getInstance().logShare(new ShareEvent().putMethod("Destination: whatsapp")
                                 .putContentId(myListItem.id));
+                        Answers.getInstance().logCustom(new CustomEvent("Whatsapp Share")
+                                .putCustomAttribute("itemid", myListItem.id));
 
                         Integer updatedShareCount = mShareCounts.get(myListItem.id) + 1;
                         mShareCounts.put(myListItem.id, updatedShareCount);

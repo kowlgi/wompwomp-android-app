@@ -16,6 +16,8 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.webkit.URLUtil;
 
+import com.crashlytics.android.answers.Answers;
+import com.crashlytics.android.answers.CustomEvent;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.PendingResult;
@@ -32,7 +34,6 @@ import java.util.Calendar;
 import co.wompwomp.sunshine.provider.FeedContract;
 import co.wompwomp.sunshine.util.Utils;
 import co.wompwomp.sunshine.util.VideoFileInfo;
-import timber.log.Timber;
 
 
 /**
@@ -61,15 +62,8 @@ public class NotifierService extends IntentService {
     }
 
     private void initNotificationAlarm() {
-        Intent intent = new Intent(this, NotifierService.class);
-        intent.setAction(WompWompConstants.PUSH_NOTIFICATION);
-
-        boolean alarmUp = PendingIntent.getService(this,
-                0,
-                intent,
-                PendingIntent.FLAG_NO_CREATE) != null;
-
         // update notification time using google tag manager if google play services exist on this phone
+        int hour = WompWompConstants.DEFAULT_PUSH_NOTIFY_HOUR, minute = WompWompConstants.DEFAULT_PUSH_NOTIFY_MINUTE;
         if (checkPlayServices()) {
             TagManager tagManager = TagManager.getInstance(this);
             PendingResult<ContainerHolder> pending =
@@ -77,41 +71,37 @@ public class NotifierService extends IntentService {
                             R.raw.gtminfo);
 
             ContainerHolder containerHolder = pending.await();
-            int hour = WompWompConstants.DEFAULT_PUSH_NOTIFY_HOUR, minute = WompWompConstants.DEFAULT_PUSH_NOTIFY_MINUTE;
             Container container = containerHolder.getContainer();
             if (container != null && containerHolder.getStatus().isSuccess()) {
                 hour = (int) container.getLong(WompWompConstants.GTM_NOTIFICATION_HOUR);
                 minute = (int) container.getLong(WompWompConstants.GTM_NOTIFICATION_MINUTE);
             }
-
-            // To make the default time different than the expected alarm time, we add
-            // a minute
-            String default_alarm_time = buildTimeString(hour, minute+1);
-            String alarm_time = PreferenceManager
-                    .getDefaultSharedPreferences(this)
-                    .getString(WompWompConstants.PREF_NOTIFICATION_ALARM_TIME, default_alarm_time);
-
-            if(alarmUp && alarm_time.equals(buildTimeString(hour, minute))) return;
-
-            configureAlarmForPushNotification(intent, hour, minute);
-        } else {
-            // To make the default time different than the expected alarm time, we add
-            // a minute
-            String default_alarm_time = buildTimeString(WompWompConstants.DEFAULT_PUSH_NOTIFY_HOUR,
-                    WompWompConstants.DEFAULT_PUSH_NOTIFY_MINUTE + 1);
-            String alarm_time = PreferenceManager
-                    .getDefaultSharedPreferences(this)
-                    .getString(WompWompConstants.PREF_NOTIFICATION_ALARM_TIME, default_alarm_time);
-
-            if(alarmUp && alarm_time.equals(buildTimeString(WompWompConstants.DEFAULT_PUSH_NOTIFY_HOUR,
-                    WompWompConstants.DEFAULT_PUSH_NOTIFY_MINUTE))) return;
-
-            configureAlarmForPushNotification(intent, WompWompConstants.DEFAULT_PUSH_NOTIFY_HOUR,
-                    WompWompConstants.DEFAULT_PUSH_NOTIFY_MINUTE);
         }
+
+        // To make the default time different than the expected alarm time, we add
+        // a minute
+        String default_alarm_time = buildTimeString(hour, minute+1);
+        String alarm_time = PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .getString(WompWompConstants.PREF_NOTIFICATION_ALARM_TIME, default_alarm_time);
+
+        Intent intent = new Intent(this, NotifierService.class);
+        intent.setAction(WompWompConstants.PUSH_NOTIFICATION);
+        boolean alarmUp = PendingIntent.getService(this,
+                0,
+                intent,
+                PendingIntent.FLAG_NO_CREATE) != null;
+        if(alarmUp && alarm_time.equals(buildTimeString(hour,minute))) {
+            return;
+        } else {
+            AlarmManager alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            alarmMgr.cancel(getAlarmIntent());
+        }
+
+        configureAlarmForPushNotification(hour, minute);
     }
 
-    private void configureAlarmForPushNotification(Intent intent, int hour, int minute) {
+    private void configureAlarmForPushNotification(int hour, int minute) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(System.currentTimeMillis());
         calendar.set(Calendar.HOUR_OF_DAY, hour);
@@ -131,16 +121,14 @@ public class NotifierService extends IntentService {
                 .apply();
 
         AlarmManager alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        PendingIntent alarmIntent;
-        alarmIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
-        alarmMgr.setInexactRepeating(AlarmManager.RTC, calendar.getTimeInMillis(),
-                AlarmManager.INTERVAL_DAY, alarmIntent);
-        Timber.i("Notifier Service alarm has been set for this time: " +
+        alarmMgr.setInexactRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
+                AlarmManager.INTERVAL_DAY, getAlarmIntent());
+/*        Timber.i("Notifier Service alarm has been set for this time: " +
                 calendar.get(Calendar.HOUR_OF_DAY) + ":" +
                 calendar.get(Calendar.MINUTE) + ":" +
                 calendar.get(Calendar.SECOND) + ":" +
                 calendar.get(Calendar.MILLISECOND) + "(trigger time: " + calendar.getTimeInMillis() +
-                ", current time: " + System.currentTimeMillis() + ")");
+                ", current time: " + System.currentTimeMillis() + ")");*/
     }
 
     /**
@@ -155,12 +143,6 @@ public class NotifierService extends IntentService {
     }
 
     private void handlePushNotify() {
-        DateTime now = DateTime.now();
-        DateTime twentyFourHoursAgo = now.minusHours(24);
-        String last_logged_in = PreferenceManager
-                .getDefaultSharedPreferences(this)
-                .getString(WompWompConstants.PREF_LAST_LOGGED_IN_TIMESTAMP, twentyFourHoursAgo.toString());
-
         int interval = WompWompConstants.DEFAULT_PUSH_NOTIFY_INTERVAL_IN_HOURS;
         if (checkPlayServices()) {
             TagManager tagManager = TagManager.getInstance(this);
@@ -176,16 +158,17 @@ public class NotifierService extends IntentService {
             }
         }
 
+        DateTime now = DateTime.now();
+        DateTime intervalTimeAgo = now.minusHours(interval + 1);
+        String last_logged_in = PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .getString(WompWompConstants.PREF_LAST_LOGGED_IN_TIMESTAMP, intervalTimeAgo.toString());
         DateTime last_logged_in_dt = new DateTime(last_logged_in);
         Duration duration_since_login = new Duration(last_logged_in_dt, now);
-        Timber.i("Interval since last log in: " +
-                duration_since_login.getStandardHours() + ":" +
-                duration_since_login.getStandardMinutes() + ":" +
-                duration_since_login.getStandardSeconds());
-
 
         if (duration_since_login.getStandardHours() >= interval) {
-            SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO_NOTIFIER_SERVICE);
+            SyncUtils.TriggerRefresh(
+                    WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO_NOTIFIER_SERVICE);
         }
     }
 
@@ -193,9 +176,18 @@ public class NotifierService extends IntentService {
         return Integer.valueOf(hour).toString() + ":" + Integer.valueOf(minute).toString();
     }
 
+    private PendingIntent getAlarmIntent(){
+        Intent intent = new Intent(this, NotifierService.class);
+        intent.setAction(WompWompConstants.PUSH_NOTIFICATION);
+        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+    }
+
     private void onSyncComplete(String oldContentTimestamp) {
-        final String SELECTION = FeedContract.Entry.COLUMN_NAME_CREATED_ON +
-                " > '" + oldContentTimestamp + "'";
+        String SELECTION = null;
+        if(oldContentTimestamp != null) {
+            SELECTION = FeedContract.Entry.COLUMN_NAME_CREATED_ON +
+                    " > '" + oldContentTimestamp + "'";
+        }
 
         Uri uri = FeedContract.Entry.CONTENT_URI; // Get all entries
         Cursor cursor = getApplicationContext().getContentResolver().query(
@@ -267,5 +259,7 @@ public class NotifierService extends IntentService {
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         notificationManager.notify(0 /* ID of notification */, notificationBuilder.build());
+        Answers.getInstance().logCustom(new CustomEvent("Auto notification posted")
+                .putCustomAttribute("itemid", itemId));
     }
 }

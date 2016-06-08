@@ -48,7 +48,7 @@ public class WompWompConstants {
     public static final String ANNOTATION_ALL_TIME_POPULAR = "A";
     public static final String ANNOTATION_TRENDING_THIS_WEEK = "W";
     public static final String ANNOTATION_TRENDING_TODAY = "D";
-    public static final String ANNOTATION_BEST_OF_THIS_MONTH = "BC";
+    public static final String ANNOTATION_BEST_OF_THIS_MONTH = "C";
     public static final String ANNOTATION_BEST_OF_PREVIOUS_MONTH = "B";
 
     // Constants for entry id for prompt cards

@@ -144,7 +144,7 @@ public class Utils {
         aView.draw(myCanvas);
 
         final double SHRINK_FACTOR = 0.25;
-        Bitmap watermark = BitmapFactory.decodeResource(context.getResources(), R.drawable.watermark_wompwomp_stylized);
+        Bitmap watermark = BitmapFactory.decodeResource(context.getResources(), R.drawable.wompwomp_newicon_watermark);
         double new_width = (int) (aView.getWidth() * SHRINK_FACTOR);
         double new_height = (new_width/watermark.getWidth()) * watermark.getHeight(); /* scale proportionally */
         Bitmap scaledWatermark = Bitmap.createScaledBitmap(watermark,
@@ -162,7 +162,8 @@ public class Utils {
         FileOutputStream out = null;
         try {
             if (Build.VERSION.SDK_INT > VERSION_CODES.LOLLIPOP_MR1 &&
-                    context.checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") == PackageManager.PERMISSION_DENIED) {
+                    context.checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") ==
+                            PackageManager.PERMISSION_DENIED) {
                 return null;
             }
 
