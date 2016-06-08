@@ -9,9 +9,9 @@
     <string name="rate_all_caps">RATE</string>
 
     <string name="no_network_connection_toast">No network connection found</string>
-    <string name="share_app">Hey, check out WompWomp. It has really funny videos and pictures: http://wompwomp.co/install</string>
-    <string name="share_us_if_you_like">Hope you\'re enjoying our app. Share it with your friends!</string>
-    <string name="rate_us_on_play_store">We\'d love to have your feedback. Rate us on the Play store</string>
+    <string name="share_app">Hey, check out WompWomp. It has really funny videos that you will love! Click to open the Play Store page: http://wompwomp.co/install</string>
+    <string name="share_us_if_you_like">If you\'re enjoying our app we would really appreciate it if you could share the app with your friends!</string>
+    <string name="rate_us_on_play_store">If you\'re enjoying our app please take a moment to rate us on the Play Store</string>
     <string name="version_title">Version</string>
     <string name="email_id">wompwompapp@gmail.com</string>
     <string name="our_contact">Contact Us</string>
@@ -46,7 +46,11 @@
     <string name="press_button_to_play_video">Press button to play video</string>
     <string name="press_button_to_share">Press button to share</string>
     <string name="press_button_to_like">press button to like</string>
-    <string name="this_week">THIS WEEK</string>
-    <string name="all_time">ALL TIME</string>
-    <string name="today">TODAY</string>
+    <string name="this_week_annotation">&#x1f525;Hot This Week</string> // fire emoji
+    <string name="all_time_annotation">&#x1f3C6;Top All Time</string>
+    <string name="today">Today</string>
+    <string name="today_annotation">&#x1F4A5;Hot Today</string>
+    <string name="best_of_this_month_annotation">&#x1F602;Best Of This Month</string>
+    <string name="best_of_previous_month_annotation">&#x1F602;Best Of</string>
+    <string name="gcm_defaultSenderId">124086447940</string>
 </resources>

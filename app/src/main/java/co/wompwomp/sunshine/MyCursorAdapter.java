@@ -139,6 +139,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
     }
 
     public class ContentCardViewHolder extends ViewHolder {
+        public View contentView;
         public SquareImageView imageView;
         public TextView textView;
         public ImageButton shareButton;
@@ -158,12 +159,11 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
         public TextView likesText;
         public TextView viewsText;
         public TextView dateHeader;
-        public View allTimeTrending;
-        public View lastWeekTrending;
-        public View lastDayTrending;
+        public TextView annotation;
 
         public ContentCardViewHolder(View itemView) {
             super(itemView);
+            contentView = itemView.findViewById(R.id.shareCard);
             imageView = (SquareImageView) itemView.findViewById(R.id.imageView);
             textView = (TextView) itemView.findViewById(R.id.textView);
             shareButton = (ImageButton) itemView.findViewById(R.id.share_button);
@@ -186,9 +186,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
             viewsText = (TextView) itemView.findViewById(R.id.viewsText);
             likesText = (TextView) itemView.findViewById(R.id.likesText);
             dateHeader = (TextView) itemView.findViewById(R.id.dateHeader);
-            allTimeTrending = itemView.findViewById(R.id.alltimepopularannotation);
-            lastWeekTrending = itemView.findViewById(R.id.trendinglastweekannotation);
-            lastDayTrending = itemView.findViewById(R.id.trendinglastdayannotation);
+            annotation = (TextView) itemView.findViewById(R.id.annotation);
 
             int whatsappButtonVisibility = Utils.isPackageInstalled("com.whatsapp", mContext) ? View.VISIBLE : View.GONE;
             whatsappshareButton.setVisibility(whatsappButtonVisibility);
@@ -236,25 +234,25 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
             case WompWompConstants.TYPE_CONTENT_CARD:
             case WompWompConstants.TYPE_VIDEO_CONTENT_CARD:{
                 View itemView = LayoutInflater.from(mContext)
-                        .inflate(R.layout.content_card, parent, false);
+                        .inflate(R.layout.card_content, parent, false);
                 vh = new ContentCardViewHolder(itemView);
                 break;
             }
             case WompWompConstants.TYPE_SHARE_CARD: {
                 View itemView = LayoutInflater.from(mContext)
-                        .inflate(R.layout.share_card, parent, false);
+                        .inflate(R.layout.card_share, parent, false);
                 vh = new ViewHolder(itemView);
                 break;
             }
             case WompWompConstants.TYPE_RATE_CARD: {
                 View itemView = LayoutInflater.from(mContext)
-                        .inflate(R.layout.rate_card, parent, false);
+                        .inflate(R.layout.card_rate, parent, false);
                 vh = new ViewHolder(itemView);
                 break;
             }
             case WompWompConstants.TYPE_UPGRADE_CARD: {
                 View itemView = LayoutInflater.from(mContext)
-                        .inflate(R.layout.upgrade_card, parent, false);
+                        .inflate(R.layout.card_upgrade, parent, false);
                 vh = new ViewHolder(itemView);
                 break;
             }
@@ -332,29 +330,34 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                     dateHeader = mContext.getResources().getString(R.string.today);
                 }
 
-                if(dateHeader.length() > 0) {
-                    holder.dateHeader.setText(dateHeader.toUpperCase());
+                if(dateHeader.length() > 0 && myListItem.list_type.equals(WompWompConstants.LIST_TYPE_HOME)) {
+                    holder.dateHeader.setText(dateHeader);
                     holder.dateHeader.setVisibility(View.VISIBLE);
                 } else {
                     holder.dateHeader.setVisibility(View.GONE);
                 }
 
-                if(!myListItem.annotation.contains(WompWompConstants.ANNOTATION_ALL_TIME_POPULAR)) {
-                    holder.allTimeTrending.setVisibility(View.GONE);
+                if(myListItem.annotation.contains(WompWompConstants.ANNOTATION_ALL_TIME_POPULAR)) {
+                    holder.annotation.setText(R.string.all_time_annotation);
+                    holder.annotation.setVisibility(View.VISIBLE);
+                } else if (myListItem.annotation.contains(WompWompConstants.ANNOTATION_TRENDING_THIS_WEEK)){
+                    holder.annotation.setText(R.string.this_week_annotation);
+                    holder.annotation.setVisibility(View.VISIBLE);
+                } else if(myListItem.annotation.contains(WompWompConstants.ANNOTATION_TRENDING_TODAY)) {
+                    holder.annotation.setText(R.string.today_annotation);
+                    holder.annotation.setVisibility(View.VISIBLE);
+                } else if(myListItem.annotation.equals(WompWompConstants.ANNOTATION_BEST_OF_PREVIOUS_MONTH)) {
+                    DateTimeFormatter fmt = DateTimeFormat.forPattern("MMMM yyyy");
+                    String previousMonthAnnotation =
+                            mContext.getResources().getString(R.string.best_of_previous_month_annotation) +
+                                    " " + currentItemDate.toString(fmt);
+                    holder.annotation.setText(previousMonthAnnotation);
+                    holder.annotation.setVisibility(View.VISIBLE);
+                } else if(myListItem.annotation.equals(WompWompConstants.ANNOTATION_BEST_OF_THIS_MONTH)) {
+                    holder.annotation.setText(R.string.best_of_this_month_annotation);
+                    holder.annotation.setVisibility(View.VISIBLE);
                 } else {
-                    holder.allTimeTrending.setVisibility(View.VISIBLE);
-                }
-
-                if(!myListItem.annotation.contains(WompWompConstants.ANNOTATION_TRENDING_THIS_WEEK)){
-                    holder.lastWeekTrending.setVisibility(View.GONE);
-                } else {
-                    holder.lastWeekTrending.setVisibility(View.VISIBLE);
-                }
-
-                if(!myListItem.annotation.contains(WompWompConstants.ANNOTATION_TRENDING_TODAY)){
-                    holder.lastDayTrending.setVisibility(View.GONE);
-                } else {
-                    holder.lastDayTrending.setVisibility(View.VISIBLE);
+                    holder.annotation.setVisibility(View.GONE);
                 }
 
                 final ArrayList<VideoFileInfo> videoPrefetchList = new ArrayList<>();
@@ -523,8 +526,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                                 shareIntent.setType("video/*");
                             }
                         } else {
-                            View parentView = (View) holder.imageView.getParent();
-                            Uri bmpUri = Utils.getLocalViewBitmapUri(myListItem.id, parentView, mContext);
+                            Uri bmpUri = Utils.getLocalViewBitmapUri(myListItem.id, holder.contentView, mContext);
                             if (bmpUri != null) {
                                 shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
                                 shareIntent.setType("image/*");
@@ -604,8 +606,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                                 shareIntent.setType("video/*");
                             }
                         } else {
-                            View parentView = (View) holder.imageView.getParent();
-                            Uri bmpUri = Utils.getLocalViewBitmapUri(myListItem.id, parentView, mContext);
+                            Uri bmpUri = Utils.getLocalViewBitmapUri(myListItem.id, holder.contentView, mContext);
                             if (bmpUri != null) {
                                 shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
                                 shareIntent.setType("image/*");
@@ -676,7 +677,9 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                     public void onClick(View v) {
                         Answers.getInstance().logCustom(new CustomEvent("Rate card clicked"));
                         Utils.showAppPageLaunchToast(mContext);
-                        mContext.startActivity(Utils.getRateAppIntent(mContext));
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        intent.setData(Uri.parse("http://play.google.com/store/apps/details?id=" + BuildConfig.APPLICATION_ID));
+                        mContext.startActivity(intent);
                     }
                 });
                 break;
@@ -688,7 +691,9 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                     public void onClick(View v) {
                         Answers.getInstance().logCustom(new CustomEvent("Upgrade card clicked"));
                         Utils.showAppPageLaunchToast(mContext);
-                        mContext.startActivity(Utils.getRateAppIntent(mContext));
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        intent.setData(Uri.parse("http://play.google.com/store/apps/details?id=" + BuildConfig.APPLICATION_ID));
+                        mContext.startActivity(intent);
                     }
                 });
                 break;
@@ -716,8 +721,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 
     private void reinforceShareAndLikeIntent(String contentTimestamp){
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-        int shareCount = preferences.getInt(WompWompConstants.SHARE_LIKE_COUNTER, 0);
-        preferences.edit().putInt(WompWompConstants.SHARE_LIKE_COUNTER, ++shareCount).apply();
+        int shareCount = preferences.getInt(WompWompConstants.PREF_SHARE_LIKE_COUNTER, 0);
+        preferences.edit().putInt(WompWompConstants.PREF_SHARE_LIKE_COUNTER, ++shareCount).apply();
 
         if(shareCount % WompWompConstants.DEFAULT_SHARE_APP_THRESHOLD == 0) {
             Uri uri = FeedContract.Entry.CONTENT_URI; // Get all entries

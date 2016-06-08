@@ -9,8 +9,7 @@
     card_view:cardElevation="3dp"
     android:layout_marginBottom="30dp"
     android:focusableInTouchMode="false"
-    android:focusable="false"
-    android:contextClickable="false">
+    android:focusable="false">
 
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:orientation="vertical" android:layout_width="match_parent"
@@ -33,27 +32,22 @@
                 style="@android:style/TextAppearance.Large"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:textColor="#e1f5fe"
+                android:textColor="@color/rate_card_text"
                 android:padding="20dp"/>
         </LinearLayout>
 
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <Button
-                android:text="@string/rate_all_caps"
-                android:id="@+id/rateappbutton"
-                android:textColor="#e1f5fe"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textAlignment="center"
-                android:layout_alignParentRight="true"
-                android:padding="20dp"
-                android:clickable="true"
-                style="?android:attr/borderlessButtonStyle"
-                android:textAppearance="@style/TextAppearance.AppCompat.Large" />
-        </RelativeLayout>
+        <Button
+            android:text="@string/rate_all_caps"
+            android:id="@+id/rateappbutton"
+            android:textColor="@color/rate_card_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:padding="10dp"
+            android:layout_margin="5dp"
+            android:clickable="true"
+            android:background="@drawable/rate_button"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large" />
 
     </LinearLayout>
 

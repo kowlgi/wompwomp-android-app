@@ -60,6 +60,7 @@ public class FeedParser {
         Integer numPlays = 0;
         Integer fileSize = 0;
         String annotation = null;
+        Integer featuredPriority = 0;
 
         reader.beginObject();
         while (reader.hasNext()) {
@@ -98,13 +99,27 @@ public class FeedParser {
                 case WompWompConstants.WOMPWOMP_ANNOTATION:
                     annotation = reader.nextString();
                     break;
+                case WompWompConstants.WOMPWOMP_FEATURED_PRIORITY:
+                    featuredPriority = reader.nextInt();
+                    break;
                 default:
                     reader.skipValue();
                     break;
             }
         }
         reader.endObject();
-        return new Entry(id, imageSourceUri, quoteText, numFavorites, numShares, createdOn, author, videoUri, numPlays, fileSize, annotation);
+        return new Entry(id,
+                imageSourceUri,
+                quoteText,
+                numFavorites,
+                numShares,
+                createdOn,
+                author,
+                videoUri,
+                numPlays,
+                fileSize,
+                annotation,
+                featuredPriority);
     }
 
     /**
@@ -122,10 +137,11 @@ public class FeedParser {
         public final Integer numPlays;
         public final Integer fileSize;
         public final String annotation;
+        public final Integer featuredPriority;
 
         Entry(String id, String imageSourceUri, String quoteText, Integer numFavorites,
               Integer numShares, String createdOn, String author, String videoUri,
-              Integer numPlays, Integer fileSize, String annotation) {
+              Integer numPlays, Integer fileSize, String annotation, Integer featuredPriority) {
             this.id = id;
             this.imageSourceUri = imageSourceUri;
             this.quoteText = quoteText;
@@ -137,6 +153,7 @@ public class FeedParser {
             this.numPlays = numPlays;
             this.fileSize = fileSize;
             this.annotation = annotation;
+            this.featuredPriority = featuredPriority;
         }
     }
 }

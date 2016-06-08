@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -60,6 +61,14 @@ public class NotifierService extends IntentService {
     }
 
     private void initNotificationAlarm() {
+        Intent intent = new Intent(this, NotifierService.class);
+        intent.setAction(WompWompConstants.PUSH_NOTIFICATION);
+
+        boolean alarmUp = PendingIntent.getService(this,
+                0,
+                intent,
+                PendingIntent.FLAG_NO_CREATE) != null;
+
         // update notification time using google tag manager if google play services exist on this phone
         if (checkPlayServices()) {
             TagManager tagManager = TagManager.getInstance(this);
@@ -74,13 +83,35 @@ public class NotifierService extends IntentService {
                 hour = (int) container.getLong(WompWompConstants.GTM_NOTIFICATION_HOUR);
                 minute = (int) container.getLong(WompWompConstants.GTM_NOTIFICATION_MINUTE);
             }
-            configureAlarmForPushNotification(hour, minute);
+
+            // To make the default time different than the expected alarm time, we add
+            // a minute
+            String default_alarm_time = buildTimeString(hour, minute+1);
+            String alarm_time = PreferenceManager
+                    .getDefaultSharedPreferences(this)
+                    .getString(WompWompConstants.PREF_NOTIFICATION_ALARM_TIME, default_alarm_time);
+
+            if(alarmUp && alarm_time.equals(buildTimeString(hour, minute))) return;
+
+            configureAlarmForPushNotification(intent, hour, minute);
         } else {
-            configureAlarmForPushNotification(WompWompConstants.DEFAULT_PUSH_NOTIFY_HOUR, WompWompConstants.DEFAULT_PUSH_NOTIFY_MINUTE);
+            // To make the default time different than the expected alarm time, we add
+            // a minute
+            String default_alarm_time = buildTimeString(WompWompConstants.DEFAULT_PUSH_NOTIFY_HOUR,
+                    WompWompConstants.DEFAULT_PUSH_NOTIFY_MINUTE + 1);
+            String alarm_time = PreferenceManager
+                    .getDefaultSharedPreferences(this)
+                    .getString(WompWompConstants.PREF_NOTIFICATION_ALARM_TIME, default_alarm_time);
+
+            if(alarmUp && alarm_time.equals(buildTimeString(WompWompConstants.DEFAULT_PUSH_NOTIFY_HOUR,
+                    WompWompConstants.DEFAULT_PUSH_NOTIFY_MINUTE))) return;
+
+            configureAlarmForPushNotification(intent, WompWompConstants.DEFAULT_PUSH_NOTIFY_HOUR,
+                    WompWompConstants.DEFAULT_PUSH_NOTIFY_MINUTE);
         }
     }
 
-    private void configureAlarmForPushNotification(int hour, int minute) {
+    private void configureAlarmForPushNotification(Intent intent, int hour, int minute) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(System.currentTimeMillis());
         calendar.set(Calendar.HOUR_OF_DAY, hour);
@@ -91,13 +122,19 @@ public class NotifierService extends IntentService {
             calendar.setTimeInMillis(calendar.getTimeInMillis() + AlarmManager.INTERVAL_DAY);
         }
 
+        PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .edit()
+                .putString(WompWompConstants.PREF_NOTIFICATION_ALARM_TIME, buildTimeString(
+                        calendar.get(Calendar.HOUR_OF_DAY),
+                        calendar.get(Calendar.MINUTE)))
+                .apply();
+
         AlarmManager alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         PendingIntent alarmIntent;
-        Intent intent = new Intent(this, NotifierService.class);
-        intent.setAction(WompWompConstants.PUSH_NOTIFICATION);
         alarmIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
         alarmMgr.setInexactRepeating(AlarmManager.RTC, calendar.getTimeInMillis(),
-                AlarmManager.INTERVAL_FIFTEEN_MINUTES, alarmIntent);
+                AlarmManager.INTERVAL_DAY, alarmIntent);
         Timber.i("Notifier Service alarm has been set for this time: " +
                 calendar.get(Calendar.HOUR_OF_DAY) + ":" +
                 calendar.get(Calendar.MINUTE) + ":" +
@@ -122,7 +159,7 @@ public class NotifierService extends IntentService {
         DateTime twentyFourHoursAgo = now.minusHours(24);
         String last_logged_in = PreferenceManager
                 .getDefaultSharedPreferences(this)
-                .getString(WompWompConstants.LAST_LOGGED_IN_TIMESTAMP, twentyFourHoursAgo.toString());
+                .getString(WompWompConstants.PREF_LAST_LOGGED_IN_TIMESTAMP, twentyFourHoursAgo.toString());
 
         int interval = WompWompConstants.DEFAULT_PUSH_NOTIFY_INTERVAL_IN_HOURS;
         if (checkPlayServices()) {
@@ -146,13 +183,17 @@ public class NotifierService extends IntentService {
                 duration_since_login.getStandardMinutes() + ":" +
                 duration_since_login.getStandardSeconds());
 
+
         if (duration_since_login.getStandardHours() >= interval) {
             SyncUtils.TriggerRefresh(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO_NOTIFIER_SERVICE);
         }
     }
 
+    private String buildTimeString(int hour, int minute){
+        return Integer.valueOf(hour).toString() + ":" + Integer.valueOf(minute).toString();
+    }
+
     private void onSyncComplete(String oldContentTimestamp) {
-        // update your views
         final String SELECTION = FeedContract.Entry.COLUMN_NAME_CREATED_ON +
                 " > '" + oldContentTimestamp + "'";
 
@@ -185,6 +226,7 @@ public class NotifierService extends IntentService {
             FileDownloaderService.startDownload(this, videoPrefetchList);
         }
 
+        cursor.moveToFirst();
         String quoteText = cursor.getString(WompWompConstants.COLUMN_QUOTE_TEXT);
         String imageUri = cursor.getString(WompWompConstants.COLUMN_IMAGE_SOURCE_URI);
         String itemId = cursor.getString(WompWompConstants.COLUMN_ENTRY_ID);
@@ -201,8 +243,10 @@ public class NotifierService extends IntentService {
         String appName = getResources().getString(R.string.app_name);
 
         Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        Bitmap largeIcon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_wompwomp_newicon);
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(getApplicationContext())
                 .setSmallIcon(R.drawable.ic_stat_wompwomp_newicon)
+                .setLargeIcon(largeIcon)
                 .setContentTitle(appName)
                 .setContentText(quoteText)
                 .setAutoCancel(true)

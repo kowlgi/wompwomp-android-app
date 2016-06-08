@@ -83,11 +83,7 @@ public abstract class ImageWorker {
             final AsyncDrawable asyncDrawable =
                     new AsyncDrawable(mResources, mLoadingBitmap, task);
             imageView.setImageDrawable(asyncDrawable);
-            if(Utils.hasHoneycomb()) {
-                task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-            } else {
-                task.execute();
-            }
+            task.execute();
         }
     }
 

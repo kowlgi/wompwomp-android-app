@@ -24,7 +24,7 @@ public class AboutDialogFragment extends DialogFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        return inflater.inflate(R.layout.about_dialog, container);
+        return inflater.inflate(R.layout.dialog_about, container);
     }
 
     @Override

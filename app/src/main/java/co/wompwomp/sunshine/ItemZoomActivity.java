@@ -87,7 +87,7 @@ public class ItemZoomActivity extends AppCompatActivity {
         }
 
         PreferenceManager.getDefaultSharedPreferences(this).edit()
-                .putBoolean(WompWompConstants.APP_RESUMED_FROM_BG, false).commit();
+                .putBoolean(WompWompConstants.PREF_APP_RESUMED_FROM_BG, false).commit();
     }
 
     @Override

@@ -214,17 +214,6 @@ public class Utils {
         return shareIntent;
     }
 
-    public static Intent getRateAppIntent(Context context) {
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        if( GooglePlayServicesUtil.isGooglePlayServicesAvailable(context) == ConnectionResult.SUCCESS) {
-            intent.setData(Uri.parse("market://details?id=" + BuildConfig.APPLICATION_ID));
-        }
-        else {
-            intent.setData(Uri.parse("http://play.google.com/store/apps/details?id=" + BuildConfig.APPLICATION_ID));
-        }
-        return intent;
-    }
-
     public static String truncateAndAppendEllipsis(final String content, final int lastIndex) {
         if(content.length() <= lastIndex) {
             return content;
@@ -258,7 +247,7 @@ public class Utils {
             */
             FragmentManager fm = ((AppCompatActivity)context).getSupportFragmentManager();
             PermissionsDialogFragment permissionsDialogFragment = PermissionsDialogFragment.newInstance();
-            permissionsDialogFragment.show(fm, "permissions_dialog");
+            permissionsDialogFragment.show(fm, "dialog_permissions");
         }
     }
 

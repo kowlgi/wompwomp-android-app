@@ -19,6 +19,7 @@ public class WompWompConstants {
     public static final int COLUMN_FILE_SIZE = 12;
     public static final int COLUMN_ANNOTATION = 13;
     public static final int COLUMN_LIST_TYPE = 14;
+    public static final int COLUMN_FEATURED_PRIORITY = 15;
 
     /* Card types */
     public static final int TYPE_CONTENT_CARD = 100;
@@ -39,6 +40,7 @@ public class WompWompConstants {
     public static final String WOMPWOMP_NUMPLAYS = "p";
     public static final String WOMPWOMP_FILESIZE = "z";
     public static final String WOMPWOMP_ANNOTATION = "n";
+    public static final String WOMPWOMP_FEATURED_PRIORITY = "r";
 
     public static final String LIST_TYPE_HOME = "home";
     public static final String LIST_TYPE_FEATURED = "featured";
@@ -46,6 +48,8 @@ public class WompWompConstants {
     public static final String ANNOTATION_ALL_TIME_POPULAR = "A";
     public static final String ANNOTATION_TRENDING_THIS_WEEK = "W";
     public static final String ANNOTATION_TRENDING_TODAY = "D";
+    public static final String ANNOTATION_BEST_OF_THIS_MONTH = "BC";
+    public static final String ANNOTATION_BEST_OF_PREVIOUS_MONTH = "B";
 
     // Constants for entry id for prompt cards
     public static final String WOMPWOMP_CTA_SHARE = "CTA_SHARE";
@@ -61,18 +65,20 @@ public class WompWompConstants {
 
     public enum SyncMethod {
         EXISTING_AND_NEW_ABOVE_LOW_CURSOR, /* insert and update db in automatic background sync scenario */
-        ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO_NOTIFIER_SERVICE,
+        ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO_NOTIFIER_SERVICE, /* insert only into db before push notification */
         ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO, /* insert only into db in in-app refresh scenario */
-        ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER,
+        ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER, /* user initiated refresh */
         SUBSET_OF_LATEST_ITEMS_NO_CURSOR, /* insert and update db on app open */
         SUBSET_OF_ITEMS_BELOW_LOW_CURSOR, /* insert only into db in in-app scroll down to bottom scenario */
+        ALL_FEATURED_ITEMS, /* insert and update db on app open */
         SYNC_METHOD_NONE
     }
 
     // Preferences
-    public static final String APP_RESUMED_FROM_BG = "app_resumed_from_bg";
-    public static final String LAST_LOGGED_IN_TIMESTAMP = "last_logged_in_timestamp";
-    public static final String SHARE_LIKE_COUNTER = "share_like_counter";
+    public static final String PREF_APP_RESUMED_FROM_BG = "app_resumed_from_bg";
+    public static final String PREF_LAST_LOGGED_IN_TIMESTAMP = "last_logged_in_timestamp";
+    public static final String PREF_SHARE_LIKE_COUNTER = "share_like_counter";
+    public static final String PREF_NOTIFICATION_ALARM_TIME = "notification_alarm_time";
     public static final Integer DEFAULT_SHARE_APP_THRESHOLD = 4;
 
     public static final String LIKES_FILENAME = "wwlikes.ser";
@@ -96,9 +102,9 @@ public class WompWompConstants {
     public static final Integer MAX_VIDEOS_FILES_TO_RETAIN = 100;
 
     // Push Notification defaults
-    public static final int DEFAULT_PUSH_NOTIFY_HOUR = 13;
+    public static final int DEFAULT_PUSH_NOTIFY_HOUR = 8;
     public static final int DEFAULT_PUSH_NOTIFY_MINUTE = 0;
-    public static final int DEFAULT_PUSH_NOTIFY_INTERVAL_IN_HOURS = 1;
+    public static final int DEFAULT_PUSH_NOTIFY_INTERVAL_IN_HOURS = 24;
     public static final String INIT_NOTIFICATION_ALARM = "init_notification_alarm";
     public static final String PUSH_NOTIFICATION = "push_notification";
     public static final String SYNC_COMPLETE = "sync_complete";
@@ -124,9 +130,20 @@ public class WompWompConstants {
             FeedContract.Entry.COLUMN_NAME_NUM_PLAYS,
             FeedContract.Entry.COLUMN_NAME_FILE_SIZE,
             FeedContract.Entry.COLUMN_NAME_ANNOTATION,
-            FeedContract.Entry.COLUMN_NAME_LIST_TYPE
+            FeedContract.Entry.COLUMN_NAME_LIST_TYPE,
+            FeedContract.Entry.COLUMN_NAME_FEATURED_PRIORITY
     };
+
+    public static final String HOME_LIST_SELECTION = "(" + FeedContract.Entry.COLUMN_NAME_LIST_TYPE +
+            " IS NULL OR " + FeedContract.Entry.COLUMN_NAME_LIST_TYPE + " = '" +
+            WompWompConstants.LIST_TYPE_HOME + "' OR " + FeedContract.Entry.COLUMN_NAME_LIST_TYPE + " = '' )";
+
+    public static final String FEATURED_LIST_SELECTION = "(" + FeedContract.Entry.COLUMN_NAME_LIST_TYPE + " = '" +
+            WompWompConstants.LIST_TYPE_FEATURED + "' )";
 
     public static final String ACTION_FINISHED_SYNC = "co.wompwomp.sunshine.ACTION_FINISHED_SYNC";
     public static final Integer MAX_NUM_PREFETCH_VIDEOS = 3;
+
+    public static final int HOME_LOADER_ID = 0;
+    public static final int FEATURED_LOADER_ID = 1;
 }

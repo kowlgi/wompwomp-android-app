@@ -22,6 +22,8 @@ public class MyListItem {
     public Integer numPlays;
     public Integer fileSize;
     public String annotation;
+    public String list_type;
+    public Integer featured_priority;
 
     public static MyListItem fromCursor(Cursor c) {
         MyListItem myItem = new MyListItem();
@@ -39,6 +41,8 @@ public class MyListItem {
         myItem.numPlays = c.getInt(WompWompConstants.COLUMN_NUM_PLAYS);
         myItem.fileSize = c.getInt(WompWompConstants.COLUMN_FILE_SIZE);
         myItem.annotation = c.getString(WompWompConstants.COLUMN_ANNOTATION);
+        myItem.list_type = c.getString(WompWompConstants.COLUMN_LIST_TYPE);
+        myItem.featured_priority = c.getInt(WompWompConstants.COLUMN_FEATURED_PRIORITY);
         return myItem;
     }
 
@@ -83,6 +87,8 @@ public class MyListItem {
                 ", videouri: " + videoUri +
                 ", numPlays: " + numPlays +
                 ", fileSize: " + fileSize +
-                ", annotation: " + annotation;
+                ", annotation: " + annotation +
+                ", list_type: " + list_type +
+                ", featured_priority: " + featured_priority;
     }
 }

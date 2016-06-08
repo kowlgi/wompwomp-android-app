@@ -10,14 +10,14 @@
     </style>
 
     <style name="WompwompActionBarStyle" parent="AppTheme">
-        <item name="android:background">@color/wompwompblue</item>
+        <item name="android:background">@color/wompwompbackground</item>
         <!-- color of title text -->
-        <item name="android:textColorPrimary">@android:color/white</item>
+        <item name="android:textColorPrimary">@color/wompwompblue</item>
         <!-- color of the menu overflow icon (three vertical dots) -->
-        <item name="android:textColorSecondary">@android:color/white</item>
+        <item name="android:textColorSecondary">@color/wompwompblue</item>
 
         <!--For compatibility-->
-        <item name="background">@color/wompwompblue</item>
+        <item name="background">@color/wompwompbackground</item>
     </style>
 
     <style name="FullscreenTheme" parent="AppTheme">

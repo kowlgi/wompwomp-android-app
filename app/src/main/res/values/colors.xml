@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="wompwompblue"> #6985EC </color>
+    <color name="wompwompbackground"> #EAEFFF </color>
+    <color name="rate_card_text">#e1f5fe</color>
+    <color name="share_card_text">#B9F6CA</color>
     <color name="spinner_complementarycolor1"> #8F67EC </color>
     <color name="spinner_complementarycolor2"> #FFCE5F </color>
     <color name="spinner_complementarycolor3"> #FFE85F </color>

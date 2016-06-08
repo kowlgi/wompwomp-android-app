@@ -18,16 +18,12 @@ import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 
 import co.wompwomp.sunshine.provider.FeedContract;
 import co.wompwomp.sunshine.util.Utils;
 import co.wompwomp.sunshine.util.VideoFileInfo;
-import timber.log.Timber;
 
 public class WelcomeActivity extends AppCompatActivity {
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
@@ -46,49 +42,6 @@ public class WelcomeActivity extends AppCompatActivity {
             startService(intent);
         }
         Crashlytics.setUserIdentifier(Installation.id(this));
-
-        HashSet<String> likes;
-        if(Utils.fileExists(this, WompWompConstants.LIKES_FILENAME)) {
-            // All likes have apparently been migrated from the database to file,
-            // so we're good
-            Timber.d(WompWompConstants.LIKES_FILENAME +" exists");
-        } else {
-            // we need to store 'likes' data from DB into a file
-            likes = new HashSet<>();
-            final String[] LIKES_PROJECTION = new String[]{
-                    FeedContract.Entry.COLUMN_NAME_ENTRY_ID,
-            };
-            final String LIKES_SELECTION = "(" + FeedContract.Entry.COLUMN_NAME_FAVORITE +
-                    " IS 1 )";
-            Cursor c = getContentResolver().query(FeedContract.Entry.CONTENT_URI,
-                    LIKES_PROJECTION,
-                    LIKES_SELECTION,
-                    null,
-                    null);
-
-            if(c != null && c.getCount() > 0) {
-                c.moveToFirst();
-
-                do {
-                    likes.add(c.getString(0));
-                } while(c.moveToNext());
-            }
-            if(c != null) c.close();
-
-            try {
-                FileOutputStream fos = this.openFileOutput(WompWompConstants.LIKES_FILENAME, Context.MODE_PRIVATE);
-                ObjectOutputStream oos = new ObjectOutputStream(fos);
-                oos.writeObject(likes);
-                oos.close();
-                fos.close();
-            } catch (java.io.FileNotFoundException fnf) {
-                Timber.e("Error from file stream open operation ", fnf.toString());
-                fnf.printStackTrace();
-            } catch (java.io.IOException ioe) {
-                Timber.e("Error from file write operation ", ioe.toString());
-                ioe.printStackTrace();
-            }
-        }
 
         /* Only keep the videos that correspond to items in the db */
         try {
@@ -191,7 +144,6 @@ public class WelcomeActivity extends AppCompatActivity {
                 ArrayList<VideoFileInfo> videoPrefetchList = new ArrayList<>();
                 int numVideos = 0;
                 do {
-                    // do something
                     String videoUri = c.getString(WompWompConstants.COLUMN_VIDEOURI);
                     Integer fileSize = c.getInt(WompWompConstants.COLUMN_FILE_SIZE);
                     if(videoUri == null || videoUri.length() <= 0 ) continue;

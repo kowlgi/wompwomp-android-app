@@ -42,6 +42,7 @@ public class FeedContract {
     public static final String APP_OPENED_URL = BASE_URL + "/op";
     public static final String APP_PUSH_NOTIFICATION_CLICKED_URL = BASE_URL + "/not/";
     public static final String APP_CLOSED_URL = BASE_URL + "/cl";
+    public static final String FEATURED_URL = BASE_URL + "/feat";
 
     /**
      * Content provider authority.
@@ -140,5 +141,9 @@ public class FeedContract {
          * List type: Home, Featured, etc.
          */
         public static final String COLUMN_NAME_LIST_TYPE = "list_type";
+        /**
+         * Rank in the featured list
+         */
+        public static final String COLUMN_NAME_FEATURED_PRIORITY = "featured_priority";
     }
 }

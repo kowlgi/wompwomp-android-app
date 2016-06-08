@@ -21,6 +21,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -125,8 +126,10 @@ public class MyGcmListenerService extends GcmListenerService {
         String appName = getResources().getString(R.string.app_name);
 
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        Bitmap largeIcon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_wompwomp_newicon);
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.ic_stat_wompwomp_newicon)
+                .setLargeIcon(largeIcon)
                 .setContentTitle(appName)
                 .setContentText(message)
                 .setAutoCancel(true)

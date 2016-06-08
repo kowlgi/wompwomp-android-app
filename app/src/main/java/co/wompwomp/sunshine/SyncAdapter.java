@@ -134,7 +134,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             Cursor c = mContentResolver.query(
                     FeedContract.Entry.CONTENT_URI,
                     CURSOR_PROJECTION,
-                    null,
+                    WompWompConstants.HOME_LIST_SELECTION,
                     null,
                     FeedContract.Entry.COLUMN_NAME_CREATED_ON + " DESC");
 
@@ -143,8 +143,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 /* insert and update db happens on app open */
                 limit = WompWompConstants.SYNC_NUM_SUBSET_ITEMS;
                 updateAndDeleteStaleItems =  true;
-            }
-            else if (syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO ||
+            } else if (syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO ||
                     syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_USER ||
                     syncMethod == WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO_NOTIFIER_SERVICE) {
                 /* insert only into db in in-app refresh scenario */
@@ -152,22 +151,24 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 c.moveToFirst();
                 cursor = c.getString(0);
                 updateAndDeleteStaleItems = false;
-            }
-            else if(syncMethod == WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR) {
+            } else if(syncMethod == WompWompConstants.SyncMethod.SUBSET_OF_ITEMS_BELOW_LOW_CURSOR) {
                 /* insert only into db in in-app scroll down to bottom scenario */
                 limit = WompWompConstants.SYNC_NUM_SUBSET_ITEMS * -1; /* negative limit implies items below cursor */
                 c.moveToLast();
                 cursor = c.getString(0);
                 updateAndDeleteStaleItems = false;
-            }
-            else if(syncMethod == WompWompConstants.SyncMethod.EXISTING_AND_NEW_ABOVE_LOW_CURSOR) {
-                /* insert and update db happens on app resume */
+            } else if(syncMethod == WompWompConstants.SyncMethod.EXISTING_AND_NEW_ABOVE_LOW_CURSOR) {
+                /* insert and update db happens on app open */
                 limit = WompWompConstants.SYNC_NUM_ALL_ITEMS;
                 c.moveToLast();
                 cursor = c.getString(0);
                 updateAndDeleteStaleItems = true;
                 cursorInclusive = "yes";
+            } else if(syncMethod == WompWompConstants.SyncMethod.ALL_FEATURED_ITEMS) {
+                /* insert and update db on app resume */
+                updateAndDeleteStaleItems = true;
             }
+
             if(c != null) {
                 c.close();
             }
@@ -182,9 +183,18 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
 
             params += "&instId=" + Installation.id(getContext());
             params += "&userInitiated=" + userInitiated;
-            final URL location = new URL(FeedContract.FEED_URL + params);
+            URL location;
+            String listType;
+            if(syncMethod == WompWompConstants.SyncMethod.ALL_FEATURED_ITEMS) {
+                location = new URL(FeedContract.FEATURED_URL);
+                listType = WompWompConstants.LIST_TYPE_FEATURED;
+            } else {
+                location = new URL(FeedContract.FEED_URL + params);
+                listType = WompWompConstants.LIST_TYPE_HOME;
+            }
+
             stream = downloadUrl(location);
-            updateLocalFeedData(stream, syncResult, updateAndDeleteStaleItems, WompWompConstants.LIST_TYPE_HOME);
+            updateLocalFeedData(stream, syncResult, updateAndDeleteStaleItems, listType);
             if(stream != null) {
                 stream.close();
                 stream = null;
@@ -259,10 +269,14 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             entryMap.put(e.id, e);
         }
 
-        // Get list of all items
-
         Uri uri = FeedContract.Entry.CONTENT_URI; // Get all entries
-        Cursor c = contentResolver.query(uri, WompWompConstants.PROJECTION, null, null, null);
+        String selection;
+        if(list_type.equals(WompWompConstants.LIST_TYPE_FEATURED)) {
+            selection = WompWompConstants.FEATURED_LIST_SELECTION;
+        } else {
+            selection = WompWompConstants.HOME_LIST_SELECTION;
+        }
+        Cursor c = contentResolver.query(uri, WompWompConstants.PROJECTION, selection, null, null);
         assert c != null;
 
         // Update stale data
@@ -278,6 +292,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
             Integer numPlays;
             Integer fileSize;
             String annotation;
+            Integer featuredPriority;
 
             while (c.moveToNext()) {
                 syncResult.stats.numEntries++;
@@ -292,6 +307,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                 numPlays = c.getInt(WompWompConstants.COLUMN_NUM_PLAYS);
                 fileSize = c.getInt(WompWompConstants.COLUMN_FILE_SIZE);
                 annotation = c.getString(WompWompConstants.COLUMN_ANNOTATION);
+                featuredPriority = c.getInt(WompWompConstants.COLUMN_FEATURED_PRIORITY);
 
                 FeedParser.Entry match = entryMap.get(entryId);
                 if (match != null) {
@@ -300,15 +316,16 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                     // Check to see if the entry needs to be updated
                     Uri existingUri = FeedContract.Entry.CONTENT_URI.buildUpon()
                             .appendPath(Integer.toString(id)).build();
-                    if (numFavorites.equals(match.numFavorites) ||
-                            numShares.equals(match.numShares) ||
-                            author.equals(match.author) ||
-                            imageSourceUri.equals(match.imageSourceUri) ||
-                            quoteText.equals(match.quoteText) ||
-                            videoUri.equals(match.videoUri) ||
-                            numPlays.equals(match.numPlays) ||
-                            fileSize.equals(match.fileSize) ||
-                            annotation.equals(match.annotation)){
+                    if (!numFavorites.equals(match.numFavorites) ||
+                            !numShares.equals(match.numShares) ||
+                            !author.equals(match.author) ||
+                            !imageSourceUri.equals(match.imageSourceUri) ||
+                            !quoteText.equals(match.quoteText) ||
+                            !videoUri.equals(match.videoUri) ||
+                            !numPlays.equals(match.numPlays) ||
+                            !fileSize.equals(match.fileSize) ||
+                            !annotation.equals(match.annotation) ||
+                            !featuredPriority.equals(match.featuredPriority)){
                         // Update existing record
                         batch.add(ContentProviderOperation.newUpdate(existingUri)
                                 .withValue(FeedContract.Entry.COLUMN_NAME_NUM_FAVORITES, match.numFavorites)
@@ -320,6 +337,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                                 .withValue(FeedContract.Entry.COLUMN_NAME_NUM_PLAYS, match.numPlays)
                                 .withValue(FeedContract.Entry.COLUMN_NAME_FILE_SIZE, match.fileSize)
                                 .withValue(FeedContract.Entry.COLUMN_NAME_ANNOTATION, match.annotation)
+                                .withValue(FeedContract.Entry.COLUMN_NAME_FEATURED_PRIORITY, match.featuredPriority)
                                 .build());
                         syncResult.stats.numUpdates++;
                     } else {
@@ -357,6 +375,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
                     .withValue(FeedContract.Entry.COLUMN_NAME_FILE_SIZE, e.fileSize)
                     .withValue(FeedContract.Entry.COLUMN_NAME_ANNOTATION, e.annotation)
                     .withValue(FeedContract.Entry.COLUMN_NAME_LIST_TYPE, list_type)
+                    .withValue(FeedContract.Entry.COLUMN_NAME_FEATURED_PRIORITY, e.featuredPriority)
                     .build());
             syncResult.stats.numInserts++;
         }
