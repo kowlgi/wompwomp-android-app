@@ -53,6 +53,7 @@
     <string name="best_of_this_month_annotation">&#x1F602;Best Of This Month</string>
     <string name="best_of_previous_month_annotation">&#x1F602;Best Of</string>
     <string name="gcm_defaultSenderId">124086447940</string>
-    <string name="updated_daily">&#x1F60A;Updated Daily</string>
-    <string name="the_end">&#x1F6A7;The end</string>
+    <string name="updated_daily">Updated Daily</string>
+    <string name="check_back_again_tomorrow">Check</string>
+    <string name="the_end">&#x1F6A7;The end\nCheck Back Again Tomorrow</string>
 </resources>
