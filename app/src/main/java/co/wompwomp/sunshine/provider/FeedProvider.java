@@ -26,6 +26,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 
+import co.wompwomp.sunshine.WompWompConstants;
 import co.wompwomp.sunshine.db.SelectionBuilder;
 
 public class FeedProvider extends ContentProvider {
@@ -242,11 +243,11 @@ public class FeedProvider extends ContentProvider {
 
         private static final String SQL_V3_1_NEW_ENTRIES =
                 "ALTER TABLE " + FeedContract.Entry.TABLE_NAME + " ADD COLUMN " +
-                        FeedContract.Entry.COLUMN_NAME_AUTHOR + TYPE_TEXT;
+                        FeedContract.Entry.COLUMN_NAME_AUTHOR + TYPE_TEXT + " DEFAULT ''";
 
         private static final String SQL_V4_1_NEW_ENTRIES =
                 "ALTER TABLE " + FeedContract.Entry.TABLE_NAME + " ADD COLUMN " +
-                        FeedContract.Entry.COLUMN_NAME_VIDEOURI + TYPE_TEXT;
+                        FeedContract.Entry.COLUMN_NAME_VIDEOURI + TYPE_TEXT + " DEFAULT ''";
 
         private static final String SQL_V4_2_NEW_ENTRIES =
                 "ALTER TABLE " + FeedContract.Entry.TABLE_NAME + " ADD COLUMN " +
@@ -258,15 +259,16 @@ public class FeedProvider extends ContentProvider {
 
         private static final String SQL_V5_1_NEW_ENTRIES =
                 "ALTER TABLE " + FeedContract.Entry.TABLE_NAME + " ADD COLUMN " +
-                        FeedContract.Entry.COLUMN_NAME_ANNOTATION + TYPE_TEXT;
+                        FeedContract.Entry.COLUMN_NAME_ANNOTATION + TYPE_TEXT + " DEFAULT ''";
 
         private static final String SQL_V5_2_NEW_ENTRIES =
                 "ALTER TABLE " + FeedContract.Entry.TABLE_NAME + " ADD COLUMN " +
-                        FeedContract.Entry.COLUMN_NAME_LIST_TYPE + TYPE_TEXT;
+                        FeedContract.Entry.COLUMN_NAME_LIST_TYPE + TYPE_TEXT + " DEFAULT '" +
+                        WompWompConstants.LIST_TYPE_HOME + "'";
 
         private static final String SQL_V5_3_NEW_ENTRIES =
                 "ALTER TABLE " + FeedContract.Entry.TABLE_NAME + " ADD COLUMN " +
-                        FeedContract.Entry.COLUMN_NAME_FEATURED_PRIORITY + TYPE_INTEGER;
+                        FeedContract.Entry.COLUMN_NAME_FEATURED_PRIORITY + TYPE_INTEGER + " DEFAULT 0";
 
         public FeedDatabase(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);

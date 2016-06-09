@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-xmlns:tools="http://schemas.android.com/tools" package="co.wompwomp.sunshine"> <!-- Because Timber's min supported SDK is 15, while this apps min SDK is 11 -->
-<!-- Because Facebook's min supportted SDK is 15, while this apps min SDK is 11 -->
-<uses-sdk tools:overrideLibrary="timber.log, com.facebook" />
+xmlns:tools="http://schemas.android.com/tools" package="co.wompwomp.sunshine">
 
 <uses-permission android:name="android.permission.INTERNET" />
 

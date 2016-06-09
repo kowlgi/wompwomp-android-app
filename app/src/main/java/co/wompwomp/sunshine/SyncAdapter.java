@@ -264,7 +264,7 @@ class SyncAdapter extends AbstractThreadedSyncAdapter {
 
         // Build hash table of incoming entries
         HashMap<String, FeedParser.Entry> entryMap;
-        entryMap = new HashMap<String, FeedParser.Entry>();
+        entryMap = new HashMap<>();
         for (FeedParser.Entry e : entries) {
             entryMap.put(e.id, e);
         }
