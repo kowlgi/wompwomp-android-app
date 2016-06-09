@@ -23,7 +23,6 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okio.BufferedSink;
 import okio.Okio;
-import timber.log.Timber;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -56,7 +55,6 @@ public class FileDownloaderService extends IntentService {
             if (ACTION_DOWNLOAD_FILES.equals(action)) {
                 final Bundle bundle = intent.getExtras();
                 ArrayList<VideoFileInfo> fileUrisAndSizes = (ArrayList<VideoFileInfo>) bundle.getSerializable(FILE_LIST);
-                Timber.i("Request to download " + fileUrisAndSizes.size() + " videos");
                 downloadFiles(fileUrisAndSizes);
             }
         }
@@ -74,7 +72,6 @@ public class FileDownloaderService extends IntentService {
             if(Utils.validVideoFile(this, filename, filesize)) {
                 // the file already exists, so skip this file download
                 // and continue to the next file in the list
-                Timber.i("Video file " + filename + " exists");
                 continue;
             }
 
@@ -83,7 +80,6 @@ public class FileDownloaderService extends IntentService {
             }
 
             if(downloadsInProgress.contains(filename)) {
-                Timber.i("Video download " + filename + " already in progress");
                 continue;
             }
 
@@ -109,7 +105,6 @@ public class FileDownloaderService extends IntentService {
                 });
 
                 downloadsInProgress.add(filename);
-                Timber.i("Downloading video: " + filename);
 
             } catch (Exception e) {
                 downloadsInProgress.remove(filename);

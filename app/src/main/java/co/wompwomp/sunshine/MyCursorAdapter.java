@@ -28,7 +28,6 @@ import co.wompwomp.sunshine.util.ImageFetcher;
 import co.wompwomp.sunshine.util.Utils;
 import co.wompwomp.sunshine.util.VideoFileInfo;
 import co.wompwomp.sunshine.video.WompwompPlayer;
-import timber.log.Timber;
 
 import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
@@ -85,7 +84,6 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
             try {
                 mLikes =  getKeysFromFile(WompWompConstants.LIKES_FILENAME);
             } catch (java.lang.Exception e) {
-                Timber.e("Error from file read operation ", e);
                 mLikes = new HashSet<>();
                 e.printStackTrace();
             }
@@ -124,10 +122,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
             likesfos.close();
 
         } catch (java.io.FileNotFoundException fnf) {
-            Timber.e("Error from file stream open operation ", fnf);
             fnf.printStackTrace();
         } catch (java.io.IOException ioe) {
-            Timber.e("Error from file write operation ", ioe);
             ioe.printStackTrace();
         }
     }
