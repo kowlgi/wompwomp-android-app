@@ -157,6 +157,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
         public TextView header;
         public TextView footer;
         public TextView annotation;
+        public ImageView annotation_icon;
+        public View annotation_layout;
 
         public ContentCardViewHolder(View itemView) {
             super(itemView);
@@ -185,6 +187,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
             header = (TextView) itemView.findViewById(R.id.content_header);
             footer = (TextView) itemView.findViewById(R.id.content_footer);
             annotation = (TextView) itemView.findViewById(R.id.annotation);
+            annotation_icon = (ImageView) itemView.findViewById(R.id.annotation_icon);
+            annotation_layout = itemView.findViewById(R.id.annotation_layout);
 
             int whatsappButtonVisibility = Utils.isPackageInstalled("com.whatsapp", mContext) ? View.VISIBLE : View.GONE;
             whatsappshareButton.setVisibility(whatsappButtonVisibility);
@@ -345,15 +349,22 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                     cursor.moveToPosition(cursorPosition);
                 }
 
+                holder.annotation_layout.setVisibility(View.VISIBLE);
                 if(myListItem.annotation.contains(WompWompConstants.ANNOTATION_ALL_TIME_POPULAR)) {
                     holder.annotation.setText(R.string.all_time_annotation);
                     holder.annotation.setVisibility(View.VISIBLE);
+                    holder.annotation_icon.setImageResource(R.drawable.ic_topalltime);
+                    holder.annotation_icon.setVisibility(View.VISIBLE);
                 } else if (myListItem.annotation.contains(WompWompConstants.ANNOTATION_TRENDING_THIS_WEEK)){
                     holder.annotation.setText(R.string.this_week_annotation);
                     holder.annotation.setVisibility(View.VISIBLE);
+                    holder.annotation_icon.setImageResource(R.drawable.ic_hotthisweek);
+                    holder.annotation_icon.setVisibility(View.VISIBLE);
                 } else if(myListItem.annotation.contains(WompWompConstants.ANNOTATION_TRENDING_TODAY)) {
                     holder.annotation.setText(R.string.today_annotation);
                     holder.annotation.setVisibility(View.VISIBLE);
+                    holder.annotation_icon.setImageResource(R.drawable.ic_hottoday);
+                    holder.annotation_icon.setVisibility(View.VISIBLE);
                 } else if(myListItem.annotation.equals(WompWompConstants.ANNOTATION_BEST_OF_PREVIOUS_MONTH)) {
                     DateTimeFormatter fmt = DateTimeFormat.forPattern("MMMM yyyy");
                     String previousMonthAnnotation =
@@ -361,11 +372,17 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                                     " " + currentItemDate.toString(fmt);
                     holder.annotation.setText(previousMonthAnnotation);
                     holder.annotation.setVisibility(View.VISIBLE);
+                    holder.annotation_icon.setImageResource(R.drawable.ic_bestofmonth);
+                    holder.annotation_icon.setVisibility(View.VISIBLE);
                 } else if(myListItem.annotation.equals(WompWompConstants.ANNOTATION_BEST_OF_THIS_MONTH)) {
                     holder.annotation.setText(R.string.best_of_this_month_annotation);
                     holder.annotation.setVisibility(View.VISIBLE);
+                    holder.annotation_icon.setImageResource(R.drawable.ic_bestofmonth);
+                    holder.annotation_icon.setVisibility(View.VISIBLE);
                 } else {
                     holder.annotation.setVisibility(View.GONE);
+                    holder.annotation_icon.setVisibility(View.GONE);
+                    holder.annotation_layout.setVisibility(View.GONE);
                 }
 
                 final ArrayList<VideoFileInfo> videoPrefetchList = new ArrayList<>();

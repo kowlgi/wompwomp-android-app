@@ -47,7 +47,7 @@ public class MyGcmListenerService extends GcmListenerService {
     public void onMessageReceived(String from, Bundle data) {
         if(from == null) return; // this should ideally never happen but we've seen a few crashes reported on crashlytics
 
-        if (from.startsWith(WompWompConstants.CONTENT_NOTIFICATION)) {
+        if (from.startsWith(WompWompConstants.GCM_CONTENT_NOTIFICATION)) {
             if(true) return; // remove this statement after the server stops sending regular content notifications
             String message = data.getString("message");
             String imageUri = data.getString("imageuri");
@@ -72,17 +72,17 @@ public class MyGcmListenerService extends GcmListenerService {
                 Answers.getInstance().logCustom(new CustomEvent("Posted push notification")
                         .putCustomAttribute("itemid", itemId));
             }
-        } else if (from.startsWith(WompWompConstants.SYNC_NOTIFICATION)){
+        } else if (from.startsWith(WompWompConstants.GCM_SYNC_NOTIFICATION)){
             SyncUtils.TriggerSync(WompWompConstants.SyncMethod.ALL_LATEST_ITEMS_ABOVE_HIGH_CURSOR_AUTO);
-        } else if(from.startsWith(WompWompConstants.CTA_SHARE_NOTIFICATION)) {
+        } else if(from.startsWith(WompWompConstants.GCM_CTA_SHARE_NOTIFICATION)) {
             String timestamp = data.getString("message");
             // push 'share now' card to feed
             getContentResolver().insert(FeedContract.Entry.CONTENT_URI, Utils.populateContentValues(WompWompConstants.TYPE_SHARE_CARD, timestamp, null));
-        } else if(from.startsWith(WompWompConstants.CTA_RATE_NOTIFICATION)) {
+        } else if(from.startsWith(WompWompConstants.GCM_CTA_RATE_NOTIFICATION)) {
             String timestamp = data.getString("message");
             // push 'rate now' card to feed
             getContentResolver().insert(FeedContract.Entry.CONTENT_URI, Utils.populateContentValues(WompWompConstants.TYPE_RATE_CARD, timestamp, null));
-        } else if(from.startsWith(WompWompConstants.CTA_UPGRADE_NOTIFICATION)) {
+        } else if(from.startsWith(WompWompConstants.GCM_CTA_UPGRADE_NOTIFICATION)) {
             String timestamp = data.getString("message");
             String versionCode = data.getString("versionCode");
 
@@ -94,7 +94,7 @@ public class MyGcmListenerService extends GcmListenerService {
                 // push 'upgrade now' card to feed
                 getContentResolver().insert(FeedContract.Entry.CONTENT_URI, Utils.populateContentValues(WompWompConstants.TYPE_UPGRADE_CARD, timestamp, versionCode));
             }
-        } else if(from.startsWith(WompWompConstants.REMOVE_ALL_CTAS_NOTIFICATION)) {
+        } else if(from.startsWith(WompWompConstants.GCM_REMOVE_ALL_CTAS_NOTIFICATION)) {
             Uri uri = FeedContract.Entry.CONTENT_URI; // Get all entries
             String[] share_args = new String[] { WompWompConstants.WOMPWOMP_CTA_SHARE};
             String[] rate_args = new String[] { WompWompConstants.WOMPWOMP_CTA_RATE};
@@ -102,7 +102,7 @@ public class MyGcmListenerService extends GcmListenerService {
             getContentResolver().delete(uri, FeedContract.Entry.COLUMN_NAME_ENTRY_ID+"=?", share_args);
             getContentResolver().delete(uri, FeedContract.Entry.COLUMN_NAME_ENTRY_ID+"=?", rate_args);
             getContentResolver().delete(uri, FeedContract.Entry.COLUMN_NAME_ENTRY_ID+"=?", upgrade_args);
-        } else if(from.startsWith(WompWompConstants.INIT_NOTIF_ALARM)) {
+        } else if(from.startsWith(WompWompConstants.GCM_INIT_NOTIFICATION_ALARM)) {
             Intent pushNotificationIntent = new Intent(this, NotifierService.class);
             pushNotificationIntent.setAction(WompWompConstants.INIT_NOTIFICATION_ALARM);
             startService(pushNotificationIntent);

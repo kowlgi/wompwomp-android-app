@@ -82,21 +82,21 @@ public class WompWompConstants {
     public static final Integer DEFAULT_SHARE_APP_THRESHOLD = 4;
 
     public static final String LIKES_FILENAME = "wwlikes.ser";
-    public static final String CONTENT_NOTIFICATION = "/topics/content";
-    public static final String CTA_SHARE_NOTIFICATION = "/topics/cta_share";
-    public static final String SYNC_NOTIFICATION = "/topics/sync";
-    public static final String CTA_RATE_NOTIFICATION = "/topics/cta_rate";
-    public static final String CTA_UPGRADE_NOTIFICATION = "/topics/cta_upgrade";
-    public static final String REMOVE_ALL_CTAS_NOTIFICATION = "/topics/remove_all_ctas";
-    public static final String INIT_NOTIF_ALARM = "/topics/init_notification_alarm";
+    public static final String GCM_CONTENT_NOTIFICATION = "/topics/content";
+    public static final String GCM_CTA_SHARE_NOTIFICATION = "/topics/cta_share";
+    public static final String GCM_SYNC_NOTIFICATION = "/topics/sync";
+    public static final String GCM_CTA_RATE_NOTIFICATION = "/topics/cta_rate";
+    public static final String GCM_CTA_UPGRADE_NOTIFICATION = "/topics/cta_upgrade";
+    public static final String GCM_REMOVE_ALL_CTAS_NOTIFICATION = "/topics/remove_all_ctas";
+    public static final String GCM_INIT_NOTIFICATION_ALARM = "/topics/init_notification_alarm";
     public static final String[] NOTIFICATION_TOPICS = {
-            CONTENT_NOTIFICATION,
-            SYNC_NOTIFICATION,
-            CTA_SHARE_NOTIFICATION,
-            CTA_RATE_NOTIFICATION,
-            REMOVE_ALL_CTAS_NOTIFICATION,
-            CTA_UPGRADE_NOTIFICATION,
-            INIT_NOTIF_ALARM
+            GCM_CONTENT_NOTIFICATION,
+            GCM_SYNC_NOTIFICATION,
+            GCM_CTA_SHARE_NOTIFICATION,
+            GCM_CTA_RATE_NOTIFICATION,
+            GCM_REMOVE_ALL_CTAS_NOTIFICATION,
+            GCM_CTA_UPGRADE_NOTIFICATION,
+            GCM_INIT_NOTIFICATION_ALARM
     };
 
     public static final Integer MAX_VIDEOS_FILES_TO_RETAIN = 100;

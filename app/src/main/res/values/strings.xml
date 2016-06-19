@@ -46,14 +46,14 @@
     <string name="press_button_to_play_video">Press button to play video</string>
     <string name="press_button_to_share">Press button to share</string>
     <string name="press_button_to_like">press button to like</string>
-    <string name="this_week_annotation">&#x1f525;Hot This Week</string>
-    <string name="all_time_annotation">&#x1f3C6;Top All Time</string>
+    <string name="this_week_annotation">Hot This Week</string>
+    <string name="all_time_annotation">Top All Time</string>
     <string name="today">Today</string>
-    <string name="today_annotation">&#x1F4A5;Hot Today</string>
-    <string name="best_of_this_month_annotation">&#x1F602;Best Of This Month</string>
-    <string name="best_of_previous_month_annotation">&#x1F602;Best Of</string>
+    <string name="today_annotation">Hot Today</string>
+    <string name="best_of_this_month_annotation">Best Of This Month</string>
+    <string name="best_of_previous_month_annotation">Best Of</string>
     <string name="gcm_defaultSenderId">124086447940</string>
     <string name="updated_daily">Updated Daily</string>
     <string name="check_back_again_tomorrow">Check</string>
-    <string name="the_end">&#x1F6A7;The end\nCheck Back Again Tomorrow</string>
+    <string name="the_end">THE END\nCheck Back Again Tomorrow</string>
 </resources>

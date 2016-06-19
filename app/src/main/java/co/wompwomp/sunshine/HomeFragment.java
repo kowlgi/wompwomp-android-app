@@ -207,7 +207,7 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
                     .putBoolean(WompWompConstants.PREF_APP_RESUMED_FROM_BG, true)
                     .apply();
         }
-
+        Answers.getInstance().logCustom(new CustomEvent("View Home Fragment"));
     }
 
     @Override

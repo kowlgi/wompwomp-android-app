@@ -16,6 +16,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.crashlytics.android.answers.Answers;
+import com.crashlytics.android.answers.CustomEvent;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
@@ -127,7 +129,6 @@ public class FeaturedFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public void onResume(){
         super.onResume();
-
         mImageFetcher.setExitTasksEarly(false);
         /* Because we're loading images asynchronously, we might pause() this activity before
         fetching the image from network. When this activity is resumed, recycler view doesn't call
@@ -154,7 +155,7 @@ public class FeaturedFragment extends Fragment implements LoaderManager.LoaderCa
                     .putBoolean(WompWompConstants.PREF_APP_RESUMED_FROM_BG, true)
                     .apply();
         }
-
+        Answers.getInstance().logCustom(new CustomEvent("View Popular Fragment"));
     }
 
     @Override
