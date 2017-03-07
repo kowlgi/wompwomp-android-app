@@ -26,7 +26,7 @@
                 android:layout_gravity="center"
                 android:id="@+id/toolbar_title"
                 style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
-                android:textSize="30dp"/>
+                android:textSize="30sp"/>
 
         </android.support.v7.widget.Toolbar>
 
