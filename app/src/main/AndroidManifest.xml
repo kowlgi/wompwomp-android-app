@@ -60,7 +60,15 @@ xmlns:tools="http://schemas.android.com/tools" package="co.wompwomp.sunshine">
     </service>
     <!-- [END instanceId_listener] -->
     <service android:name=".RegistrationIntentService"/>
-
+    <provider
+        android:name=".provider.GenericFileProvider"
+        android:authorities="${applicationId}.provider"
+        android:exported="false"
+        android:grantUriPermissions="true">
+        <meta-data
+            android:name="android.support.FILE_PROVIDER_PATHS"
+            android:resource="@xml/provider_paths"/>
+    </provider>
     <provider android:name=".provider.FeedProvider" android:authorities="${applicationId}" />
     <provider android:name="com.facebook.FacebookContentProvider" android:authorities="@string/facebook_provider_authorities"
         android:exported="true" />

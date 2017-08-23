@@ -29,13 +29,12 @@ import android.os.Build;
 import android.os.Build.VERSION_CODES;
 import android.os.Environment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Toast;
 
 import com.facebook.stetho.okhttp3.StethoInterceptor;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
 
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
@@ -99,7 +98,7 @@ public class Utils {
         File videofile =  new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_DOWNLOADS), filename);
         if(videofile.exists()) {
-            return Uri.fromFile(videofile);
+            return FileProvider.getUriForFile(context, context.getApplicationContext().getPackageName() + ".provider", videofile);
         }
 
         try {
@@ -115,7 +114,7 @@ public class Utils {
             dest.writeAll(src);
             dest.close();
             src.close();
-            return Uri.fromFile(videofile);
+            return FileProvider.getUriForFile(context, context.getApplicationContext().getPackageName() + ".co.wompwomp.sunshine.provider", videofile);
         } catch (Exception e) {
             Timber.e(e.toString());
             return null;
@@ -131,7 +130,7 @@ public class Utils {
                 Environment.DIRECTORY_DOWNLOADS), filename);
 
         if(file.exists()) {
-            return Uri.fromFile(file);
+            return FileProvider.getUriForFile(context, context.getApplicationContext().getPackageName() + ".co.wompwomp.sunshine.provider", file);
         }
 
         //Create a Bitmap with the same dimensions
@@ -170,7 +169,7 @@ public class Utils {
             file.getParentFile().mkdirs();
             out = new FileOutputStream(file);
             image.compress(compressFormat, 90, out); //Output
-            bmpUri = Uri.fromFile(file);
+            bmpUri = FileProvider.getUriForFile(context, context.getApplicationContext().getPackageName() + ".co.wompwomp.sunshine.provider", file);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } finally {
