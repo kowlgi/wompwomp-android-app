@@ -85,7 +85,7 @@ public class FeaturedFragment extends Fragment implements LoaderManager.LoaderCa
             }
         });
 
-        mAdapter = new MyCursorAdapter(getActivity(), null, mImageFetcher, mShareDialog);
+        mAdapter = new MyCursorAdapter(getActivity(), getContext(), null, mImageFetcher, mShareDialog);
     }
 
     @Override

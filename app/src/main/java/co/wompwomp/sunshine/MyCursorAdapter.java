@@ -1,5 +1,6 @@
 package co.wompwomp.sunshine;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -58,8 +59,8 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
 
     private ImageFetcher mImageFetcher = null;
     private Context mContext = null;
+    private Activity mActivity = null;
     private ShareDialog mShareDialog = null;
-    private HashSet<String> mLikes = null;
 
     /* we maintain these counts in this adapter as starting with v1.2 we don't do a db update when
        the user favorites or likes an item. Avoiding a db update is 1. needed, because a db update
@@ -73,30 +74,14 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
     private WompwompPlayer mPlayer = null;
     private ContentCardViewHolder mItemPlayingVideo = null;
 
-    public MyCursorAdapter(Context context, Cursor cursor, ImageFetcher imageFetcher, ShareDialog shareDialog) {
+    public MyCursorAdapter(Activity activity, Context context, Cursor cursor, ImageFetcher imageFetcher, ShareDialog shareDialog) {
         super(cursor);
         mContext = context;
         mImageFetcher = imageFetcher;
         mShareDialog = shareDialog;
         mShareCounts = new HashMap<>();
         mViewCounts = new HashMap<>();
-        if (Utils.fileExists(mContext, WompWompConstants.LIKES_FILENAME)) {
-            try {
-                mLikes =  getKeysFromFile(WompWompConstants.LIKES_FILENAME);
-            } catch (java.lang.Exception e) {
-                mLikes = new HashSet<>();
-                e.printStackTrace();
-            }
-        } else mLikes = new HashSet<>();
-    }
-
-    private HashSet<String> getKeysFromFile (String filePath) throws Exception {
-        FileInputStream fis = mContext.openFileInput(filePath);
-        ObjectInputStream ois = new ObjectInputStream(fis);
-        HashSet<String> obj = (HashSet<String>) ois.readObject();
-        ois.close();
-        fis.close();
-        return obj;
+        mActivity = activity;
     }
 
     public void start() {
@@ -113,19 +98,6 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
          */
         mShareCounts.clear();
         mViewCounts.clear();
-
-        try {
-            FileOutputStream likesfos = mContext.openFileOutput(WompWompConstants.LIKES_FILENAME, Context.MODE_PRIVATE);
-            ObjectOutputStream likesoos = new ObjectOutputStream(likesfos);
-            likesoos.writeObject(mLikes);
-            likesoos.close();
-            likesfos.close();
-
-        } catch (java.io.FileNotFoundException fnf) {
-            fnf.printStackTrace();
-        } catch (java.io.IOException ioe) {
-            ioe.printStackTrace();
-        }
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -163,7 +135,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
         public ContentCardViewHolder(View itemView) {
             super(itemView);
             contentView = itemView.findViewById(R.id.shareCard);
-            imageView = (SquareImageView) itemView.findViewById(R.id.imageView);
+            imageView = itemView.findViewById(R.id.imageView);
             textView = (TextView) itemView.findViewById(R.id.textView);
             shareButton = (ImageButton) itemView.findViewById(R.id.share_button);
             favoriteButton = (ImageButton) itemView.findViewById(R.id.favorite_button);
@@ -439,7 +411,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                 }
 
                 // In v1.1.6 we stored the likes info in the DB, in later versions we store them in a file
-                myListItem.favorite = mLikes.contains(myListItem.id);
+                myListItem.favorite = ((MainActivity)mActivity).hasLiked(myListItem.id);
 
                 if (myListItem.favorite) {
                     holder.favoriteButton.setImageResource(R.drawable.ic_favorite_red_24dp);
@@ -658,7 +630,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                             // she likes me not :(
                             holder.numfavoritesView.setText(MyListItem.format(myListItem.numFavorites));
                             holder.likesText.setText(myListItem.numFavorites == 1 ? R.string.like : R.string.likes);
-                            mLikes.remove(myListItem.id);
+                            ((MainActivity)mActivity).removeLike(myListItem.id);
                             holder.favoriteButton.setImageResource(R.drawable.ic_favorite_lightred_24dp);
                             myListItem.favorite = false;
 
@@ -670,7 +642,7 @@ public class MyCursorAdapter extends BaseCursorAdapter<MyCursorAdapter.ViewHolde
                             int updatedLikeCount = myListItem.numFavorites + 1;
                             holder.numfavoritesView.setText(MyListItem.format(updatedLikeCount));
                             holder.likesText.setText(updatedLikeCount == 1 ? R.string.like : R.string.likes);
-                            mLikes.add(myListItem.id);
+                            ((MainActivity)mActivity).addLike(myListItem.id);
                             holder.favoriteButton.setImageResource(R.drawable.ic_favorite_red_24dp);
                             myListItem.favorite = true;
 

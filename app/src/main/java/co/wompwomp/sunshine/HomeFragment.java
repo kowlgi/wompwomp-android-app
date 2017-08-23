@@ -99,7 +99,7 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
             }
         });
 
-        mAdapter = new MyCursorAdapter(getContext(), null, mImageFetcher, mShareDialog);
+        mAdapter = new MyCursorAdapter(getActivity(), getContext(), null, mImageFetcher, mShareDialog);
     }
 
     @Override

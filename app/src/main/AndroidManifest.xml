@@ -101,7 +101,7 @@ xmlns:tools="http://schemas.android.com/tools" package="co.wompwomp.sunshine">
     </service>
 
     <activity android:name="com.facebook.FacebookActivity" android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
-        android:label="wompwomp" android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        android:label="wompwomp" android:theme="@android:style/Theme.Translucent.NoTitleBar" tools:replace="android:theme" />
 
     <meta-data android:name="io.fabric.ApiKey" android:value="927db89b92d122f76adb5b2ede34e798bd6caa60" />
     <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_app_id" />

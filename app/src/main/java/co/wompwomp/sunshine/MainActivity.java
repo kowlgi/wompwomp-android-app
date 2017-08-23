@@ -1,6 +1,7 @@
 package co.wompwomp.sunshine;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -23,12 +24,19 @@ import com.crashlytics.android.answers.CustomEvent;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.HashSet;
+
 import co.wompwomp.sunshine.provider.FeedContract;
 import co.wompwomp.sunshine.util.Utils;
 
 public class MainActivity extends AppCompatActivity {
 
     private ViewPager mViewPager;
+    private HashSet<String> mLikes = null;
 
     @SuppressLint("ShowToast")
     @Override
@@ -49,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
         if(tabLayout != null) {
             tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
             tabLayout.setupWithViewPager(mViewPager);
-            tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
                 @Override
                 public void onTabSelected(TabLayout.Tab tab) {
                     // do nothing
@@ -68,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
-        Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar myToolbar = findViewById(R.id.toolbar);
         setSupportActionBar(myToolbar);
         android.support.v7.app.ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
@@ -93,6 +101,15 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+
+        if (Utils.fileExists(this, WompWompConstants.LIKES_FILENAME)) {
+            try {
+                mLikes =  getKeysFromFile(WompWompConstants.LIKES_FILENAME);
+            } catch (java.lang.Exception e) {
+                mLikes = new HashSet<>();
+                e.printStackTrace();
+            }
+        } else mLikes = new HashSet<>();
     }
 
     @Override
@@ -104,6 +121,22 @@ public class MainActivity extends AppCompatActivity {
                 .edit()
                 .putString(WompWompConstants.PREF_LAST_LOGGED_IN_TIMESTAMP, ldt.toString())
                 .apply();
+    }
+
+    @Override
+    protected void onPause(){
+        super.onPause();
+        try {
+            FileOutputStream likesfos = openFileOutput(WompWompConstants.LIKES_FILENAME, Context.MODE_PRIVATE);
+            ObjectOutputStream likesoos = new ObjectOutputStream(likesfos);
+            likesoos.writeObject(mLikes);
+            likesoos.close();
+            likesfos.close();
+        } catch (java.io.FileNotFoundException fnf) {
+            fnf.printStackTrace();
+        } catch (java.io.IOException ioe) {
+            ioe.printStackTrace();
+        }
     }
 
     @Override
@@ -168,5 +201,26 @@ public class MainActivity extends AppCompatActivity {
                     (SmoothScrollToTopListener) fragmentPagerAdapter.getFragment(index);
             if(listener != null) listener.onSmoothScrollToTop();
         }
+    }
+
+    public void addLike(String id){
+        mLikes.add(id);
+    }
+
+    public void removeLike(String id){
+        mLikes.remove(id);
+    }
+
+    public Boolean hasLiked(String id){
+        return mLikes.contains(id);
+    }
+
+    private HashSet<String> getKeysFromFile (String filePath) throws Exception {
+        FileInputStream fis = openFileInput(filePath);
+        ObjectInputStream ois = new ObjectInputStream(fis);
+        HashSet<String> obj = (HashSet<String>) ois.readObject();
+        ois.close();
+        fis.close();
+        return obj;
     }
 }
