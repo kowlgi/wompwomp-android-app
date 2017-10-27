@@ -5,8 +5,6 @@ import android.content.Context;
 
 import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.answers.Answers;
-import com.crashlytics.android.core.CrashlyticsCore;
-import com.facebook.FacebookSdk;
 import com.facebook.stetho.Stetho;
 import com.squareup.leakcanary.LeakCanary;
 
@@ -23,29 +21,8 @@ public class MyApplication extends Application {
     public void onCreate() {
         super.onCreate();
 
-        CrashlyticsCore crashlyticsCore = new CrashlyticsCore.Builder()
-                .disabled(BuildConfig.DEBUG)
-                .build();
+        Fabric.with(this, new Crashlytics(), new Answers());
 
-        Crashlytics crashlytics = new Crashlytics.Builder()
-                .core(crashlyticsCore)
-                .build();
-
-        Answers answers = new Answers();
-
-        Fabric fabric;
-        if(BuildConfig.DEBUG) {
-             fabric = new Fabric.Builder(this)
-                    .kits(crashlytics)
-                    .build();
-        }
-        else {
-            fabric = new Fabric.Builder(this)
-                    .kits(crashlytics, answers)
-                    .build();
-        }
-        // Crash and usage analytics
-        Fabric.with(fabric);
         // Detect memory leaks
         LeakCanary.install(this);
 
@@ -54,7 +31,6 @@ public class MyApplication extends Application {
             Timber.plant(new Timber.DebugTree());
         }
 
-        FacebookSdk.sdkInitialize(getApplicationContext());
         JodaTimeAndroid.init(this);
         Stetho.initializeWithDefaults(this);
 
