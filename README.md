@@ -22,3 +22,6 @@ WompWomp had 10K installs and hosted over 3000 pictures and video memes.
 * Install Android Studio and open it
 * Open this git repo folder in Android Studio
 * Build, install and run the app
+
+### App visuals
+Images from the Play store page
