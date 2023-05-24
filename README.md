@@ -25,3 +25,5 @@ WompWomp had 10K installs and hosted over 3000 pictures and video memes.
 
 ### App visuals
 Images from the Play store page
+
+![App screenshot 1](https://bitbucket.org/breadboy/wompwomp-android-app/src/master/images/screen0.jpeg)
