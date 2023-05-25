@@ -1,4 +1,4 @@
-# Android app for WompWomp (Oct 2015 - Jun 2016)
+# Android app for WompWomp (Oct 2015 - Oct 2017)
 
 ## Intro
 Wompwomp was an Android app and web app for viewing video and image memes. This repo is for the Android app codebase. The Android app was on the Play Store. The web app was hosted at https://wompwomp.co and was used mainly for uploading memes to the database.
